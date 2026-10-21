@@ -102,9 +102,12 @@ afterAll(async () => {
 test('migração real em banco vazio cria tabelas, índices e registro de migração', async () => {
   const migrations =
     await database.$queryRaw`SELECT migration_name, finished_at FROM "_prisma_migrations"`;
-  expect(migrations).toHaveLength(1);
-  expect(migrations[0].migration_name).toBe('20261021000100_initial_access');
-  expect(migrations[0].finished_at).not.toBeNull();
+  expect(migrations).toHaveLength(2);
+  expect(migrations.map((migration) => migration.migration_name).sort()).toEqual([
+    '20261021000100_initial_access',
+    '20261021000200_events_incidents',
+  ]);
+  for (const migration of migrations) expect(migration.finished_at).not.toBeNull();
   const tables =
     await database.$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname='public'`;
   expect(tables.map((row) => row.tablename)).toEqual(

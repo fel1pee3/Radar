@@ -32,16 +32,17 @@ model Tenant {
 }
 
 model User {
-  id           String       @id @default(uuid()) @db.Uuid
-  tenantId     String       @db.Uuid
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  email        String       @unique @db.VarChar(254)
-  passwordHash String
-  role         Role
-  active       Boolean      @default(true)
-  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
-  sessions     Session[]
-  audits       AuditEntry[]
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @db.Uuid
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  email           String           @unique @db.VarChar(254)
+  passwordHash    String
+  role            Role
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
+  sessions        Session[]
+  audits          AuditEntry[]
+  incidentActions IncidentAction[]
 
   @@unique([tenantId, id])
 }
@@ -60,15 +61,16 @@ model Session {
 }
 
 model Site {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @db.Uuid
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  name         String   @db.VarChar(120)
-  timezone     String   @db.VarChar(80)
-  bootstrapKey String?  @db.VarChar(40)
-  createdAt    DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  id           String     @id @default(uuid()) @db.Uuid
+  tenantId     String     @db.Uuid
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  name         String     @db.VarChar(120)
+  timezone     String     @db.VarChar(80)
+  bootstrapKey String?    @db.VarChar(40)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(3)
   cameras      Camera[]
+  incidents    Incident[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, bootstrapKey])
@@ -76,16 +78,22 @@ model Site {
 }
 
 model Camera {
-  id              String     @id @default(uuid()) @db.Uuid
-  tenantId        String     @db.Uuid
-  siteId          String     @db.Uuid
-  site            Site       @relation(fields: [tenantId, siteId], references: [tenantId, id], onDelete: Restrict)
-  name            String     @db.VarChar(120)
-  type            CameraType
-  expectedRunning Boolean    @default(false)
-  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime   @updatedAt @db.Timestamptz(3)
-  device          Device?
+  id                  String      @id @default(uuid()) @db.Uuid
+  tenantId            String      @db.Uuid
+  siteId              String      @db.Uuid
+  site                Site        @relation(fields: [tenantId, siteId], references: [tenantId, id], onDelete: Restrict)
+  name                String      @db.VarChar(120)
+  type                CameraType
+  expectedRunning     Boolean     @default(false)
+  createdAt           DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime    @updatedAt @db.Timestamptz(3)
+  device              Device?
+  incidents           Incident[]
+  runs                CameraRun[]
+  activeRunId         String?     @db.Uuid
+  heartbeatSequence   BigInt?
+  heartbeatReceivedAt DateTime?   @db.Timestamptz(3)
+  lastHeartbeat       Json?
 
   @@unique([tenantId, id])
   @@index([tenantId, createdAt, id])
@@ -99,6 +107,7 @@ model Device {
   credentialVersion Int                @default(0)
   createdAt         DateTime           @default(now()) @db.Timestamptz(3)
   credentials       DeviceCredential[]
+  receipts          EventReceipt[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, cameraId])
@@ -118,14 +127,201 @@ model DeviceCredential {
 }
 
 model AuditEntry {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  actorId   String?  @db.Uuid
-  actor     User?    @relation(fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict)
-  action    String   @db.VarChar(60)
-  objectId  String?  @db.Uuid
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @db.Uuid
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  actorId          String?         @db.Uuid
+  actor            User?           @relation(fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict)
+  action           String          @db.VarChar(60)
+  objectId         String?         @db.Uuid
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  incidentId       String?         @db.Uuid
+  incident         Incident?       @relation(fields: [tenantId, incidentId], references: [tenantId, id], onDelete: Restrict)
+  incidentActionId String?         @db.Uuid
+  incidentAction   IncidentAction? @relation(fields: [tenantId, incidentActionId], references: [tenantId, id], onDelete: Restrict)
+  resultCode       String?         @db.VarChar(60)
+  fromVersion      Int?
+  toVersion        Int?
 
+  @@index([tenantId, createdAt, id])
+  @@index([tenantId, incidentId, createdAt, id])
+}
+
+enum SourceMode {
+  SIMULATED
+  REPLAY
+  LIVE
+}
+
+enum DetectionKind {
+  PERSON_ON_FLOOR
+  POSSIBLE_FALL
+}
+
+enum DeliveryClass {
+  TEST
+  CURRENT
+  DELAYED
+  CLOCK_UNCERTAIN
+}
+
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+enum IncidentReview {
+  UNREVIEWED
+  PERSON_ON_FLOOR_CONFIRMED
+  FALL_REPORTED
+  FALSE_POSITIVE
+  INCONCLUSIVE
+}
+
+enum IncidentOutcome {
+  ASSISTANCE_RECORDED
+  NO_ASSISTANCE_NEEDED
+  INCONCLUSIVE
+  TEST_COMPLETED
+}
+
+enum DismissReason {
+  FALSE_DETECTION
+  TEST_EVENT
+  DUPLICATE
+  OTHER
+}
+
+enum IntentStatus {
+  PENDING
+  DELIVERED
+}
+
+enum NotificationChannel {
+  SIMULATED
+}
+
+model CameraRun {
+  tenantId        String    @db.Uuid
+  cameraId        String    @db.Uuid
+  camera          Camera    @relation(fields: [tenantId, cameraId], references: [tenantId, id], onDelete: Restrict)
+  runId           String    @db.Uuid
+  firstReceivedAt DateTime  @db.Timestamptz(3)
+  retiredAt       DateTime? @db.Timestamptz(3)
+
+  @@id([tenantId, cameraId, runId])
+}
+
+model Incident {
+  id             String              @id @default(uuid()) @db.Uuid
+  tenantId       String              @db.Uuid
+  siteId         String              @db.Uuid
+  site           Site                @relation(fields: [tenantId, siteId], references: [tenantId, id], onDelete: Restrict)
+  cameraId       String              @db.Uuid
+  camera         Camera              @relation(fields: [tenantId, cameraId], references: [tenantId, id], onDelete: Restrict)
+  episodeId      String              @db.Uuid
+  originEventId  String              @db.Uuid
+  runId          String              @db.Uuid
+  episodeHash    String              @db.Char(64)
+  kind           DetectionKind
+  mode           SourceMode
+  deliveryClass  DeliveryClass
+  status         IncidentStatus      @default(OPEN)
+  review         IncidentReview      @default(UNREVIEWED)
+  outcome        IncidentOutcome?
+  dismissReason  DismissReason?
+  version        Int                 @default(1)
+  occurredAt     DateTime            @db.Timestamptz(3)
+  detectedAt     DateTime            @db.Timestamptz(3)
+  receivedAt     DateTime            @db.Timestamptz(3)
+  sourceOffsetMs BigInt?
+  signals        Json?
+  pose           Json?
+  versions       Json?
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @db.Timestamptz(3)
+  receipts       EventReceipt[]
+  actions        IncidentAction[]
+  intent         NotificationIntent?
+  audits         AuditEntry[]
+
+  @@unique([tenantId, id])
+  @@unique([cameraId, episodeId])
+  @@index([tenantId, siteId, occurredAt, id])
+  @@index([tenantId, status, createdAt, id])
+  @@index([tenantId, createdAt, id])
+}
+
+model EventReceipt {
+  id            String        @id @default(uuid()) @db.Uuid
+  tenantId      String        @db.Uuid
+  deviceId      String        @db.Uuid
+  device        Device        @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Restrict)
+  eventId       String        @db.Uuid
+  episodeId     String        @db.Uuid
+  payloadHash   String        @db.Char(64)
+  payload       Json?
+  receivedAt    DateTime      @db.Timestamptz(3)
+  deliveryClass DeliveryClass
+  incidentId    String?       @db.Uuid
+  incident      Incident?     @relation(fields: [tenantId, incidentId], references: [tenantId, id], onDelete: Restrict)
+  expiredAt     DateTime?     @db.Timestamptz(3)
+
+  @@unique([deviceId, eventId])
+  @@index([tenantId, incidentId])
+}
+
+model IncidentAction {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @db.Uuid
+  incidentId  String       @db.Uuid
+  incident    Incident     @relation(fields: [tenantId, incidentId], references: [tenantId, id], onDelete: Restrict)
+  actorId     String       @db.Uuid
+  actor       User         @relation(fields: [tenantId, actorId], references: [tenantId, id], onDelete: Restrict)
+  actionId    String       @db.Uuid
+  action      String       @db.VarChar(30)
+  payloadHash String       @db.Char(64)
+  payload     Json?
+  result      Json
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  audits      AuditEntry[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, actionId])
+  @@index([tenantId, incidentId, createdAt, id])
+}
+
+model NotificationIntent {
+  id            String                @id @default(uuid()) @db.Uuid
+  tenantId      String                @db.Uuid
+  incidentId    String                @unique @db.Uuid
+  incident      Incident              @relation(fields: [tenantId, incidentId], references: [tenantId, id], onDelete: Restrict)
+  key           String                @unique @db.VarChar(100)
+  status        IntentStatus          @default(PENDING)
+  attempts      Int                   @default(0)
+  nextAttemptAt DateTime              @default(now()) @db.Timestamptz(3)
+  lastErrorCode String?               @db.VarChar(60)
+  createdAt     DateTime              @default(now()) @db.Timestamptz(3)
+  delivery      NotificationDelivery?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, incidentId])
+  @@index([status, nextAttemptAt, createdAt, id])
+}
+
+model NotificationDelivery {
+  id        String              @id @default(uuid()) @db.Uuid
+  tenantId  String              @db.Uuid
+  intentId  String              @unique @db.Uuid
+  intent    NotificationIntent  @relation(fields: [tenantId, intentId], references: [tenantId, id], onDelete: Restrict)
+  channel   NotificationChannel @default(SIMULATED)
+  message   String              @db.VarChar(300)
+  urgent    Boolean
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+
+  @@unique([tenantId, intentId])
   @@index([tenantId, createdAt, id])
 }

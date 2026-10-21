@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://radar.local/contracts/incident-action-v1.json",
+  "title": "IncidentActionV1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "RECOGNIZE"
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action"]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "START_RESPONSE"
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action"]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "SET_REVIEW"
+        },
+        "review": {
+          "type": "string",
+          "enum": [
+            "UNREVIEWED",
+            "PERSON_ON_FLOOR_CONFIRMED",
+            "FALL_REPORTED",
+            "FALSE_POSITIVE",
+            "INCONCLUSIVE"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action", "review"]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "RESOLVE"
+        },
+        "review": {
+          "type": "string",
+          "enum": ["PERSON_ON_FLOOR_CONFIRMED", "FALL_REPORTED", "FALSE_POSITIVE", "INCONCLUSIVE"]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["ASSISTANCE_RECORDED", "NO_ASSISTANCE_NEEDED", "INCONCLUSIVE", "TEST_COMPLETED"]
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action", "review", "outcome"]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "DISMISS"
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["FALSE_DETECTION", "TEST_EVENT", "DUPLICATE", "OTHER"]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action", "reason"],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reason": {
+                "const": "OTHER"
+              }
+            },
+            "required": ["reason"]
+          },
+          "then": {
+            "required": ["note"]
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "action": {
+          "type": "string",
+          "const": "ADD_NOTE"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        }
+      },
+      "required": ["actionId", "expectedVersion", "action", "note"]
+    }
+  ]
+}

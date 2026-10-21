@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-Este é o contrato normativo da v0.1. A etapa 02 criará os JSON Schemas e tipos correspondentes em `packages/contracts/`. Exemplos deste documento são fictícios; não representam eventos observados.
+Este é o contrato normativo da v0.1. A etapa 02 materializou os JSON Schemas, tipos gerados e exemplos compartilhados em [packages/contracts](../packages/contracts/). Exemplos deste documento são fictícios; não representam eventos observados. [Roteiro HTTP/PowerShell](VALIDACAO_MANUAL_ETAPA_02.md) e [relatório 02](RELATORIOS/ETAPA_02.md).
 
 ## Vocabulário
 
@@ -67,7 +67,24 @@ Valores aceitos: `mode = SIMULATED | REPLAY | LIVE`; `kind = PERSON_ON_FLOOR | P
 
 ## Validação e idempotência
 
-Criar schemas `event-v1`, `heartbeat-v1` e `incident-action-v1`, com enums fechados, limites, propriedades desconhecidas rejeitadas e exemplos usados em TypeScript e Python. Validar tipos também no backend; não confiar apenas no formulário.
+Schemas `event-v1`, `heartbeat-v1` e `incident-action-v1` em `packages/contracts/src/schemas` usam JSON Schema draft-07, enums fechados e `additionalProperties: false` em todos os objetos. Ajv valida TypeScript e a API; Python usa jsonschema. `packages/contracts/fixtures/cases.json` é a mesma fonte de exemplos nos três caminhos. Tipos TypeScript são gerados por `pnpm.cmd contracts:generate`; a verificação detecta tipos desatualizados. Os tipos estáticos não substituem a validação de limites/condições em runtime.
+
+Limites concretizados na etapa 02:
+
+| Campo | Regra |
+| --- | --- |
+| UUID | Forma hexadecimal canônica de 36 caracteres; maiúsculas/minúsculas aceitas |
+| Timestamps | UTC `YYYY-MM-DDTHH:mm:ss[.SSS]Z`, fração opcional de 1–3 dígitos; calendário real, ano 0000 e leap second rejeitados; armazenamento com precisão de milissegundos |
+| Durações, offsets, sequence e contadores | Inteiros de 0 a 9.007.199.254.740.991; sem conversão de string/bool |
+| `sourceOffsetMs` | Inteiro obrigatório em REPLAY; null em LIVE/SIMULATED |
+| `torsoAngleDeg`, `bboxAspectRatio` | 0–180 graus; razão maior que zero e até 1.000 |
+| `analysisFps`, frações, visibility | FPS de 0–1.000; fração/visibility de 0–1 |
+| Pose | Máximo 22 índices únicos, 11–32; x/y finitos, sem clamp a 0–1; unicidade de índices também validada após o schema em ambas as linguagens |
+| `versions.*` | 1–120 caracteres ASCII; início alfanumérico, seguido de alfanumérico, ponto, sublinhado, `+` ou `-` |
+| Heartbeat | Flags únicas, no máximo as oito documentadas; `lastFrameAgeMs` pode ser null durante aquecimento |
+| Ações | `expectedVersion` inteiro de 1–2.147.483.647; nota não vazia/não composta apenas por espaços, até 2.000 caracteres |
+
+O teto de 64 KiB é aplicado ao corpo HTTP antes da validação. JSON malformado retorna 400, corpo excedente 413, payload fora do schema 422 `INVALID_PAYLOAD`. Credencial ausente/revogada retorna 401; câmera fora do bearer retorna 403 `CAMERA_SCOPE_MISMATCH`, inclusive outra câmera do mesmo tenant. Não há autoridade concedida por campos enviados no payload.
 
 - Unicidade de recibo por `(deviceId, eventId)`.
 - Unicidade de incidente por `(cameraId, episodeId)` dentro do tenant.
@@ -77,6 +94,10 @@ Criar schemas `event-v1`, `heartbeat-v1` e `incident-action-v1`, com enums fecha
 - Mesmo episódio com novo event ID e contexto imutável equivalente: registrar recibo deduplicado e apontar ao incidente existente. Divergência de câmera, modo ou conteúdo exige 409 `EPISODE_CONFLICT`.
 - Resposta de sucesso contém `eventId`, `incidentId`, `receivedAt`, `duplicate`, `deliveryClass`.
 - Falha antes do commit: 5xx; cliente reenvia o mesmo evento. Timeout depois de commit também se resolve pela idempotência.
+
+Na etapa 02, o hash SHA-256 usa JSON com chaves de objetos ordenadas recursivamente, arrays na ordem original e números representados como JSON pelo runtime Node. Não é uma implementação declarada de RFC 8785. O hash de episódio inclui todos os campos do envelope exceto `eventId`: `runId`, horários, modo, sinais, pose e versões continuam imutáveis. Um novo run não reescreve um evento anterior; reenvie seu envelope original. O escopo da unicidade de episódio é a câmera, não um UUID global entre câmeras. Uma tentativa fora do escopo da credencial é rejeitada antes da comparação de episódio.
+
+O bloqueio de linha da câmera serializa ingestões/heartbeat; restrições únicas e FKs compostas no PostgreSQL continuam protegendo as chaves e o tenant. Para recibo conhecido, a deduplicação precede os limites de idade de um novo envelope. O retorno usa a classe e o recebimento daquele recibo; o novo recibo de episódio equivalente recebe seu próprio `receivedAt`, mantendo incidente e classe originais.
 
 Validação 400/422 e conflito 409 de evento não entram em retry infinito: mover item para erro permanente local, mostrar motivo sem dados sensíveis. 401/403 suspende envio e exige corrigir/revogar credencial. 408/429/5xx e erro de rede usam backoff. Persistir evento antes de qualquer HTTP. RUN_CONFLICT do heartbeat tem tratamento próprio: aguardar a execução anterior terminar/expirar, sem descartar eventos pendentes.
 
@@ -117,6 +138,8 @@ Toda ação exige `actionId` UUID, `expectedVersion` inteiro, `action` válida e
 
 `SET_REVIEW` altera somente a revisão em estados não finais, com campo `review` e `note` opcional. `ADD_NOTE` exige `note` e é permitida inclusive em estados finais, sem reabri-los. Notas têm limite de 2.000 caracteres. Ações sem necessidade de determinado campo o rejeitam; schema deve usar variantes por ação. Todas incrementam a versão e registram auditoria, exceto reenvio idêntico que devolve o resultado original.
 
+O `actionId` é único no tenant e seu hash inclui `incidentId` e todo o corpo. Reutilizá-lo com outro corpo/incidente retorna 409 `ACTION_ID_CONFLICT`. Um advisory lock transacional serializa a chave; um bloqueio do incidente permite conferir `expectedVersion` e registrar alteração/ação/auditoria atomicamente. A repetição é consultada antes da versão/transição atuais e devolve o snapshot original `{incidentId,actionId,status,review,outcome,dismissReason,version,updatedAt}`. Nova ação com versão antiga retorna 409 `VERSION_CONFLICT`; transição vedada retorna 409 `INVALID_TRANSITION`. `GET /audit?incidentId=...` inclui os campos da ação e suas versões, permitindo consultar notas; logs técnicos não incluem esse conteúdo.
+
 Revisão separada do estado: `UNREVIEWED`, `PERSON_ON_FLOOR_CONFIRMED`, `FALL_REPORTED`, `FALSE_POSITIVE`, `INCONCLUSIVE`. `FALL_REPORTED` significa relato/revisão humana; não diagnóstico pelo modelo. Uma pessoa deitada voluntariamente pode confirmar a postura no chão e ser um falso alerta de necessidade de ajuda. Avaliar esses objetivos separadamente.
 
 ## Heartbeat e saúde
@@ -130,6 +153,10 @@ Revisão separada do estado: `UNREVIEWED`, `PERSON_ON_FLOOR_CONFIRMED`, `FALL_RE
 - Uma câmera tem uma execução ativa. O primeiro heartbeat anuncia `runId`; outro run ativo recebe 409 `RUN_CONFLICT` até encerramento explícito ou expiração de 15 s do anterior. Replay de eventos antigos pode ser aceito sem se tornar a execução ativa.
 
 O servidor usa seu próprio horário de recebimento para avaliar heartbeat. UI mostra `PAUSED`/`SOURCE_ENDED` se o último heartbeat confirmou parada intencional; para execução esperada como ativa, ausência há mais de 15 s dá `OFFLINE`. Heartbeat fresco com flags dá `DEGRADED`; sem flags, `ONLINE`. Mostrar também há quanto tempo o status foi recebido; pausa persistida não comprova que o processo continua ligado.
+
+`GET /cameras` e `GET /cameras/:id` incluem `health: {state,expectedRunning,receivedAt,ageMs,stale,heartbeat}`. Sem heartbeat o estado é OFFLINE, com `ageMs: null`; `expectedRunning` continua informando a expectativa cadastrada separadamente. ERROR fresco dá DEGRADED mesmo sem flag. O lease é válido até 15.000 ms inclusive; após isso, outro run pode assumir. Heartbeat aceito retorna 200 `{accepted:true,ignored:false,health}`. Sequência repetida/menor retorna 200 `{accepted:false,ignored:true,reason:OLD_SEQUENCE,health}` sem renovar o recebimento. Run substituído retorna `RETIRED_RUN`; ENDED não pode voltar a RUNNING com o mesmo runId (409 `RUN_CLOSED`). Outro run pode assumir imediatamente após ENDED.
+
+`CameraRun` mantém apenas IDs e horários de primeira recepção/aposentadoria para impedir que pacotes de runs substituídos ressuscitem uma execução. Não é uma fila nem histórico de payloads de heartbeat: somente o último payload fica na Camera. A retenção dessas chaves técnicas será tratada com as demais rotinas na etapa 07. Eventos, inclusive históricos, nunca alteram esse lease.
 
 “ONLINE” significa conexão/captura aparentemente disponíveis, não garantia de cobertura ou ausência de queda. `NO_POSE` não significa que não existe pessoa. Sinais de baixa luz/congelamento são heurísticas e podem errar.
 
@@ -159,6 +186,10 @@ Todos os caminhos abaixo têm prefixo `/v1`. Sessão de usuário e bearer de dev
 | `GET /audit?incidentId=...` | Sessão autorizada | Histórico do incidente, sem segredos |
 
 Listagens usam `limit` padrão 20/máximo 100 e cursor estável `(createdAt,id)`. Filtros de incidentes: status, câmera, modo e intervalo. Nenhum filtro pode mudar o tenant da identidade. API gera OpenAPI a partir da implementação; o schema de eventos compartilhado continua sendo a referência entre linguagens.
+
+Na etapa 02 os filtros são `status`, `cameraId`, `mode`, `from` e `to`; intervalo inclusivo de `occurredAt`, com datas ISO 8601. Intervalo invertido retorna 400. Detalhe/lista retornam o incidente, sinais/pose/versões e campos humanos separados, sem o hash interno. Ações e auditoria usam endpoints próprios. Todas as listagens retornam `{items,nextCursor}`. Leituras e ações exigem sessão OWNER/OPERATOR; escrita humana exige Origin da web. Bearer continua reservado a `/edge/*`. Snapshot/Evidence ainda pertencem à etapa 07.
+
+O executor local Nest consulta intenções PENDING a cada segundo e na inicialização. `FOR UPDATE SKIP LOCKED`, unicidade por intenção e uma transação para entrega/auditoria/status impedem duplicação mesmo com executores concorrentes. Falha reverte tudo e mantém a intenção elegível para nova tentativa; o polling atual não usa backoff exponencial. `attempts` contabiliza processamentos que chegaram a commit, não falhas de conexão. O aviso armazena `channel: SIMULATED`, modo e classe explícitos; `urgent` só é true para CURRENT. A intenção é criada por incidente; reenvios e ações não criam outro aviso. Não há serviço externo, confirmação de leitura nem promessa de assistência.
 
 Definições concretizadas na etapa 01: `Camera.type = FILE | WEBCAM | RTSP` (alinhado ao `source.kind` do worker); `expectedRunning` booleano, inicialmente false, expressa somente expectativa, sem anunciar captura online. POST/PATCH não aceitam URI, senha de câmera ou `tenantId`. GET de câmera inclui apenas o ID do Device, sem hash ou credencial. Emissão/rotação retorna `{id, deviceId, cameraId, version, createdAt, token}` uma vez; não há leitura posterior do token. Todas as listagens da 01 retornam `{items,nextCursor}` e ordenam por `(createdAt,id)` ascendente. Sessões e detalhes são `Cache-Control: no-store`.
 

@@ -8,16 +8,22 @@ import { AppModule } from './app.module.js';
 import { readSettings } from './config.js';
 import type { Settings } from './config.js';
 import { SafeExceptionFilter } from './errors.js';
+import { schemas } from '@radar/contracts';
+import type { Clock } from './event-support.js';
 
 export async function createApplication(
   settings: Settings = readSettings(),
   logger: LoggerService | false = new ConsoleLogger('RadarAPI', { json: true }),
+  options: { clock?: Clock; notificationsEnabled?: boolean } = {},
 ) {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule.register(settings), {
-    logger,
-    abortOnError: false,
-    bodyParser: false,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule.register(settings, options),
+    {
+      logger,
+      abortOnError: false,
+      bodyParser: false,
+    },
+  );
   const server = app.getHttpAdapter().getInstance() as Application;
   server.disable('x-powered-by');
   server.set('trust proxy', false);
@@ -44,9 +50,16 @@ export async function createApplication(
       .setTitle('Radar de Acontecimentos — API local')
       .setVersion('0.1.0')
       .addCookieAuth('radar_session', { type: 'apiKey', in: 'cookie' }, 'human-session')
-      .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'worker-token')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'opaque' }, 'worker-token')
       .build(),
   );
+  document.openapi = '3.1.0';
+  for (const schema of Object.values(schemas)) {
+    // Nest tipa schemas em OAS 3.0; o documento servido declara 3.1 para os JSON Schemas v1.
+    document.components!.schemas![schema.title] = schema as unknown as NonNullable<
+      NonNullable<typeof document.components>['schemas']
+    >[string];
+  }
   SwaggerModule.setup('v1/docs', app, document, { ui: false, jsonDocumentUrl: '/v1/openapi.json' });
   return { app, document };
 }

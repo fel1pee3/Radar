@@ -6,7 +6,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** fundação da etapa 00 preservada; etapa 01 implementou Prisma/migrações, domínio mínimo, autenticação, permissões e credenciais de worker, com testes reais em banco isolado. O provisionamento do proprietário depende de credenciais privadas locais; veja a situação em [status](docs/STATUS.md) e no [relatório 01](docs/RELATORIOS/ETAPA_01.md). Há um [roteiro PowerShell](docs/VALIDACAO_MANUAL_ETAPA_01.md); a web continua mínima. Incidentes, detector e captura ainda não existem.
+> **Estado atual:** etapas 00–02 implementadas e verificadas. A API recebe eventos autenticados, persiste incidentes idempotentes, registra ações humanas, calcula saúde por heartbeat e entrega avisos locais SIMULATED. Contratos compartilhados são validados em TS/API/Python. Veja [status](docs/STATUS.md), [relatório 02](docs/RELATORIOS/ETAPA_02.md) e [roteiro PowerShell 02](docs/VALIDACAO_MANUAL_ETAPA_02.md). Proprietário existente preservado. A web continua mínima; painel, simulador, detector e captura pertencem às próximas etapas.
 
 ## 1. A decisão de partida
 

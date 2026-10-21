@@ -11,6 +11,7 @@ import {
   UseGuards,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { Database } from './database.js';
@@ -18,6 +19,9 @@ import { HumanGuard, OwnerGuard } from './identity.js';
 import type { HumanRequest } from './identity.js';
 import { CameraDto, CameraPatchDto, ListDto, SiteDto, SitePatchDto } from './dto.js';
 import { pageArguments, pageResult } from './pagination.js';
+import { CLOCK } from './event-support.js';
+import type { Clock } from './event-support.js';
+import { cameraHealth } from './heartbeat.js';
 
 export const siteSelect = {
   id: true,
@@ -34,6 +38,8 @@ export const cameraSelect = {
   name: true,
   type: true,
   expectedRunning: true,
+  lastHeartbeat: true,
+  heartbeatReceivedAt: true,
   createdAt: true,
   updatedAt: true,
   device: { select: { id: true } },
@@ -106,7 +112,22 @@ export class SitesController {
 @UseGuards(HumanGuard)
 @Controller('cameras')
 export class CamerasController {
-  constructor(private readonly database: Database) {}
+  constructor(
+    private readonly database: Database,
+    @Inject(CLOCK) private readonly clock: Clock,
+  ) {}
+  private present<
+    T extends {
+      lastHeartbeat: unknown;
+      heartbeatReceivedAt: Date | null;
+      expectedRunning: boolean;
+    },
+  >(camera: T) {
+    const { lastHeartbeat, heartbeatReceivedAt, ...result } = camera;
+    void lastHeartbeat;
+    void heartbeatReceivedAt;
+    return { ...result, health: cameraHealth(camera, this.clock.now()) };
+  }
   @Get()
   async list(@Req() request: HumanRequest, @Query() query: ListDto) {
     const args = pageArguments(query);
@@ -116,7 +137,8 @@ export class CamerasController {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       select: cameraSelect,
     });
-    return pageResult(rows, query.limit);
+    const page = pageResult(rows, query.limit);
+    return { ...page, items: page.items.map((camera) => this.present(camera)) };
   }
   @Get(':id')
   async get(@Req() request: HumanRequest, @Param('id', ParseUUIDPipe) id: string) {
@@ -125,7 +147,7 @@ export class CamerasController {
       select: cameraSelect,
     });
     if (!camera) throw new NotFoundException('Câmera não encontrada.');
-    return camera;
+    return this.present(camera);
   }
   @Post()
   @UseGuards(OwnerGuard)
@@ -139,7 +161,9 @@ export class CamerasController {
       await tx.auditEntry.create({
         data: { tenantId, actorId, action: 'CAMERA_CREATED', objectId: camera.id },
       });
-      return tx.camera.findUniqueOrThrow({ where: { id: camera.id }, select: cameraSelect });
+      return this.present(
+        await tx.camera.findUniqueOrThrow({ where: { id: camera.id }, select: cameraSelect }),
+      );
     });
   }
   @Patch(':id')
@@ -166,7 +190,7 @@ export class CamerasController {
       await tx.auditEntry.create({
         data: { tenantId, actorId, action: 'CAMERA_UPDATED', objectId: id },
       });
-      return camera;
+      return this.present(camera);
     });
   }
 }

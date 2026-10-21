@@ -21,7 +21,7 @@ import { HumanGuard, OwnerGuard } from './identity.js';
 import type { HumanRequest } from './identity.js';
 import { newToken, tokenHash, validToken } from './security.js';
 
-type DeviceRequest = Request & {
+export type DeviceRequest = Request & {
   worker: { tenantId: string; cameraId: string; deviceId: string; credentialId: string };
 };
 

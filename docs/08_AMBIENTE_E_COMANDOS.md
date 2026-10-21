@@ -130,6 +130,7 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `pnpm openapi:generate` | 01 | Gera docs/OPENAPI.json a partir dos endpoints/DTOs |
 | `pnpm test:api` | 01 | Integração real em container/banco/volume exclusivos e descartáveis; não limpa o banco da demo |
 | `pnpm test:contracts` | 02 | Testes de contratos entre linguagens |
+| `pnpm contracts:generate` | 02 | Regenera tipos TypeScript dos JSON Schemas; `test:contracts` confere sua consistência |
 | `pnpm demo:simulate` | 03 | Envia evento artificial rotulado, via API autenticada |
 | `pnpm test:e2e` | 03 | Fluxo de navegador em ambiente de teste |
 | `uv run --project services/edge radar-edge doctor` | 04 | Verifica modelo, arquivos e recursos sem expor segredos |
@@ -144,6 +145,8 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 Definir no Python a descoberta de testes de modo que o comando a partir da raiz funcione; o argumento `--project` do uv seleciona o projeto, não garante sozinho o diretório de trabalho de toda ferramenta. Não esconder falha com `|| true` ou placeholder que sempre retorna sucesso.
 
 O primeiro `pnpm install`/`uv sync` da etapa 00 resolve e cria os locks; os comandos frozen passam a ser usados depois. A CLI `calibrate` precisa de interação do fundador quando não houver ambiente gráfico. Pode oferecer edição manual de pontos validados como alternativa, sem supor que a IA viu o vídeo.
+
+Na etapa 02, `pnpm.cmd test:api` aplica as duas migrações num banco exclusivo vazio, executa primeiro os 19 testes de acesso e depois os testes de eventos/incidentes, incluindo o roteiro PowerShell por HTTP real. A ordem preserva o teste anterior de banco vazio. Não execute o comando interno `test:integration` contra a demonstração: a suíte exige o identificador do container exclusivo. A validação de tipos da API gera contratos/client necessários para não depender de um build antigo. O [roteiro manual 02](VALIDACAO_MANUAL_ETAPA_02.md) permite validar o fluxo com a conta local existente. Ative `. ./scripts/activate.ps1` em cada terminal antes de usar `pnpm.cmd`.
 
 ## Sequência final de execução prevista
 

@@ -91,7 +91,9 @@ try {
   environment.DATABASE_URL = `postgresql://radar_test:${password}@127.0.0.1:${port}/${database}`;
   console.log(`Banco vazio de testes em container exclusivo ${name}; conexão privada omitida.`);
   pnpm(['--filter', '@radar/api', 'db:migrate']);
-  pnpm(['--filter', '@radar/api', 'test:integration']);
+  // O contrato de banco vazio da etapa 01 continua sendo executado antes das novas fixtures.
+  pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/access.test.mjs']);
+  pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/events.test.mjs']);
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Falha na validação isolada.');
   process.exitCode = 1;

@@ -28,7 +28,9 @@
     "user:create-operator": "powershell -NoProfile -File scripts/setup-user.ps1 -Mode operator",
     "user:operator-env": "pnpm --filter @radar/api build && pnpm --filter @radar/api user:operator-env",
     "openapi:generate": "pnpm --filter @radar/api build && pnpm --filter @radar/api openapi:generate",
-    "test:api": "pnpm --filter @radar/api build && node scripts/test-api.mjs"
+    "test:api": "pnpm --filter @radar/api build && node scripts/test-api.mjs",
+    "contracts:generate": "pnpm --filter @radar/contracts types:generate",
+    "test:contracts": "pnpm --filter @radar/contracts test && uv run --project services/edge --frozen pytest services/edge/tests/test_contracts.py"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

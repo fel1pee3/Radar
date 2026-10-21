@@ -85,13 +85,13 @@ export class CameraDto {
 export class CameraPatchDto extends PartialType(CameraDto, { skipNullProperties: false }) {}
 
 export class ListDto {
-  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({ type: Number, default: 20, minimum: 1, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  limit = 20;
+  limit: number = 20;
 
   @ApiPropertyOptional({ maxLength: 1024 })
   @IsOptional()

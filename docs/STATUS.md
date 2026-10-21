@@ -1,8 +1,8 @@
 # Status de construção
 
-**Última atualização:** 21/10/2026 — etapa 01 implementada e verificada, incluindo proprietário criado localmente pelo fundador.
+**Última atualização:** 21/10/2026 — etapa 02 implementada e verificada; proprietário, configurações e volume anteriores preservados.
 
-**Software implementado:** fundação e API de domínio/acesso da etapa 01. **Modelo executado:** não. **Câmeras testadas:** nenhuma. **Próxima etapa elegível:** 02, somente mediante nova solicitação.
+**Software implementado:** fundação, domínio/acesso e API de eventos/incidentes/heartbeat/avisos simulados, com contratos TS/Python. **Modelo executado:** não. **Câmeras físicas testadas:** nenhuma. **Próxima etapa elegível:** 03, somente mediante nova solicitação.
 
 Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresentam o plano; só atualizar para concluída quando os critérios tiverem evidência real.
 
@@ -10,7 +10,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | --- | --- | --- | --- |
 | 00 | [Fundação do repositório e ambiente](../etapas/00_FUNDACAO/README.md) | CONCLUÍDA | [ETAPA_00](RELATORIOS/ETAPA_00.md) · 21/10/2026 |
 | 01 | [Domínio, banco e acesso](../etapas/01_DOMINIO_E_ACESSO/README.md) | CONCLUÍDA | [ETAPA_01](RELATORIOS/ETAPA_01.md) · 21/10/2026 |
-| 02 | [Eventos, incidentes e contratos](../etapas/02_EVENTOS_E_INCIDENTES/README.md) | NÃO INICIADA | — |
+| 02 | [Eventos, incidentes e contratos](../etapas/02_EVENTOS_E_INCIDENTES/README.md) | CONCLUÍDA | [ETAPA_02](RELATORIOS/ETAPA_02.md) · 21/10/2026 |
 | 03 | [Painel e primeira demonstração](../etapas/03_PAINEL_E_SIMULADOR/README.md) | NÃO INICIADA | — |
 | 04 | [Visão computacional em arquivo](../etapas/04_VISAO_EM_VIDEO/README.md) | NÃO INICIADA | — |
 | 05 | [Motor temporal e eventos de visão](../etapas/05_MOTOR_TEMPORAL/README.md) | NÃO INICIADA | — |
@@ -33,6 +33,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | MediaPipe / OpenCV / bundle e hash | MediaPipe 1.1.1 e opencv-contrib-python 5.0.0.93 (cv2 5.0.0), imports reais aprovados; nenhum modelo obtido; [inventário](RELATORIOS/DEPENDENCIAS_E_MODELOS.md) |
 | Docker / banco | Desktop 4.57.0, Engine 29.1.3, Compose 5.0.1; PostgreSQL 17.11 saudável; TCP autenticado e volume persistente verificados; loopback 15432 nesta máquina (D15) |
 | Persistência / acesso (01) | Prisma/client/adapter-pg 7.10.1, pg 8.23.1, Argon2 0.45.1; migração inicial aplicada em radar:15432 e banco vazio dedicado; 19 testes de integração aprovados |
+| Eventos / contratos (02) | Migração 20261021000200_events_incidents aplicada em banco vazio exclusivo e radar:15432; 19 testes anteriores + 104 novos aprovados; contratos: 87 TS e 87 Python; roteiro PowerShell exercitado por HTTP real em banco isolado |
 | Webcam e índice | Não consultados nem abertos na 00; teste físico na 06 |
 | KAP-S069 / firmware / protocolo | Não confirmado; etapa 09 opcional |
 
@@ -40,6 +41,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 
 - Nenhuma verificação obrigatória da etapa 00 pendente. Reprodução em [ambiente e comandos](08_AMBIENTE_E_COMANDOS.md).
 - Nenhum critério obrigatório da etapa 01 pendente. Proprietário criado localmente pelo fundador e confirmado por contagem de OWNER ativo/auditoria, sem consulta de senha/hash. Login/configuração por PowerShell no [roteiro manual](VALIDACAO_MANUAL_ETAPA_01.md); web permanece mínima.
+- Nenhum critério obrigatório da etapa 02 pendente. Fluxo HTTP/PowerShell, transações, concorrência, ações, isolamento, classes de tempo, heartbeat e recuperação de avisos verificados; [relatório](RELATORIOS/ETAPA_02.md) e [roteiro manual](VALIDACAO_MANUAL_ETAPA_02.md). Nenhuma tela de incidentes, captura, inferência, snapshot ou comunicação externa implementada nesta etapa; retenção automática permanece na 07.
 - Monitorar compatibilidade dos plugins React/a11y antes de atualizar ESLint 9 (aviso de fim de suporte registrado no inventário).
 - Preparar vídeos próprios/autorizados para a etapa 04.
 - Executar testes físicos de webcam quando chegar à etapa 06.
@@ -52,6 +54,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | 21/10/2026 | Documentação de construção organizada; demo antes de parceiro | D01 em decisões; ainda não há código de produto |
 | 21/10/2026 | Etapa 00 concluída; PostgreSQL em porta alternativa local (D15) | Instalações frozen inclusive em diretórios vazios; lint, typecheck, build, Ruff, imports Python, HTTP direto/proxy, captura Edge e persistência do volume; [relatório](RELATORIOS/ETAPA_00.md) |
 | 21/10/2026 | Etapa 01 concluída: domínio/acesso, migração e proprietário local | 19 testes reais em PostgreSQL exclusivo; seed/CLI, sessões, papéis, FKs de tenant, rotação concorrente, falha/retomada do banco, logs e bootstrap real confirmado; [relatório](RELATORIOS/ETAPA_01.md) |
+| 21/10/2026 | Etapa 02 concluída: contratos, eventos, incidentes, heartbeat e avisos locais | 123 testes API (19 anteriores + 104 novos), 87 TS e 87 Python; migração aditiva preservou um OWNER, um local, duas câmeras e volume da demo; [relatório](RELATORIOS/ETAPA_02.md) |
 
 ## Regra de atualização
 

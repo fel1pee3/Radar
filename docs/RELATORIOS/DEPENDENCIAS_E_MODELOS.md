@@ -1,6 +1,6 @@
 # Dependências e modelos — inventário inicial
 
-Data: 21/10/2026. Escopo: etapa 00, execução local Windows x64.
+Data: 21/10/2026. Escopo: etapas 00–02, execução local Windows x64.
 Versões diretas fixadas nos manifests; árvores completas e integridades nos arquivos
 `pnpm-lock.yaml` e `services/edge/uv.lock`. Não foi escolhida uma licença para o código autoral.
 
@@ -111,7 +111,26 @@ flatbuffers 25.12.19 (Apache 2.0), sounddevice 0.5.6 (MIT), certifi 2026.10.19
 (MPL-2.0). A árvore exata dos 31 pacotes do ambiente está no lock; não foi alegada
 uma auditoria de licença completa de todas as dependências transitivas.
 
-## Modelos, vídeos e datasets
+## Adições da etapa 02: contratos e testes
+
+| Pacote / fonte oficial | Versão | Licença declarada | Uso |
+| --- | --- | --- | --- |
+| [ajv](https://www.npmjs.com/package/ajv/v/8.20.0) | 8.20.0 | MIT | JSON Schema draft-07 em TS/API; sem coerção |
+| [ajv-formats](https://www.npmjs.com/package/ajv-formats/v/3.0.1) | 3.0.1 | MIT | UUID/formats; date-time UTC estrito compartilhado é validado explicitamente |
+| [json-schema-to-typescript](https://www.npmjs.com/package/json-schema-to-typescript/v/16.0.0) | 16.0.0 | MIT | Geração/verificação de tipos, somente desenvolvimento |
+| [jsonschema](https://pypi.org/project/jsonschema/4.26.0/) | 4.26.0 | MIT | Validação Python dos mesmos schemas/exemplos, sem captura |
+| [pytest](https://pypi.org/project/pytest/9.1.1/) | 9.1.1 | MIT | Testes de contratos, somente desenvolvimento |
+
+Versões/licenças diretas consultadas nos metadados oficiais npm/PyPI.
+Referências de implementação: [Ajv](https://ajv.js.org/guide/getting-started.html),
+[jsonschema](https://python-jsonschema.readthedocs.io/en/stable/validate/) e
+[locks PostgreSQL 17](https://www.postgresql.org/docs/17/explicit-locking.html).
+As árvores completas estão nos locks: o ambiente Python passou de 31 para 41
+pacotes, preservando as versões anteriores e somente opencv-contrib-python como
+fornecedor de cv2. Não houve atualização de família de framework, ORM ou visão.
+Não foi feita auditoria completa de licenças transitivas/redistribuição comercial.
+
+## Modelos, vídeos e datasets (situação após a 02)
 
 Nenhum bundle de pose foi obtido, carregado ou versionado. URL, SHA-256 calculado
 e termos do modelo serão registrados na etapa 04 antes de inferência.

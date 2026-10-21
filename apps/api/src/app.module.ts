@@ -13,6 +13,12 @@ import {
 } from './identity.js';
 import { SitesController, CamerasController } from './catalog.js';
 import { DeviceCredentialsController, EdgeIdentityController, WorkerGuard } from './devices.js';
+import { IngestController, IngestService } from './ingest.js';
+import { HeartbeatController, HeartbeatService } from './heartbeat.js';
+import { IncidentsController, IncidentService, AuditController } from './incidents.js';
+import { NotificationsController, NotificationExecutor } from './notifications.js';
+import { CLOCK, SystemClock, NOTIFICATIONS_ENABLED } from './event-support.js';
+import type { Clock } from './event-support.js';
 
 @Module({
   controllers: [
@@ -22,11 +28,37 @@ import { DeviceCredentialsController, EdgeIdentityController, WorkerGuard } from
     CamerasController,
     DeviceCredentialsController,
     EdgeIdentityController,
+    IngestController,
+    HeartbeatController,
+    IncidentsController,
+    AuditController,
+    NotificationsController,
   ],
-  providers: [Database, HumanGuard, OwnerGuard, OriginGuard, LoginLimiter, WorkerGuard],
+  providers: [
+    Database,
+    HumanGuard,
+    OwnerGuard,
+    OriginGuard,
+    LoginLimiter,
+    WorkerGuard,
+    IngestService,
+    HeartbeatService,
+    IncidentService,
+    NotificationExecutor,
+  ],
 })
 export class AppModule {
-  static register(settings: Settings): DynamicModule {
-    return { module: AppModule, providers: [{ provide: SETTINGS, useValue: settings }] };
+  static register(
+    settings: Settings,
+    options: { clock?: Clock; notificationsEnabled?: boolean } = {},
+  ): DynamicModule {
+    return {
+      module: AppModule,
+      providers: [
+        { provide: SETTINGS, useValue: settings },
+        { provide: CLOCK, useValue: options.clock ?? new SystemClock() },
+        { provide: NOTIFICATIONS_ENABLED, useValue: options.notificationsEnabled ?? true },
+      ],
+    };
   }
 }

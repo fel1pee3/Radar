@@ -1,0 +1,2147 @@
+[
+  {
+    "name": "event-v1-basic",
+    "schema": "event-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-basic",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "incident-action-v1-basic",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RECOGNIZE"
+    }
+  },
+  {
+    "name": "event-REPLAY",
+    "schema": "event-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "REPLAY",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": 100,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-LIVE",
+    "schema": "event-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "LIVE",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-extrapolated-pose",
+    "schema": "event-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [
+        {
+          "index": 11,
+          "x": -0.1,
+          "y": 1.05,
+          "visibility": 0.8
+        }
+      ],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-PAUSED",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "PAUSED",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-ENDED",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "ENDED",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-ERROR",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "ERROR",
+      "qualityFlags": ["CAPTURE_ERROR"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "action-START_RESPONSE9",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "START_RESPONSE"
+    }
+  },
+  {
+    "name": "action-SET_REVIEW10",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "SET_REVIEW",
+      "review": "UNREVIEWED",
+      "note": "Teste sintético"
+    }
+  },
+  {
+    "name": "action-RESOLVE11",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RESOLVE",
+      "outcome": "TEST_COMPLETED",
+      "review": "INCONCLUSIVE"
+    }
+  },
+  {
+    "name": "action-DISMISS12",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "DISMISS",
+      "reason": "OTHER",
+      "note": "Teste sintético"
+    }
+  },
+  {
+    "name": "action-DISMISS13",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "DISMISS",
+      "reason": "FALSE_DETECTION"
+    }
+  },
+  {
+    "name": "action-ADD_NOTE14",
+    "schema": "incident-action-v1",
+    "valid": true,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "ADD_NOTE",
+      "note": "Nota sintética"
+    }
+  },
+  {
+    "name": "event-v1-missing-schemaVersion",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-eventType",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-eventId",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-episodeId",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-cameraId",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-runId",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-mode",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-kind",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-occurredAt",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-detectedAt",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-sourceOffsetMs",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-signals",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-pose",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "event-v1-missing-versions",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": []
+    }
+  },
+  {
+    "name": "event-v1-unknown-authority",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      },
+      "tenantId": "33333333-3333-4333-8333-333333333333"
+    }
+  },
+  {
+    "name": "event-v1-boolean-type",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": false,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-schemaVersion",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-cameraId",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-runId",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-mode",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-sequence",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-sentAt",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-captureState",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-qualityFlags",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-analysisFps",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-outboxPending",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-lastFrameAgeMs",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-inferenceState",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-missing-versions",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP"
+    }
+  },
+  {
+    "name": "heartbeat-v1-unknown-authority",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      },
+      "tenantId": "33333333-3333-4333-8333-333333333333"
+    }
+  },
+  {
+    "name": "heartbeat-v1-boolean-type",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": false,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "incident-action-v1-missing-actionId",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "expectedVersion": 1,
+      "action": "RECOGNIZE"
+    }
+  },
+  {
+    "name": "incident-action-v1-missing-expectedVersion",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "action": "RECOGNIZE"
+    }
+  },
+  {
+    "name": "incident-action-v1-missing-action",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1
+    }
+  },
+  {
+    "name": "incident-action-v1-unknown-authority",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RECOGNIZE",
+      "tenantId": "33333333-3333-4333-8333-333333333333"
+    }
+  },
+  {
+    "name": "incident-action-v1-boolean-type",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": false,
+      "expectedVersion": 1,
+      "action": "RECOGNIZE"
+    }
+  },
+  {
+    "name": "invalid-event-mode51",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "INVALID",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-schemaVersion52",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 2,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-sourceOffsetMs53",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": 10,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-cameraId54",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "invalid",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-detectedAt55",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-02-30T12:00:00Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-occurredAt56",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00+00:00",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-pose57",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [
+        {
+          "index": 0,
+          "x": 0,
+          "y": 0,
+          "visibility": 1
+        }
+      ],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-event-pose58",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [
+        {
+          "index": 11,
+          "x": 0,
+          "y": 0,
+          "visibility": 1
+        },
+        {
+          "index": 11,
+          "x": 1,
+          "y": 1,
+          "visibility": 1
+        }
+      ],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-floorDurationMs",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": -1,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-validPoseFraction",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1.1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-hipInFloorZone",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": "true",
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-torsoAngleDeg",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 181,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-bboxAspectRatio",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-analysisFps",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 1001
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-signal-unknown",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5,
+        "unknown": 1
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "unknown-version",
+    "schema": "event-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "eventType": "INCIDENT_CANDIDATE",
+      "eventId": "11111111-1111-4111-8111-111111111111",
+      "episodeId": "22222222-2222-4222-8222-222222222222",
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "kind": "PERSON_ON_FLOOR",
+      "occurredAt": "2026-10-21T12:00:00.000Z",
+      "detectedAt": "2026-10-21T12:00:02.000Z",
+      "sourceOffsetMs": null,
+      "signals": {
+        "floorDurationMs": 2000,
+        "torsoAngleDeg": 75,
+        "bboxAspectRatio": 0.7,
+        "hipInFloorZone": true,
+        "rapidDescentObserved": false,
+        "validPoseFraction": 1,
+        "analysisFps": 5
+      },
+      "pose": [],
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1",
+        "url": "private"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-sequence67",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 1.5,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-sequence68",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": -1,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-sequence69",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": true,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-qualityFlags70",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["INVALID"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-qualityFlags71",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["LOW_FPS", "LOW_FPS"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-analysisFps72",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": -1,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-captureState73",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "STOPPED",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-inferenceState74",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "INVALID",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-heartbeat-lastFrameAgeMs75",
+    "schema": "heartbeat-v1",
+    "valid": false,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "SIMULATED",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": [],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": -1,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "invalid-action-76",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RESOLVE",
+      "review": "UNREVIEWED",
+      "outcome": "TEST_COMPLETED"
+    }
+  },
+  {
+    "name": "invalid-action-77",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RESOLVE",
+      "review": "INCONCLUSIVE"
+    }
+  },
+  {
+    "name": "invalid-action-78",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "DISMISS",
+      "reason": "OTHER"
+    }
+  },
+  {
+    "name": "invalid-action-79",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "ADD_NOTE",
+      "note": ""
+    }
+  },
+  {
+    "name": "invalid-action-80",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "ADD_NOTE",
+      "note": "   "
+    }
+  },
+  {
+    "name": "invalid-action-81",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "ADD_NOTE",
+      "note": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  },
+  {
+    "name": "invalid-action-82",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RECOGNIZE",
+      "review": "INCONCLUSIVE"
+    }
+  },
+  {
+    "name": "invalid-action-83",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 0,
+      "action": "RECOGNIZE"
+    }
+  },
+  {
+    "name": "invalid-action-84",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "UNKNOWN"
+    }
+  },
+  {
+    "name": "invalid-action-85",
+    "schema": "incident-action-v1",
+    "valid": false,
+    "value": {
+      "actionId": "55555555-5555-4555-8555-555555555555",
+      "expectedVersion": 1,
+      "action": "RECOGNIZE",
+      "note": "unexpected"
+    }
+  }
+]
