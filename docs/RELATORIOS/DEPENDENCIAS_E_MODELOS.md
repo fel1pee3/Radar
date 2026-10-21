@@ -1,6 +1,6 @@
 # Dependências e modelos — inventário inicial
 
-Data: 21/10/2026. Escopo: etapas 00–02, execução local Windows x64.
+Data: 21/10/2026. Escopo: etapas 00–03, execução local Windows x64.
 Versões diretas fixadas nos manifests; árvores completas e integridades nos arquivos
 `pnpm-lock.yaml` e `services/edge/uv.lock`. Não foi escolhida uma licença para o código autoral.
 
@@ -130,9 +130,27 @@ pacotes, preservando as versões anteriores e somente opencv-contrib-python como
 fornecedor de cv2. Não houve atualização de família de framework, ORM ou visão.
 Não foi feita auditoria completa de licenças transitivas/redistribuição comercial.
 
-## Modelos, vídeos e datasets (situação após a 02)
+## Adições da etapa 03: navegador e simulador
+
+`@playwright/test` **1.64.1**, somente desenvolvimento, licença declarada
+Apache-2.0, Node>=20 conforme metadados oficiais de
+[npm](https://www.npmjs.com/package/@playwright/test/v/1.64.1).
+`playwright`/`playwright-core` transitivos da mesma versão estão no lock.
+Instalado Chromium/Chrome for Testing **156.0.8078.4**, revisão 1248, pelos
+downloads oficiais da ferramenta. Os binários permanecem fora do Git; não foi
+feita aprovação de redistribuição desses binários. O instalador gerenciou seu
+cache local e removeu revisões de navegador que considerou não utilizadas.
+
+Web passou a depender de `@radar/contracts` via workspace para os tipos.
+Simulador usa APIs nativas do Node e contratos existentes; nenhuma dependência
+de runtime externa adicional. Frameworks e versões Python preservados.
+Referências consultadas: [configuração Playwright](https://playwright.dev/docs/test-configuration),
+[efeitos/cleanup React](https://react.dev/reference/react/useEffect) e
+[self hosting/cache Next](https://nextjs.org/docs/app/guides/self-hosting).
+
+## Modelos, vídeos e datasets (situação após a 03)
 
 Nenhum bundle de pose foi obtido, carregado ou versionado. URL, SHA-256 calculado
 e termos do modelo serão registrados na etapa 04 antes de inferência.
-Nenhum vídeo, dataset ou câmera foi utilizado. A captura de tela de validação é
-somente da página vazia do projeto e permanece em `.local/`, fora do Git.
+Nenhum vídeo, dataset ou câmera foi utilizado. Screenshots da etapa 03 mostram
+somente dados/pose sintéticos e permanecem em `.local/`, fora do Git.

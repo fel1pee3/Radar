@@ -20,6 +20,10 @@ if (
 /** @type {import('next').NextConfig} */
 const config = {
   agentRules: false,
+  distDir: process.env.RADAR_E2E_BUILD === 'true' ? '.next-e2e' : '.next',
+  typescript: {
+    tsconfigPath: process.env.RADAR_E2E_BUILD === 'true' ? 'tsconfig.e2e.json' : 'tsconfig.json',
+  },
   async rewrites() {
     return [{ source: '/api/:path*', destination: `${apiUrl.href}/:path*` }];
   },

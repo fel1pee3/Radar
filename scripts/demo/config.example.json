@@ -1,0 +1,8 @@
+{
+  "purpose": "RADAR_SIMULATED_DEMO",
+  "apiUrl": "http://127.0.0.1:3001/v1",
+  "cameraId": "PREENCHA_O_UUID_DA_CAMERA_EXCLUSIVA_DE_DEMONSTRACAO",
+  "deviceToken": "",
+  "durationSeconds": 60,
+  "resendCount": 10
+}

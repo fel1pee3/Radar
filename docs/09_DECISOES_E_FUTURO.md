@@ -31,6 +31,13 @@
 
 Manter aqui decisões novas com data, problema, alternativas consideradas, escolha e impacto nos contratos. Não reabrir tudo a cada prompt.
 
+| ID | Decisão | Motivo e consequência |
+| --- | --- | --- |
+| D23 | Listar metadados de credenciais por câmera, exclusivo de OWNER | 21/10/2026, etapa 03: revogação após recarregar precisa de ID/version/revokedAt; GET paginado com guards/scoping existentes e sem token/hash. Não houve alteração de identidade, rotação ou schema do banco. |
+| D24 | Sessão e rascunhos em memória; polling sequencial por recurso e fetch no-store | 21/10/2026, etapa 03: evita cache entre contas e perda de texto durante atualização. Sessão expirada oculta dados e permite login da mesma conta; troca de conta/logout desmonta o estado. 409 exige nova intenção; retry transitório preserva actionId/corpo. Sem localStorage de sessão ou segredo. |
+| D25 | Simulador Node com câmera dedicada e arquivo privado em .local | 21/10/2026, etapa 03: usa bearer, contratos e endpoints existentes, somente SIMULATED, pose sintética, heartbeat e ENDED; aceita UTF-8/BOM do PowerShell. Nenhum produtor Python, captura, modelo ou outbox foi antecipado. |
+| D26 | E2E com build, banco e processos exclusivos | 21/10/2026, etapa 03: Playwright 1.64.1/Chromium, portas temporárias e .next-e2e evitam reutilizar/parar processos do fundador. Falhas são injetadas apenas nos recursos próprios; não se altera PostgreSQL 5432 nem o volume da demo. |
+
 ## O que permanece do dossiê
 
 O caso de uso assistivo, o processamento local, o reconhecimento de concorrentes, o fluxo humano, a necessidade de medir falsos alertas e a evolução por evidências. O pacote atual define uma bancada mais acessível para começar; não apaga os requisitos de um futuro serviço real.

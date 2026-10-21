@@ -1,6 +1,8 @@
 node_modules/
 .local/
 **/.next/
+**/.next-e2e/
+**/tsconfig.e2e.json
 **/dist/
 apps/api/src/generated/
 **/.venv/

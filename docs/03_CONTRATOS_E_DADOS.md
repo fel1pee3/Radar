@@ -174,6 +174,7 @@ Todos os caminhos abaixo têm prefixo `/v1`. Sessão de usuário e bearer de dev
 | `GET /cameras`, `POST /cameras`, `PATCH /cameras/:id` | Leitura autenticada; alteração OWNER | Nome, local, tipo e expectativa de execução |
 | `GET /cameras/:id` | Sessão | Detalhe no tenant autenticado |
 | `POST /cameras/:id/device-credentials` | OWNER | Emite/rotaciona token uma vez |
+| `GET /cameras/:id/device-credentials` | OWNER | Metadados paginados id/deviceId/version/createdAt/revokedAt; sem token/hash (03) |
 | `DELETE /device-credentials/:id` | OWNER | Revoga token |
 | `GET /edge/me` | Device | Diagnóstico do tenant/câmera/device da credencial; não ingere eventos |
 | `POST /edge/events`, `POST /edge/heartbeat` | Device | Ingestão e saúde |
@@ -217,3 +218,15 @@ O login usa e-mail globalmente único normalizado em minúsculas (D17), sem tena
 Índices iniciais: incidentes `(tenantId, siteId, occurredAt, id)` e `(tenantId, status, createdAt, id)`; recibos e ações com unicidades descritas; intenções pendentes por status/próxima tentativa. Todas as relações conferem o mesmo tenant. Chaves compostas/restrições devem impedir relações entre tenants além das verificações da API. Na purga de incidente, preservar recibo mínimo com marcador expiredAt e relação anulada explicitamente; não cascatar a exclusão da chave de deduplicação antes do prazo.
 
 O usuário não acessa SQLite do worker. A API não lê a URI privada de captura. Testes criam dois tenants artificiais para demonstrar isolamento, sem construir telas de gestão de múltiplos clientes.
+
+Integração na etapa 03: o painel usa somente `/api/*` e cookies HttpOnly, com
+consultas `no-store`. A listagem de metadados de credenciais permite revogar por ID
+após recarga, mantendo leitura exclusiva de OWNER e escopo de câmera/tenant.
+Não permite consultar novamente o segredo. Emissão/rotação continua sendo POST
+explícito com confirmação na interface; polling nunca emite credenciais.
+
+Ações do painel mantêm um actionId e corpo por intenção. Falha transitória permite
+reenviar a mesma tentativa; 409 recarrega o estado e exige conferir/preparar outra
+intenção. Polling não reescreve notas nem confirma transição automaticamente.
+Rascunhos e tentativas ficam em memória: sobreviver à expiração com a mesma conta
+não equivale a persistência offline, que continua fora desta etapa.

@@ -15,7 +15,7 @@
     "infra:status": "docker compose --env-file .env -f infra/compose.yaml ps",
     "dev:api": "pnpm --filter @radar/api dev",
     "dev:web": "pnpm --filter @radar/web dev",
-    "lint": "pnpm -r lint && eslint scripts && prettier --check .",
+    "lint": "pnpm -r lint && eslint scripts tests/e2e && prettier --check .",
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",
     "format": "prettier --write .",
@@ -30,10 +30,15 @@
     "openapi:generate": "pnpm --filter @radar/api build && pnpm --filter @radar/api openapi:generate",
     "test:api": "pnpm --filter @radar/api build && node scripts/test-api.mjs",
     "contracts:generate": "pnpm --filter @radar/contracts types:generate",
-    "test:contracts": "pnpm --filter @radar/contracts test && uv run --project services/edge --frozen pytest services/edge/tests/test_contracts.py"
+    "test:contracts": "pnpm --filter @radar/contracts test && uv run --project services/edge --frozen pytest services/edge/tests/test_contracts.py",
+    "demo:simulate": "node scripts/demo/simulate.mjs",
+    "test:demo": "node --test scripts/demo/*.test.mjs",
+    "test:e2e": "pnpm --filter @radar/api build && node tests/e2e/run.mjs",
+    "test:e2e:install": "playwright install chromium"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
+    "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "eslint": "9.39.5",
     "prettier": "3.9.10",

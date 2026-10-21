@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapas 00 e 01 implementadas em 21/10/2026.** Consulte o [status](STATUS.md) e o [relatório 01](RELATORIOS/ETAPA_01.md) para critérios verificados e pendências de provisionamento. Comandos das etapas seguintes continuam previstos e não devem ser executados antes da etapa correspondente. O [roteiro PowerShell da etapa 01](VALIDACAO_MANUAL_ETAPA_01.md) cobre autenticação e configuração sem imprimir segredos.
+**Etapas 00–03 implementadas em 21/10/2026.** Consulte o [status](STATUS.md), o [relatório 03](RELATORIOS/ETAPA_03.md) e o [roteiro de apresentação](VALIDACAO_MANUAL_ETAPA_03.md). Comandos de 04 em diante continuam previstos e não devem ser executados antes da etapa correspondente. O proprietário existente é preservado; não há necessidade de repetir provisionamento para abrir o painel.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -40,7 +40,7 @@ Terminal da web:
 pnpm.cmd dev:web
 ```
 
-Abra `http://127.0.0.1:3000`. A página continua mínima e informa que nenhuma fonte de vídeo está em execução; não há UI de login. Liveness só comprova o processo. A etapa 01 adicionou readiness real (`/v1/health/ready`), Prisma/migrações e autenticação HTTP. O [roteiro manual](VALIDACAO_MANUAL_ETAPA_01.md) demonstra o uso por PowerShell, inclusive pelo proxy da web.
+Abra `http://127.0.0.1:3000`. A etapa 03 oferece login real e painel com visão geral, incidentes, fontes, avisos locais e configuração de OWNER. Liveness só comprova o processo; readiness (`/v1/health/ready`) consulta o banco. O [roteiro da etapa 03](VALIDACAO_MANUAL_ETAPA_03.md) mostra a apresentação no navegador e o simulador; o [roteiro HTTP anterior](VALIDACAO_MANUAL_ETAPA_01.md) continua válido para diagnóstico.
 
 Terminal de validação:
 
@@ -132,7 +132,9 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `pnpm test:contracts` | 02 | Testes de contratos entre linguagens |
 | `pnpm contracts:generate` | 02 | Regenera tipos TypeScript dos JSON Schemas; `test:contracts` confere sua consistência |
 | `pnpm demo:simulate` | 03 | Envia evento artificial rotulado, via API autenticada |
+| `pnpm test:demo` | 03 | Testa falhas de transporte do simulador em servidor HTTP sintético exclusivo |
 | `pnpm test:e2e` | 03 | Fluxo de navegador em ambiente de teste |
+| `pnpm test:e2e:install` | 03 | Instala Chromium compatível com Playwright fixado; executar uma vez por ambiente |
 | `uv run --project services/edge radar-edge doctor` | 04 | Verifica modelo, arquivos e recursos sem expor segredos |
 | `uv run --project services/edge radar-edge calibrate --config .local/edge.yaml` | 04 | Assistente local para delimitar piso |
 | `uv run --project services/edge radar-edge run --config .local/edge.yaml` | 04/05 | Arquivo/poses; após 05, emissão real de candidatos |
@@ -145,6 +147,27 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 Definir no Python a descoberta de testes de modo que o comando a partir da raiz funcione; o argumento `--project` do uv seleciona o projeto, não garante sozinho o diretório de trabalho de toda ferramenta. Não esconder falha com `|| true` ou placeholder que sempre retorna sucesso.
 
 O primeiro `pnpm install`/`uv sync` da etapa 00 resolve e cria os locks; os comandos frozen passam a ser usados depois. A CLI `calibrate` precisa de interação do fundador quando não houver ambiente gráfico. Pode oferecer edição manual de pontos validados como alternativa, sem supor que a IA viu o vídeo.
+
+Na 03, `pnpm.cmd demo:simulate` lê `.local/demo.json`; o exemplo sem segredo é
+`scripts/demo/config.example.json`. Use câmera/credencial exclusivas de demonstração,
+modo SIMULATED, pose sintética e heartbeat enquanto a execução estiver ativa.
+`r` e Enter reenviam o mesmo evento; `q` e Enter ou o prazo encerram com ENDED.
+`--config .local/demo.json --once` faz uma execução curta. Não há inserção direta
+de incidentes no banco, login humano no simulador, captura ou inferência.
+Inicie a API antes: `dev:api` já compila os contratos. O simulador não os recompila,
+evitando reiniciar o processo observado pelo Node durante os envios. Há até quatro
+tentativas para conexão/timeout/HTTP 502/503/504, com o mesmo envelope; falhas
+permanentes continuam encerrando com código não zero. `test:demo` exige os mesmos
+contratos compilados e usa somente servidor e credenciais sintéticos locais.
+
+`pnpm.cmd test:e2e` cria container `radar-e2e-<id>`, banco/volume próprios e três
+portas efêmeras, aplica as migrações e inicia seus processos de API e web. O build
+da web usa `.next-e2e` e configuração TS gerada/ignorada; `next-env.d.ts` é restaurado
+ao final. Os processos e configurações privados da demonstração ficam preservados.
+O teste de falha para/reinicia somente esse container. Screenshots/diagnósticos
+sintéticos ficam em `.local/etapa03/results`. Suíte completa: desktop 1440×1000 e
+viewport móvel 390×844, Chromium. Exemplo de investigação focada:
+`pnpm.cmd test:e2e --grep 'polling pausa' --project desktop`.
 
 Na etapa 02, `pnpm.cmd test:api` aplica as duas migrações num banco exclusivo vazio, executa primeiro os 19 testes de acesso e depois os testes de eventos/incidentes, incluindo o roteiro PowerShell por HTTP real. A ordem preserva o teste anterior de banco vazio. Não execute o comando interno `test:integration` contra a demonstração: a suíte exige o identificador do container exclusivo. A validação de tipos da API gera contratos/client necessários para não depender de um build antigo. O [roteiro manual 02](VALIDACAO_MANUAL_ETAPA_02.md) permite validar o fluxo com a conta local existente. Ative `. ./scripts/activate.ps1` em cada terminal antes de usar `pnpm.cmd`.
 

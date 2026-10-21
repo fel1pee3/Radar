@@ -12,6 +12,7 @@ import {
   NotFoundException,
   HttpCode,
   Res,
+  Query,
 } from '@nestjs/common';
 import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import { ApiBearerAuth, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -20,6 +21,8 @@ import { Database } from './database.js';
 import { HumanGuard, OwnerGuard } from './identity.js';
 import type { HumanRequest } from './identity.js';
 import { newToken, tokenHash, validToken } from './security.js';
+import { ListDto } from './dto.js';
+import { pageArguments, pageResult } from './pagination.js';
 
 export type DeviceRequest = Request & {
   worker: { tenantId: string; cameraId: string; deviceId: string; credentialId: string };
@@ -54,6 +57,29 @@ export class WorkerGuard implements CanActivate {
 @Controller()
 export class DeviceCredentialsController {
   constructor(private readonly database: Database) {}
+  @Get('cameras/:id/device-credentials')
+  @ApiOperation({ summary: 'Lista apenas metadados de credenciais; nunca retorna token ou hash.' })
+  async list(
+    @Req() request: HumanRequest,
+    @Param('id', ParseUUIDPipe) cameraId: string,
+    @Query() query: ListDto,
+  ) {
+    const { tenantId } = request.principal;
+    const device = await this.database.device.findUnique({
+      where: { tenantId_cameraId: { tenantId, cameraId } },
+    });
+    if (!device) throw new NotFoundException('Câmera não encontrada.');
+    const args = pageArguments(query);
+    return pageResult(
+      await this.database.deviceCredential.findMany({
+        ...args,
+        where: { ...args.where, tenantId, deviceId: device.id },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: { id: true, deviceId: true, version: true, createdAt: true, revokedAt: true },
+      }),
+      query.limit,
+    );
+  }
   @Post('cameras/:id/device-credentials')
   @ApiOperation({
     summary: 'Emite token uma vez e revoga todos os anteriores, preservando Device.',

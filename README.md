@@ -6,7 +6,14 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–02 implementadas e verificadas. A API recebe eventos autenticados, persiste incidentes idempotentes, registra ações humanas, calcula saúde por heartbeat e entrega avisos locais SIMULATED. Contratos compartilhados são validados em TS/API/Python. Veja [status](docs/STATUS.md), [relatório 02](docs/RELATORIOS/ETAPA_02.md) e [roteiro PowerShell 02](docs/VALIDACAO_MANUAL_ETAPA_02.md). Proprietário existente preservado. A web continua mínima; painel, simulador, detector e captura pertencem às próximas etapas.
+> **Estado atual:** etapas 00–03 implementadas e verificadas. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. O comando `pnpm.cmd demo:simulate` publica eventos SIMULATED na API real, sem câmera ou IA. Veja [status](docs/STATUS.md), [relatório 03](docs/RELATORIOS/ETAPA_03.md) e [roteiro de apresentação](docs/VALIDACAO_MANUAL_ETAPA_03.md). Proprietário, cadastros, configurações privadas e volume preservados. Captura e detecção pertencem às próximas etapas.
+
+Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
+`pnpm.cmd dev:api` e `pnpm.cmd dev:web` separadamente. Abra
+`http://127.0.0.1:3000` e use seu proprietário existente. O roteiro explica a
+câmera lógica exclusiva, a credencial exibida uma vez e o arquivo privado
+`.local/demo.json`. `pnpm.cmd test:e2e` verifica o fluxo em PostgreSQL/API/web
+exclusivos; instale o navegador uma vez com `pnpm.cmd test:e2e:install`.
 
 ## 1. A decisão de partida
 

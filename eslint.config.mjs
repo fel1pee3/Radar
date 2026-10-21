@@ -25,6 +25,19 @@ export default tseslint.config(
         setInterval: 'readonly',
         clearInterval: 'readonly',
         structuredClone: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+      },
+    },
+  },
+  {
+    files: ['tests/e2e/*.mjs'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+        localStorage: 'readonly',
+        Event: 'readonly',
       },
     },
   },

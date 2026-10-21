@@ -11,6 +11,7 @@
     "build": "next build"
   },
   "dependencies": {
+    "@radar/contracts": "workspace:*",
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
