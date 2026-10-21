@@ -1,6 +1,6 @@
 # Dependências e modelos — inventário inicial
 
-Data: 21/10/2026. Escopo: etapas 00–03, execução local Windows x64.
+Data: 21/10/2026. Escopo: etapas 00–04, execução local Windows x64; validação 04 concluída em um arquivo autorizado.
 Versões diretas fixadas nos manifests; árvores completas e integridades nos arquivos
 `pnpm-lock.yaml` e `services/edge/uv.lock`. Não foi escolhida uma licença para o código autoral.
 
@@ -148,9 +148,84 @@ Referências consultadas: [configuração Playwright](https://playwright.dev/doc
 [efeitos/cleanup React](https://react.dev/reference/react/useEffect) e
 [self hosting/cache Next](https://nextjs.org/docs/app/guides/self-hosting).
 
-## Modelos, vídeos e datasets (situação após a 03)
+## Modelos, vídeos e datasets (registro histórico após a03)
 
 Nenhum bundle de pose foi obtido, carregado ou versionado. URL, SHA-256 calculado
 e termos do modelo serão registrados na etapa 04 antes de inferência.
 Nenhum vídeo, dataset ou câmera foi utilizado. Screenshots da etapa 03 mostram
 somente dados/pose sintéticos e permanecem em `.local/`, fora do Git.
+
+## Adições da etapa 04 — visão local em arquivo
+
+| Pacote | Versão | Origem/termos | Decisão |
+| --- | --- | --- | --- |
+| PyYAML | 6.0.3 | [PyPI oficial](https://pypi.org/project/PyYAML/6.0.3/), MIT; metadados consultados | safe_load + validação fechada Pydantic; única dependência nova no ambiente |
+| NumPy | 2.5.4 | Mesma distribuição e termos já registrados acima | Agora dependência direta porque o adaptador usa arrays; sem trocar versão |
+
+Lock passa de 41 para 42 pacotes. MediaPipe 1.1.1/OpenCV5.0.0.93/Python 3.12.15 e
+demais versões preservados. Único fornecedor de cv2: opencv-contrib-python.
+PyYAML wheel cp312-win_amd64 no lock:
+`5fcd34e47f6e0b794d17de1b4ff496c00986e1c83f7ab2fb8fcfe9616ff7477b`.
+Não se introduziu biblioteca FFmpeg/PyAV ou segundo OpenCV. Decode usa backend
+FFmpeg já incluído no wheel; avisos de redistribuição anteriores permanecem.
+
+### Bundle realmente obtido
+
+- Identificação: `pose-landmarker-lite-float16-v1`.
+- Origem oficial versionada: [Google Storage — Lite float16/1](https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task).
+- Destino privado: `.local/models/pose_landmarker_lite.task`; **5.777.746 bytes**.
+- SHA-256 calculado: `59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a`.
+- ZIP/bundle contém `pose_detector.tflite` e `pose_landmarks_detector.tflite`.
+- Procedimento reproduzível: `uv run --project services/edge --frozen radar-edge model-fetch`.
+  HTTPS, URL/version/hash constantes; arquivo divergente é rejeitado, sem sobrescrita.
+- Carregado e executado de verdade com Tasks 1.1.1, CPU, VIDEO, num_poses=2 e
+  máscaras desativadas; executado em vídeo sintético sem pessoas e no arquivo
+  autorizado `bancada-01`, com 89 observações de pose em cada replay completo.
+
+Termos do modelo: o [Model Card BlazePose GHUM3D](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf),
+ligado pelo [catálogo oficial de bundles](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker),
+inclui Lite/Full/Heavy e declara Apache License 2.0 na seção LICENSED UNDER (página2).
+Essa é a evidência referente ao modelo; não se utilizou o rodapé de licença dos
+exemplos para concluir a licença dos pesos. O cartão limita o uso pretendido a
+pose/fitness e não a decisões críticas de vida; seus resultados não medem este
+notebook nem certificam detecção de quedas. Pesos e documentos baixados não são
+redistribuídos no Git. Não foi feita aprovação de distribuição comercial.
+
+### Biblioteca e tráfego
+
+O [aviso MediaPipe Tasks vigente](https://developers.google.com/edge/mediapipe/solutions/tasks#mediapipe_tasks_privacy_notice),
+datado 05/06/2026, declara input no dispositivo e coleta de métricas de uso do SDK.
+A fonte pública de logging usa um dummy logger, mas isso não prova o comportamento
+do wheel: a DLL instalada, de 62.025.728 bytes, contém referências a Clearcut e
+play.googleapis.com. Presença dessas strings não prova envio observado. A API
+Python instalada foi inspecionada; não foi encontrado opt-out documentado nela.
+
+O pipeline autoral não envia vídeo/poses e não importa cliente HTTP; somente o
+comando explícito model-fetch usa HTTPS. Não houve captura/auditoria de rede nem
+validação em ambiente isolado; não se afirma ausência total de tráfego nativo.
+Não houve regra de firewall, mudança de permissões ou troca de pacote para
+contornar a questão. Validar isolamento antes de prometer operação sem tráfego.
+
+### Material usado
+
+Vídeo sintético gerado localmente por OpenCV, sem pessoa, áudio ou imagem
+de terceiros, para infraestrutura:
+`synthetic-04-infrastructure`, SHA-256
+`e396a18be5813bc10d79a776613a03a27875dfdcbc829e50d635bdbf93de3dfe`,
+320×240,10fps,20frames/2s. Vídeo/relatórios/preview sintético ficam em
+`.local/etapa04`.
+
+Arquivo real fornecido pelo fundador no diretório reservado do projeto:
+`bancada-01`, SHA-256
+`3c361aee3f49e2e6ac2688e3afb53622ffd15451ead69874b3e0a76c9cd090c0`,
+4.744.892 bytes, 1920×1080, 530 frames, aproximadamente 17,684 s. O pedido de uso
+autoriza processamento local; origem/autoria não foram verificadas de forma
+independente e não se pressupõe autorização de redistribuição. O vídeo e seu
+nome original permanecem privados. Manifesto local registra `participant-01`,
+`session-04-01` e `environment-04-01`; retenção fica sob gestão do fundador,
+sem prazo de exclusão configurado. Não houve busca em pastas pessoais.
+
+O fundador selecionou o piso na GUI e confirmou pose/região na prévia. Três
+execuções terminaram normalmente, sem gravar frames nem exportar poses. Medidas
+e limites no [relatório 04](ETAPA_04.md). Um arquivo não constitui dataset de
+avaliação de eficácia; múltiplas pessoas reais não foram testadas.

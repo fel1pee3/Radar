@@ -4,6 +4,10 @@
 
 Os relatórios são criados durante a implementação. As etapas [00](ETAPA_00.md), [01](ETAPA_01.md), [02](ETAPA_02.md) e [03](ETAPA_03.md) registram verificações reais e seus limites; o [inventário técnico](DEPENDENCIAS_E_MODELOS.md) registra as dependências selecionadas. Use `ETAPA_00.md` a `ETAPA_09.md`; o relatório final será `VALIDACAO_MVP.md`.
 
+A [etapa 04](ETAPA_04.md) registra visão em arquivo com modelo real, um vídeo
+autorizado, piso selecionado pelo fundador e prévia conferida. Essa validação
+comprova extração de poses naquele arquivo; não avalia detecção de quedas.
+
 ## Modelo de relatório de etapa
 
 Copiar a estrutura abaixo e preencher com fatos. Não deixar “passou” sem dizer o que foi executado.

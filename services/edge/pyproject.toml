@@ -1,7 +1,7 @@
 [project]
 name = "radar-edge"
 version = "0.0.0"
-description = "Diagnóstico local e validação de contratos do Radar; sem captura ou inferência."
+description = "Visão local em arquivo, calibração e diagnóstico do Radar, sem classificação de quedas."
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "mediapipe==1.1.1",
@@ -9,6 +9,8 @@ dependencies = [
   "pydantic==2.14.1",
   "httpx==0.28.1",
   "jsonschema==4.26.0",
+  "pyyaml==6.0.3",
+  "numpy==2.5.4",
 ]
 
 [project.scripts]

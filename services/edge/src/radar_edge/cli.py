@@ -1,4 +1,4 @@
-"""Diagnóstico de imports reais sem abrir câmera, rede ou modelo."""
+"""Local CLI. env preserves its original import-only diagnostic."""
 
 import argparse
 import json
@@ -53,25 +53,108 @@ def inspect_environment() -> dict[str, object]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Radar Edge — diagnóstico do ambiente local.")
-    parser.add_argument("command", choices=["env"], help="Importa bibliotecas e informa versões.")
-    parser.parse_args()
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(
+        description="Radar Edge — poses locais em arquivo, sem classificar quedas."
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("env", help="Importa bibliotecas sem abrir arquivo/modelo.")
+    fetch = commands.add_parser(
+        "model-fetch", help="Obtém explicitamente o bundle oficial com hash fixado."
+    )
+    fetch.add_argument("--output", default=".local/models/pose_landmarker_lite.task")
+    for name in ("doctor", "calibrate", "run"):
+        command = commands.add_parser(name)
+        command.add_argument("--config", default=".local/edge.yaml")
+        if name == "calibrate":
+            command.add_argument("--frame-ms", type=int, default=0)
+            command.add_argument(
+                "--points", help="JSON privado com pontos selecionados manualmente."
+            )
+            command.add_argument("--confirm-floor", action="store_true")
+        if name == "run":
+            preview = command.add_mutually_exclusive_group()
+            preview.add_argument("--preview", action="store_true", dest="preview", default=None)
+            preview.add_argument("--no-preview", action="store_false", dest="preview")
+            command.add_argument("--replay-speed", type=float)
+            command.add_argument("--max-observations", type=int)
+            command.add_argument("--export-observations", action="store_true")
+    args = parser.parse_args()
+    from radar_edge.errors import EdgeError
+
+    code = 0
     try:
-        result = inspect_environment()
+        if args.command == "env":
+            result = inspect_environment()
+        elif args.command == "model-fetch":
+            from radar_edge.model import fetch_model
+
+            result = fetch_model(args.output)
+        else:
+            from radar_edge.config import DiagnosticsConfig, ProcessingConfig, load_config
+            from radar_edge.pipeline import doctor, run_pipeline
+
+            config = load_config(args.config)
+            if args.command == "doctor":
+                result = doctor(config)
+            elif args.command == "calibrate":
+                from radar_edge.calibration import calibrate
+
+                if args.frame_ms < 0:
+                    raise EdgeError(
+                        "INVALID_ARGUMENT", "--frame-ms deve ser maior ou igual a zero."
+                    )
+                result = calibrate(config, args.frame_ms, args.points, args.confirm_floor)
+            else:
+                overrides = {
+                    key: value
+                    for key, value in {
+                        "preview": args.preview,
+                        "replaySpeed": args.replay_speed,
+                        "maxObservations": args.max_observations,
+                    }.items()
+                    if value is not None
+                }
+                config.processing = ProcessingConfig.model_validate(
+                    {**config.processing.model_dump(), **overrides}
+                )
+                if args.export_observations:
+                    config.diagnostics = DiagnosticsConfig.model_validate(
+                        {**config.diagnostics.model_dump(), "exportObservations": True}
+                    )
+                result, code = run_pipeline(config)
+    except EdgeError as error:
+        result = {
+            "status": "error",
+            "command": args.command,
+            "code": error.code,
+            "message": error.message,
+        }
+        code = 1
+    except KeyboardInterrupt:
+        result = {
+            "status": "interrupted",
+            "command": args.command,
+            "message": "Interrupção solicitada; recursos liberados.",
+        }
+        code = 130
     except Exception as error:
-        print(
-            json.dumps(
-                {
-                    "status": "error",
-                    "error_type": type(error).__name__,
-                    "message": (
-                        "Falha no ambiente de visão. Execute uv sync --project services/edge "
-                        "--frozen e verifique os wheels/DLLs para Python 3.12 e seu sistema."
-                    ),
-                },
-                ensure_ascii=False,
+        result = {
+            "status": "error",
+            "command": args.command,
+            "error_type": type(error).__name__,
+            "code": "CONFIG_OR_ENVIRONMENT_ERROR",
+            "message": (
+                "Confira configuração, limites dos argumentos e "
+                "uv sync --project services/edge --frozen. Nenhum traceback privado foi exibido."
             ),
-            file=sys.stderr,
-        )
-        raise SystemExit(1) from None
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+        }
+        code = 1
+    print(
+        json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2),
+        file=sys.stderr if code else sys.stdout,
+    )
+    if code:
+        raise SystemExit(code)

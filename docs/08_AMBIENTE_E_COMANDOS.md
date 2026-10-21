@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapas 00–03 implementadas em 21/10/2026.** Consulte o [status](STATUS.md), o [relatório 03](RELATORIOS/ETAPA_03.md) e o [roteiro de apresentação](VALIDACAO_MANUAL_ETAPA_03.md). Comandos de 04 em diante continuam previstos e não devem ser executados antes da etapa correspondente. O proprietário existente é preservado; não há necessidade de repetir provisionamento para abrir o painel.
+**Etapas 00–04 concluídas em 21/10/2026.** A 04 foi verificada com arquivo autorizado, modelo real, piso selecionado pelo fundador e prévia conferida. Consulte o [status](STATUS.md), o [relatório 04](RELATORIOS/ETAPA_04.md) e o [roteiro de visão em arquivo](VALIDACAO_MANUAL_ETAPA_04.md). Os comandos 04 abaixo existem; os de 05 em diante continuam previstos. O proprietário existente é preservado; não há necessidade de repetir provisionamento para abrir o painel.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -136,8 +136,10 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `pnpm test:e2e` | 03 | Fluxo de navegador em ambiente de teste |
 | `pnpm test:e2e:install` | 03 | Instala Chromium compatível com Playwright fixado; executar uma vez por ambiente |
 | `uv run --project services/edge radar-edge doctor` | 04 | Verifica modelo, arquivos e recursos sem expor segredos |
+| `uv run --project services/edge --frozen radar-edge model-fetch` | 04 | Download explícito do bundle oficial Lite/v1, SHA-256 fixado, em .local/models |
 | `uv run --project services/edge radar-edge calibrate --config .local/edge.yaml` | 04 | Assistente local para delimitar piso |
 | `uv run --project services/edge radar-edge run --config .local/edge.yaml` | 04/05 | Arquivo/poses; após 05, emissão real de candidatos |
+| `uv run --project services/edge --frozen pytest services/edge/tests -q` | 04 | Contratos e infraestrutura/pose/calibração; GUI extra com RADAR_TEST_GUI=1 |
 | `uv run --project services/edge pytest` | 05 | Testes de regras, contrato e persistência |
 | `uv run --project services/edge radar-edge evaluate --manifest .local/evaluation.json` | 05/08 | Replay e métricas em relatório privado |
 | `uv run --project services/edge radar-edge reset-episode --config .local/edge.yaml --reason scene_reset` | 05 | Reset local explícito, com worker de captura parado e auditoria; não encerra incidente humano |
@@ -172,6 +174,34 @@ viewport móvel 390×844, Chromium. Exemplo de investigação focada:
 Na etapa 02, `pnpm.cmd test:api` aplica as duas migrações num banco exclusivo vazio, executa primeiro os 19 testes de acesso e depois os testes de eventos/incidentes, incluindo o roteiro PowerShell por HTTP real. A ordem preserva o teste anterior de banco vazio. Não execute o comando interno `test:integration` contra a demonstração: a suíte exige o identificador do container exclusivo. A validação de tipos da API gera contratos/client necessários para não depender de um build antigo. O [roteiro manual 02](VALIDACAO_MANUAL_ETAPA_02.md) permite validar o fluxo com a conta local existente. Ative `. ./scripts/activate.ps1` em cada terminal antes de usar `pnpm.cmd`.
 
 ## Sequência final de execução prevista
+
+### Visão local em arquivo — etapa 04
+
+```powershell
+. ./scripts/activate.ps1
+uv sync --project services/edge --frozen
+uv run --project services/edge --frozen radar-edge model-fetch
+if (-not (Test-Path -LiteralPath .local/edge.yaml)) {
+    Copy-Item -LiteralPath services/edge/edge.example.yaml -Destination .local/edge.yaml
+}
+notepad .local/edge.yaml
+uv run --project services/edge --frozen radar-edge doctor --config .local/edge.yaml
+uv run --project services/edge --frozen radar-edge calibrate --config .local/edge.yaml --frame-ms 1000
+uv run --project services/edge --frozen radar-edge run --config .local/edge.yaml --preview --replay-speed 1
+uv run --project services/edge --frozen radar-edge run --config .local/edge.yaml --no-preview
+```
+
+Antes do diagnóstico, configure source.path e a autorização local. No assistente,
+clique em 3 ou mais pontos contornando o piso e Enter para confirmar; não use
+polígono dos testes sintéticos no vídeo de uma pessoa. Prévia: Q/Esc encerra.
+Não precisa de API, bearer ou token de login. A largura máxima640 e o alvo de 5
+análises/s são da mídia; throughput e CPU/RAM têm métodos e limites próprios.
+Relatórios/observações opt-in ficam privados. Fallback índice/FPS e fim não
+verificável são explícitos; não há classificação, incidente ou heartbeat.
+Detalhes, limites da biblioteca e resultados no
+[roteiro 04](VALIDACAO_MANUAL_ETAPA_04.md) e [relatório 04](RELATORIOS/ETAPA_04.md).
+
+### Sequência completa prevista até a entrega
 
 1. Instalar dependências e preparar `.env`/configuração privada.
 2. Subir PostgreSQL; gerar client, aplicar migrações e seed idempotente.

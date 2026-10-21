@@ -6,7 +6,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–03 implementadas e verificadas. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. O comando `pnpm.cmd demo:simulate` publica eventos SIMULATED na API real, sem câmera ou IA. Veja [status](docs/STATUS.md), [relatório 03](docs/RELATORIOS/ETAPA_03.md) e [roteiro de apresentação](docs/VALIDACAO_MANUAL_ETAPA_03.md). Proprietário, cadastros, configurações privadas e volume preservados. Captura e detecção pertencem às próximas etapas.
+> **Estado atual:** etapas 00–04 implementadas e verificadas. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. O comando `pnpm.cmd demo:simulate` publica eventos SIMULATED na API real, sem câmera ou IA. A etapa 04 processa arquivos locais com poses reais, calibração de piso e prévia nativa. Veja [status](docs/STATUS.md), [relatório 04](docs/RELATORIOS/ETAPA_04.md) e [roteiro de apresentação do painel](docs/VALIDACAO_MANUAL_ETAPA_03.md). Proprietário, cadastros, configurações privadas e volume preservados. Classificação temporal e captura ao vivo pertencem às próximas etapas.
 
 Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
 `pnpm.cmd dev:api` e `pnpm.cmd dev:web` separadamente. Abra
@@ -14,6 +14,12 @@ Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
 câmera lógica exclusiva, a credencial exibida uma vez e o arquivo privado
 `.local/demo.json`. `pnpm.cmd test:e2e` verifica o fluxo em PostgreSQL/API/web
 exclusivos; instale o navegador uma vez com `pnpm.cmd test:e2e:install`.
+
+A etapa 04 tem pipeline Python FILE, modelo Lite real, calibração de piso, prévia
+local e medidas. Um vídeo autorizado foi processado integralmente em três
+velocidades, com 89 observações por execução. O fundador marcou o piso e confirmou
+o alinhamento da pose na prévia. Veja o [roteiro 04](docs/VALIDACAO_MANUAL_ETAPA_04.md) e o
+[relatório 04](docs/RELATORIOS/ETAPA_04.md). Não cria incidentes nem classifica queda.
 
 ## 1. A decisão de partida
 

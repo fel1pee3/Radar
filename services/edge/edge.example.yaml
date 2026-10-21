@@ -1,0 +1,28 @@
+schemaVersion: 1
+purpose: RADAR_FILE_POSE
+# UUID fictício. A etapa 04 trabalha localmente, sem consultar a API.
+cameraId: '11111111-1111-4111-8111-111111111111'
+source:
+  kind: FILE
+  path: .local/videos/teste.mp4
+  videoId: bancada-01
+  # Altere somente depois de confirmar a autorização para processar esse arquivo.
+  authorized: false
+  rotation: AUTO
+  allowTimestampFallback: true
+model:
+  path: .local/models/pose_landmarker_lite.task
+processing:
+  maxWidth: 640
+  targetAnalysisFps: 5.0
+  minLandmarkVisibility: 0.5
+  # 0: tão rápido quanto possível; 1: ritmo original; 2: ritmo 2x.
+  replaySpeed: 0.0
+  preview: false
+  maxObservations: null
+calibrationPath: .local/calibration.json
+diagnostics:
+  outputDirectory: .local/results/edge
+  exportObservations: false
+  maxExportObservations: 1000
+  maxExportBytes: 10485760
