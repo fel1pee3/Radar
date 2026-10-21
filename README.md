@@ -6,7 +6,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** este pacote contém especificações e prompts. O software ainda não foi implementado, instalado ou testado. Comandos descritos são interfaces que as etapas deverão criar. Não são instruções para executar agora sobre este pacote vazio de código.
+> **Estado atual:** etapa 00 implementada e verificada no Windows: monorepo, página mínima Next.js, liveness NestJS, PostgreSQL local e imports reais de MediaPipe/OpenCV. O restante do MVP ainda não existe. Consulte [status](docs/STATUS.md), [comandos de execução](docs/08_AMBIENTE_E_COMANDOS.md) e [relatório da etapa 00](docs/RELATORIOS/ETAPA_00.md).
 
 ## 1. A decisão de partida
 

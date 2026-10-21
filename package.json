@@ -1,0 +1,33 @@
+{
+  "name": "radar-software",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "pnpm": "10.34.7"
+  },
+  "scripts": {
+    "setup:env": "node scripts/setup-env.mjs",
+    "infra:up": "docker compose --env-file .env -f infra/compose.yaml up -d --wait",
+    "infra:down": "docker compose --env-file .env -f infra/compose.yaml down",
+    "infra:status": "docker compose --env-file .env -f infra/compose.yaml ps",
+    "dev:api": "pnpm --filter @radar/api dev",
+    "dev:web": "pnpm --filter @radar/web dev",
+    "lint": "pnpm -r lint && eslint scripts && prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "format": "prettier --write .",
+    "lint:edge": "uv run --project services/edge --frozen ruff check services/edge && uv run --project services/edge --frozen ruff format --check services/edge",
+    "check:edge": "uv run --project services/edge --frozen radar-edge env"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "24.19.2",
+    "eslint": "9.39.5",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0"
+  }
+}

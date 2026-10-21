@@ -15,6 +15,8 @@ Três processos de aplicação e um banco: Next.js, NestJS, worker Python e Post
 
 O navegador usa `/api/*`, reescrito pelo Next para `/v1/*` da API. Não misturar `localhost` e `127.0.0.1` na configuração de cookies/origem. Interface e API têm binds de loopback no modo local. O driver de câmera está no worker, não no servidor web.
 
+Na máquina verificada na etapa 00, `POSTGRES_PORT=15432` no `.env` privado evita conflito com o PostgreSQL já instalado em 5432 (D15). A porta interna do container continua 5432. Nenhuma integração da API com o banco foi implementada nesta etapa.
+
 Dockerizar a webcam não é requisito. Não presumir que WSL/Docker Desktop exponha o dispositivo. Em Windows, o caminho principal é Python nativo, com permissão do SO. Um computador diferente para inferência será uma implantação futura com TLS e configuração de rede próprias.
 
 ## Dependências escolhidas
@@ -42,7 +44,7 @@ No Prisma 7, seguir a documentação da versão escolhida para configuração da
 
 ## Organização prevista do repositório
 
-Os caminhos de aplicação abaixo **serão criados nas etapas**. Hoje existem apenas os arquivos de documentação deste pacote.
+Na etapa 00 foram criados `apps/web`, `apps/api`, `services/edge`, `packages/contracts`, `scripts` e `infra/compose.yaml`. A tabela descreve a organização final prevista; existência do diretório não significa implementação de todo seu conteúdo futuro. Testes de domínio/e2e e modelos serão introduzidos nas etapas próprias.
 
 | Caminho | Conteúdo futuro |
 | --- | --- |

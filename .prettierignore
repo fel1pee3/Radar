@@ -1,0 +1,15 @@
+node_modules/
+.local/
+**/.next/
+**/dist/
+**/.venv/
+**/__pycache__/
+**/.ruff_cache/
+pnpm-lock.yaml
+services/edge/uv.lock
+**/next-env.d.ts
+# Preservar a formatação do pacote original de especificações.
+AGENTS.md
+etapas/
+docs/
+README.md

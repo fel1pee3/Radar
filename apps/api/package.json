@@ -1,0 +1,24 @@
+{
+  "name": "@radar/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsc && concurrently --kill-others \"tsc --watch --preserveWatchOutput\" \"node --watch --env-file-if-exists=.env dist/main.js\"",
+    "start": "node --env-file-if-exists=.env dist/main.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.6"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.7",
+    "@nestjs/core": "11.2.7",
+    "@nestjs/platform-express": "11.2.7",
+    "@radar/contracts": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  }
+}

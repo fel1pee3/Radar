@@ -2,7 +2,75 @@
 
 [Voltar ao README central](../README.md)
 
-**Este documento define a interface de desenvolvimento a construir. Nenhum comando de aplicação abaixo foi implementado ou executado neste pacote de documentação.** Cada etapa deve tornar seus comandos reais e atualizar os exemplos com resultado verificado.
+**Etapa 00 implementada e verificada em 21/10/2026.** Os comandos marcados como 00 abaixo existem. Os demais continuam previstos e não devem ser executados antes da etapa correspondente. Evidências, falhas corrigidas e versões estão no [relatório](RELATORIOS/ETAPA_00.md).
+
+## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
+
+O Node 22 e Python 3.13 existentes foram preservados. Node 24.22.1, pnpm 10.34.7 e uv 0.13.4 foram preparados em `.local/tools/` (ignorado). Python 3.12.15 foi instalado pelo uv sem alterar o Python padrão. Em cada novo terminal, execute o dot-source abaixo; ele altera somente o PATH daquele terminal.
+
+```powershell
+. ./scripts/activate.ps1
+node --version
+pnpm.cmd --version
+uv --version
+pnpm.cmd install --frozen-lockfile
+uv sync --project services/edge --frozen
+pnpm.cmd setup:env
+pnpm.cmd infra:up
+pnpm.cmd infra:status
+```
+
+`pnpm` e `pnpm.cmd` referem-se ao mesmo gerenciador; `.cmd` evita problemas de política de execução do shim PowerShell. O script `activate.ps1` foi executado com sucesso sem mudar a política de execução do Windows. Se o Docker estiver parado, inicie o Docker Desktop e aguarde `docker version` mostrar Client e Server.
+
+`setup:env` cria `.env`, `apps/api/.env` e `apps/web/.env` somente se não existirem. Gera uma senha aleatória de 32 bytes para o banco, não a imprime e nunca sobrescreve configurações existentes. O `.env` desta máquina já usa `POSTGRES_PORT=15432`, pois há outro PostgreSQL em 5432. Em um checkout novo, o exemplo usa 5432; ajuste `POSTGRES_PORT` no `.env` se houver conflito. Nunca edite o exemplo com a senha real. A senha do volume existente não muda ao editar o `.env`: preserve o arquivo privado ou faça a rotação conscientemente, sem apagar o volume.
+
+Terminal da API:
+
+```powershell
+. ./scripts/activate.ps1
+pnpm.cmd dev:api
+```
+
+Terminal da web:
+
+```powershell
+. ./scripts/activate.ps1
+pnpm.cmd dev:web
+```
+
+Abra `http://127.0.0.1:3000`. A página informa que nenhuma fonte de vídeo está em execução. A API não depende do banco nesta etapa: liveness só comprova que o processo responde. Readiness, Prisma 7 e migrações entram na etapa 01.
+
+Terminal de validação:
+
+```powershell
+. ./scripts/activate.ps1
+Invoke-RestMethod http://127.0.0.1:3001/v1/health/live
+Invoke-RestMethod http://127.0.0.1:3000/api/health/live
+pnpm.cmd lint
+pnpm.cmd typecheck
+pnpm.cmd build
+pnpm.cmd lint:edge
+pnpm.cmd check:edge
+uv build --project services/edge
+docker compose --env-file .env -f infra/compose.yaml exec -T postgres pg_isready -U radar -d radar
+```
+
+As duas consultas HTTP retornam `status: ok`. `check:edge` equivale a `uv run --project services/edge --frozen radar-edge env`: importa MediaPipe/OpenCV/Tasks reais, mas não abre câmera, baixa modelo nem executa inferência. `lint` inclui ESLint e Prettier nos arquivos novos de código/configuração; `lint:edge` aplica Ruff. `typecheck`/`build` percorrem os três pacotes TypeScript. O projeto Python tem lock e build próprios, fora do workspace pnpm.
+
+Após o build, também é possível executar `pnpm.cmd --filter @radar/api start` e `pnpm.cmd --filter @radar/web start` em terminais separados, com os processos de desenvolvimento parados. `Ctrl+C` encerra web/API. `pnpm.cmd infra:down` encerra o banco preservando `radar_postgres_data`; `pnpm.cmd infra:up` o recupera.
+
+### Recriar as ferramentas em outra instalação Windows
+
+Instale Node **24.22.1** de [nodejs.org](https://nodejs.org/dist/v24.22.1/) e confira o SHA-256 do artefato com o `SHASUMS256.txt` oficial. Com esse Node no PATH e Python disponível apenas para bootstrap, os comandos usados para preparar os outros gerenciadores locais foram:
+
+```powershell
+python -m pip install --target .local/tools/uv uv==0.13.4
+npm.cmd install --prefix .local/tools/pnpm --no-package-lock --ignore-scripts pnpm@10.34.7
+.local/tools/uv/bin/uv.exe python install 3.12.15 --no-bin
+. ./scripts/activate.ps1
+```
+
+O uso de npm/pip acima é limitado ao bootstrap dos gerenciadores. As dependências do software usam exclusivamente pnpm/uv e os locks versionados. O Node portátil desta máquina está em `.local/tools/node-v24.22.1-win-x64`; o script aceita também a mesma versão instalada no PATH. Não versionar essas ferramentas. Para outros sistemas, instale as mesmas versões conforme as fontes oficiais e execute os comandos pnpm/uv; esses sistemas não foram testados aqui.
 
 ## Pré-requisitos
 
@@ -24,6 +92,7 @@ O bootstrap deve gerar `.env.example` sem segredos e orientar cópia local. Vali
 | Variável/conceito | Onde | Observação |
 | --- | --- | --- |
 | `DATABASE_URL` | API/migrações | PostgreSQL local com senha particular |
+| `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | Compose; `.env` raiz | Senha privada obrigatória; porta publicada apenas em `127.0.0.1`; padrão 5432, 15432 nesta máquina |
 | `API_HOST`, `API_PORT` | API | `127.0.0.1`, `3001` |
 | `WEB_ORIGIN` | API | `http://127.0.0.1:3000` |
 | `API_INTERNAL_URL` | Web server | `http://127.0.0.1:3001/v1`; não vazar segredos ao client |
@@ -46,11 +115,13 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | Comando-alvo | Introduzido | Efeito esperado |
 | --- | --- | --- |
 | `pnpm install --frozen-lockfile` | 00, após lock inicial | Instala JS reproduzivelmente |
+| `pnpm setup:env` | 00 | Cria configuração privada e senha aleatória sem sobrescrever arquivos |
 | `pnpm infra:up` | 00 | Sobe somente PostgreSQL em loopback |
 | `pnpm infra:down` | 00 | Para infraestrutura sem excluir volume |
 | `pnpm dev:api` / `pnpm dev:web` | 00 | Inicia API e interface em terminais separados |
 | `pnpm lint` / `pnpm typecheck` / `pnpm build` | 00 | Verificações JS reais |
 | `uv sync --project services/edge --frozen` | 00 | Instala Python pelo lock |
+| `pnpm lint:edge` / `pnpm check:edge` | 00 | Ruff e imports reais de visão, sem modelo/câmera |
 | `pnpm db:generate` / `pnpm db:migrate` | 01 | Gera client e aplica migrações versionadas |
 | `pnpm db:seed` | 01 | Cria dados locais idempotentes sem apagar dados |
 | `pnpm test:api` / `pnpm test:contracts` | 02 | Testes de API/contratos com banco de teste separado |

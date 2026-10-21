@@ -1,0 +1,31 @@
+[project]
+name = "radar-edge"
+version = "0.0.0"
+description = "Ambiente local do worker Radar; somente diagnóstico na etapa 00."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "mediapipe==1.1.1",
+  "opencv-contrib-python==5.0.0.93",
+  "pydantic==2.14.1",
+  "httpx==0.28.1",
+]
+
+[project.scripts]
+radar-edge = "radar_edge.cli:main"
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["ruff==0.17.1"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/radar_edge"]

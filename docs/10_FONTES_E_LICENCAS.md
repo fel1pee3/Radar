@@ -25,7 +25,7 @@ Contexto de produto: dossiê `Dossie_Estrategico_Radar_de_Acontecimentos.pdf`, p
 
 ## Inventário que a implementação deverá preencher
 
-Criar `docs/RELATORIOS/DEPENDENCIAS_E_MODELOS.md` com pacote/artefato, versão exata, fonte oficial, licença/termos do artefato, dependências relevantes e decisão de uso. Para modelos: URL de origem, SHA-256 calculado e identificação do bundle. Para dataset: origem, autorização, direitos de uso/redistribuição, finalidade e retenção.
+O [inventário inicial](RELATORIOS/DEPENDENCIAS_E_MODELOS.md) foi criado na etapa 00 com pacote/artefato, versão exata, fonte oficial, licença/termos observados, dependências relevantes e decisão de uso. Atualizá-lo nas próximas etapas. Para modelos: URL de origem, SHA-256 calculado e identificação do bundle. Para dataset: origem, autorização, direitos de uso/redistribuição, finalidade e retenção. Nenhum modelo ou dataset foi obtido na etapa 00.
 
 Separar licença do código, licença do modelo e direitos do vídeo. A licença dos exemplos de uma página não comprova os termos dos pesos. Um arquivo disponível publicamente não é automaticamente redistribuível ou adequado a uso comercial.
 

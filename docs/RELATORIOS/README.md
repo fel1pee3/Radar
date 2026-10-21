@@ -2,7 +2,7 @@
 
 [Status](../STATUS.md) · [Plano](../../etapas/README.md)
 
-Os relatórios serão criados pela IA do VS Code durante a implementação. Este diretório não contém testes já executados. Use `ETAPA_00.md` a `ETAPA_09.md`; o relatório final será `VALIDACAO_MVP.md`, e o inventário técnico `DEPENDENCIAS_E_MODELOS.md`.
+Os relatórios são criados durante a implementação. A [etapa 00](ETAPA_00.md) já registra verificações reais; o [inventário técnico](DEPENDENCIAS_E_MODELOS.md) registra as dependências selecionadas. Use `ETAPA_00.md` a `ETAPA_09.md`; o relatório final será `VALIDACAO_MVP.md`.
 
 ## Modelo de relatório de etapa
 

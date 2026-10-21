@@ -20,6 +20,7 @@
 | D12 | Avisos locais/simulados | Comunicação externa e SLA de atendimento precisam de validação própria |
 | D13 | Isolamento preparado, um tenant na UI | Evita reescrever segurança sem construir administração SaaS completa |
 | D14 | Regras e evidência versionadas | Permite avaliar mudanças sem reescrever o histórico |
+| D15 | Porta do PostgreSQL do Compose configurável por `POSTGRES_PORT` | 21/10/2026, etapa 00: a instalação PostgreSQL existente ocupa 5432. Nesta máquina usar 15432 no `.env` privado; manter loopback e 5432 como padrão do exemplo. Não parar nem alterar o banco existente. Sem mudança de contratos HTTP. |
 
 Manter aqui decisões novas com data, problema, alternativas consideradas, escolha e impacto nos contratos. Não reabrir tudo a cada prompt.
 

@@ -1,0 +1,51 @@
+# Dependências, ferramentas locais e saídas
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.local/
+
+# Configuração privada
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Modelos, mídia, bancos e dumps privados
+*.task
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.jpg
+*.jpeg
+*.png
+*.sqlite*
+*.db
+*.dump
+*.sql
+*.sql.gz
+*.backup
+*.bak
+*.log
+
+# Arquivos do editor/SO
+.DS_Store
+Thumbs.db
+.idea/
