@@ -1,15 +1,15 @@
 # Status de construção
 
-**Última atualização:** 21/10/2026 — etapa 00 implementada e verificada.
+**Última atualização:** 21/10/2026 — etapa 01 implementada e verificada, incluindo proprietário criado localmente pelo fundador.
 
-**Software implementado:** fundação local da etapa 00. **Modelo executado:** não. **Câmeras testadas:** nenhuma. **Próxima etapa elegível:** 01, somente mediante nova solicitação.
+**Software implementado:** fundação e API de domínio/acesso da etapa 01. **Modelo executado:** não. **Câmeras testadas:** nenhuma. **Próxima etapa elegível:** 02, somente mediante nova solicitação.
 
 Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresentam o plano; só atualizar para concluída quando os critérios tiverem evidência real.
 
 | Etapa | Entrega | Status | Relatório / data |
 | --- | --- | --- | --- |
 | 00 | [Fundação do repositório e ambiente](../etapas/00_FUNDACAO/README.md) | CONCLUÍDA | [ETAPA_00](RELATORIOS/ETAPA_00.md) · 21/10/2026 |
-| 01 | [Domínio, banco e acesso](../etapas/01_DOMINIO_E_ACESSO/README.md) | NÃO INICIADA | — |
+| 01 | [Domínio, banco e acesso](../etapas/01_DOMINIO_E_ACESSO/README.md) | CONCLUÍDA | [ETAPA_01](RELATORIOS/ETAPA_01.md) · 21/10/2026 |
 | 02 | [Eventos, incidentes e contratos](../etapas/02_EVENTOS_E_INCIDENTES/README.md) | NÃO INICIADA | — |
 | 03 | [Painel e primeira demonstração](../etapas/03_PAINEL_E_SIMULADOR/README.md) | NÃO INICIADA | — |
 | 04 | [Visão computacional em arquivo](../etapas/04_VISAO_EM_VIDEO/README.md) | NÃO INICIADA | — |
@@ -32,13 +32,14 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | Versões exatas Node / pnpm / Python / uv | 24.22.1 / 10.34.7 / 3.12.15 / 0.13.4; Node 22.21.1 e Python 3.13.7 preexistentes preservados |
 | MediaPipe / OpenCV / bundle e hash | MediaPipe 1.1.1 e opencv-contrib-python 5.0.0.93 (cv2 5.0.0), imports reais aprovados; nenhum modelo obtido; [inventário](RELATORIOS/DEPENDENCIAS_E_MODELOS.md) |
 | Docker / banco | Desktop 4.57.0, Engine 29.1.3, Compose 5.0.1; PostgreSQL 17.11 saudável; TCP autenticado e volume persistente verificados; loopback 15432 nesta máquina (D15) |
+| Persistência / acesso (01) | Prisma/client/adapter-pg 7.10.1, pg 8.23.1, Argon2 0.45.1; migração inicial aplicada em radar:15432 e banco vazio dedicado; 19 testes de integração aprovados |
 | Webcam e índice | Não consultados nem abertos na 00; teste físico na 06 |
 | KAP-S069 / firmware / protocolo | Não confirmado; etapa 09 opcional |
 
 ## Pendências atuais
 
 - Nenhuma verificação obrigatória da etapa 00 pendente. Reprodução em [ambiente e comandos](08_AMBIENTE_E_COMANDOS.md).
-- Solicitar etapa 01 para domínio, acesso, Prisma/migrações e readiness do banco. Esses módulos ainda não existem.
+- Nenhum critério obrigatório da etapa 01 pendente. Proprietário criado localmente pelo fundador e confirmado por contagem de OWNER ativo/auditoria, sem consulta de senha/hash. Login/configuração por PowerShell no [roteiro manual](VALIDACAO_MANUAL_ETAPA_01.md); web permanece mínima.
 - Monitorar compatibilidade dos plugins React/a11y antes de atualizar ESLint 9 (aviso de fim de suporte registrado no inventário).
 - Preparar vídeos próprios/autorizados para a etapa 04.
 - Executar testes físicos de webcam quando chegar à etapa 06.
@@ -50,6 +51,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | --- | --- | --- |
 | 21/10/2026 | Documentação de construção organizada; demo antes de parceiro | D01 em decisões; ainda não há código de produto |
 | 21/10/2026 | Etapa 00 concluída; PostgreSQL em porta alternativa local (D15) | Instalações frozen inclusive em diretórios vazios; lint, typecheck, build, Ruff, imports Python, HTTP direto/proxy, captura Edge e persistência do volume; [relatório](RELATORIOS/ETAPA_00.md) |
+| 21/10/2026 | Etapa 01 concluída: domínio/acesso, migração e proprietário local | 19 testes reais em PostgreSQL exclusivo; seed/CLI, sessões, papéis, FKs de tenant, rotação concorrente, falha/retomada do banco, logs e bootstrap real confirmado; [relatório](RELATORIOS/ETAPA_01.md) |
 
 ## Regra de atualização
 

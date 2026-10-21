@@ -21,6 +21,9 @@
 | D13 | Isolamento preparado, um tenant na UI | Evita reescrever segurança sem construir administração SaaS completa |
 | D14 | Regras e evidência versionadas | Permite avaliar mudanças sem reescrever o histórico |
 | D15 | Porta do PostgreSQL do Compose configurável por `POSTGRES_PORT` | 21/10/2026, etapa 00: a instalação PostgreSQL existente ocupa 5432. Nesta máquina usar 15432 no `.env` privado; manter loopback e 5432 como padrão do exemplo. Não parar nem alterar o banco existente. Sem mudança de contratos HTTP. |
+| D16 | Padrão de desenvolvimento 15432 e bloqueio da porta 5432 do host nos comandos Prisma/API | 21/10/2026, etapa 01: instrução atual do fundador exige preservar o PostgreSQL externo. O exemplo passa a usar 15432 e a validação impede apontar acidentalmente a 5432. Atualiza o padrão inicial de D15; o volume e o `.env` existentes permanecem preservados. |
+| D17 | E-mail de login único globalmente, normalizado em minúsculas; bootstrap de um proprietário por tenant | 21/10/2026, etapa 01: login recebe e-mail/senha sem seletor de tenant. Sessões e permissões derivam da conta encontrada. Seed repetido não cria outro proprietário quando o e-mail é alterado na configuração e não redefine senha. Não há gestão pública de equipe. |
+| D18 | Diagnóstico autenticado `GET /edge/me`, detalhes de local/câmera e alteração de local | 21/10/2026, etapa 01: explicita autenticação/escopo do bearer antes da ingestão, sem implementar eventos/heartbeat. `GET /sites/:id`, `PATCH /sites/:id` e `GET /cameras/:id` complementam a configuração/leitura mínima com os mesmos gates e scoping. |
 
 Manter aqui decisões novas com data, problema, alternativas consideradas, escolha e impacto nos contratos. Não reabrir tudo a cada prompt.
 

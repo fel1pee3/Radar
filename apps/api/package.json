@@ -4,20 +4,41 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsc && concurrently --kill-others \"tsc --watch --preserveWatchOutput\" \"node --watch --env-file-if-exists=.env dist/main.js\"",
+    "dev": "prisma generate && tsc && concurrently --kill-others \"tsc --watch --preserveWatchOutput\" \"node --watch --env-file-if-exists=.env dist/main.js\"",
     "start": "node --env-file-if-exists=.env dist/main.js",
-    "lint": "eslint src",
+    "lint": "eslint src test prisma.config.ts jest.config.mjs",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "prebuild": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node --env-file-if-exists=.env dist/cli.js seed",
+    "user:operator-env": "node --env-file-if-exists=.env dist/cli.js operator",
+    "openapi:generate": "node --env-file-if-exists=.env dist/cli.js openapi",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand"
   },
   "devDependencies": {
-    "concurrently": "10.0.6"
+    "@types/express": "5.0.6",
+    "@types/jest": "30.0.0",
+    "@types/pg": "8.23.1",
+    "@types/supertest": "7.2.1",
+    "concurrently": "10.0.6",
+    "jest": "30.5.2",
+    "prisma": "7.10.1",
+    "supertest": "7.3.1"
   },
   "dependencies": {
     "@nestjs/common": "11.2.7",
     "@nestjs/core": "11.2.7",
     "@nestjs/platform-express": "11.2.7",
+    "@nestjs/swagger": "11.4.7",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "@radar/contracts": "workspace:*",
+    "argon2": "0.45.1",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.14.3",
+    "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   }

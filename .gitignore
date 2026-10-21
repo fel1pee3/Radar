@@ -40,6 +40,7 @@ __pycache__/
 *.db
 *.dump
 *.sql
+!apps/api/prisma/migrations/**/*.sql
 *.sql.gz
 *.backup
 *.bak
@@ -49,3 +50,4 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .idea/
+apps/api/src/generated/

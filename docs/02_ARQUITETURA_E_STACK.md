@@ -10,12 +10,14 @@ Três processos de aplicação e um banco: Next.js, NestJS, worker Python e Post
 | --- | --- | --- |
 | Web | `http://127.0.0.1:3000` | Interface, autenticação via cookie, leitura e ações |
 | API | `http://127.0.0.1:3001/v1` | Autorização, domínio, ingestão e armazenamento |
-| PostgreSQL | `127.0.0.1:5432` | Fonte de verdade central |
+| PostgreSQL | `127.0.0.1:15432` | Fonte de verdade central; porta interna do container 5432 |
 | Worker | Sem porta HTTP | Captura e envio de saída à API |
 
 O navegador usa `/api/*`, reescrito pelo Next para `/v1/*` da API. Não misturar `localhost` e `127.0.0.1` na configuração de cookies/origem. Interface e API têm binds de loopback no modo local. O driver de câmera está no worker, não no servidor web.
 
-Na máquina verificada na etapa 00, `POSTGRES_PORT=15432` no `.env` privado evita conflito com o PostgreSQL já instalado em 5432 (D15). A porta interna do container continua 5432. Nenhuma integração da API com o banco foi implementada nesta etapa.
+Na máquina verificada, `POSTGRES_PORT=15432` no `.env` privado evita conflito com o PostgreSQL já instalado em 5432 (D15/D16). O exemplo da etapa 01 também usa 15432. A porta interna do container continua 5432. A API usa Prisma 7.10.1, gerador `prisma-client` com output explícito em `apps/api/src/generated/prisma`, ESM/NodeNext, adapter-pg 7.10.1 e pg 8.23.1. Gerados são ignorados e reproduzidos por `db:generate`/prebuild. Migrações SQL são versionadas, sem `db push`.
+
+O `prisma.config.ts` carrega explicitamente `apps/api/.env`, preservando variáveis já fornecidas ao processo (inclusive no banco de testes). A URL é validada sem imprimir credenciais e a porta 5432 do host é rejeitada. O pool tem máximo 5 conexões, timeout de conexão de 2 s, statement timeout de 3 s e idle timeout de 5 s. O client conecta sob demanda: indisponibilidade do banco não impede liveness; readiness executa consulta real e retorna 503.
 
 Dockerizar a webcam não é requisito. Não presumir que WSL/Docker Desktop exponha o dispositivo. Em Windows, o caminho principal é Python nativo, com permissão do SO. Um computador diferente para inferência será uma implantação futura com TLS e configuração de rede próprias.
 

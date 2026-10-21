@@ -2,6 +2,7 @@ node_modules/
 .local/
 **/.next/
 **/dist/
+apps/api/src/generated/
 **/.venv/
 **/__pycache__/
 **/.ruff_cache/

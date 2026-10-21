@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapa 00 implementada e verificada em 21/10/2026.** Os comandos marcados como 00 abaixo existem. Os demais continuam previstos e não devem ser executados antes da etapa correspondente. Evidências, falhas corrigidas e versões estão no [relatório](RELATORIOS/ETAPA_00.md).
+**Etapas 00 e 01 implementadas em 21/10/2026.** Consulte o [status](STATUS.md) e o [relatório 01](RELATORIOS/ETAPA_01.md) para critérios verificados e pendências de provisionamento. Comandos das etapas seguintes continuam previstos e não devem ser executados antes da etapa correspondente. O [roteiro PowerShell da etapa 01](VALIDACAO_MANUAL_ETAPA_01.md) cobre autenticação e configuração sem imprimir segredos.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -22,7 +22,9 @@ pnpm.cmd infra:status
 
 `pnpm` e `pnpm.cmd` referem-se ao mesmo gerenciador; `.cmd` evita problemas de política de execução do shim PowerShell. O script `activate.ps1` foi executado com sucesso sem mudar a política de execução do Windows. Se o Docker estiver parado, inicie o Docker Desktop e aguarde `docker version` mostrar Client e Server.
 
-`setup:env` cria `.env`, `apps/api/.env` e `apps/web/.env` somente se não existirem. Gera uma senha aleatória de 32 bytes para o banco, não a imprime e nunca sobrescreve configurações existentes. O `.env` desta máquina já usa `POSTGRES_PORT=15432`, pois há outro PostgreSQL em 5432. Em um checkout novo, o exemplo usa 5432; ajuste `POSTGRES_PORT` no `.env` se houver conflito. Nunca edite o exemplo com a senha real. A senha do volume existente não muda ao editar o `.env`: preserve o arquivo privado ou faça a rotação conscientemente, sem apagar o volume.
+`setup:env` cria `.env`, `apps/api/.env` e `apps/web/.env` somente se não existirem. Gera uma senha aleatória de 32 bytes para o banco, sem imprimi-la. Na atualização da 01 complementa apenas valores novos/ausentes de DATABASE_URL, WEB_ORIGIN, NODE_ENV e ALLOW_INSECURE_LOCAL_HTTP da API; preserva valores já preenchidos e credenciais existentes. DATABASE_URL é derivada das credenciais do `.env` raiz com encoding e sem log de seu valor. O exemplo e esta máquina usam `POSTGRES_PORT=15432` (D16), pois há outro PostgreSQL em 5432. Prisma/API rejeitam a porta 5432 do host. Nunca edite o exemplo com senha real. A senha do volume existente não muda ao editar o `.env`: preserve o arquivo privado ou faça a rotação conscientemente, sem apagar o volume.
+
+Depois da preparação, execute `pnpm.cmd db:generate`, `pnpm.cmd db:migrate` e `pnpm.cmd setup:owner`. Migração usa `prisma migrate deploy`, aplicando somente SQL versionado. O proprietário depende de e-mail/senha privados escolhidos pelo fundador; não há senha pública. Para execução não interativa, configure BOOTSTRAP_EMAIL/BOOTSTRAP_PASSWORD no `.env` privado da API e use `pnpm.cmd db:seed`. Repetir preserva senha e dados. Trocar o e-mail não cria silenciosamente outro proprietário no mesmo tenant. Para operador local, use `pnpm.cmd user:create-operator`. O tenant padrão é identificado pelo slug `demo`, configurável por BOOTSTRAP_TENANT_SLUG.
 
 Terminal da API:
 
@@ -38,7 +40,7 @@ Terminal da web:
 pnpm.cmd dev:web
 ```
 
-Abra `http://127.0.0.1:3000`. A página informa que nenhuma fonte de vídeo está em execução. A API não depende do banco nesta etapa: liveness só comprova que o processo responde. Readiness, Prisma 7 e migrações entram na etapa 01.
+Abra `http://127.0.0.1:3000`. A página continua mínima e informa que nenhuma fonte de vídeo está em execução; não há UI de login. Liveness só comprova o processo. A etapa 01 adicionou readiness real (`/v1/health/ready`), Prisma/migrações e autenticação HTTP. O [roteiro manual](VALIDACAO_MANUAL_ETAPA_01.md) demonstra o uso por PowerShell, inclusive pelo proxy da web.
 
 Terminal de validação:
 
@@ -92,7 +94,7 @@ O bootstrap deve gerar `.env.example` sem segredos e orientar cópia local. Vali
 | Variável/conceito | Onde | Observação |
 | --- | --- | --- |
 | `DATABASE_URL` | API/migrações | PostgreSQL local com senha particular |
-| `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | Compose; `.env` raiz | Senha privada obrigatória; porta publicada apenas em `127.0.0.1`; padrão 5432, 15432 nesta máquina |
+| `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | Compose; `.env` raiz | Senha privada obrigatória; porta publicada apenas em `127.0.0.1`; padrão 15432 na etapa 01 |
 | `API_HOST`, `API_PORT` | API | `127.0.0.1`, `3001` |
 | `WEB_ORIGIN` | API | `http://127.0.0.1:3000` |
 | `API_INTERNAL_URL` | Web server | `http://127.0.0.1:3001/v1`; não vazar segredos ao client |
@@ -124,7 +126,10 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `pnpm lint:edge` / `pnpm check:edge` | 00 | Ruff e imports reais de visão, sem modelo/câmera |
 | `pnpm db:generate` / `pnpm db:migrate` | 01 | Gera client e aplica migrações versionadas |
 | `pnpm db:seed` | 01 | Cria dados locais idempotentes sem apagar dados |
-| `pnpm test:api` / `pnpm test:contracts` | 02 | Testes de API/contratos com banco de teste separado |
+| `pnpm setup:owner` / `pnpm user:create-operator` | 01 | Provisionamento local com senha mascarada; sem cadastro público |
+| `pnpm openapi:generate` | 01 | Gera docs/OPENAPI.json a partir dos endpoints/DTOs |
+| `pnpm test:api` | 01 | Integração real em container/banco/volume exclusivos e descartáveis; não limpa o banco da demo |
+| `pnpm test:contracts` | 02 | Testes de contratos entre linguagens |
 | `pnpm demo:simulate` | 03 | Envia evento artificial rotulado, via API autenticada |
 | `pnpm test:e2e` | 03 | Fluxo de navegador em ambiente de teste |
 | `uv run --project services/edge radar-edge doctor` | 04 | Verifica modelo, arquivos e recursos sem expor segredos |

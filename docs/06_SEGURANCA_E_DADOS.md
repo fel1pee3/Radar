@@ -20,6 +20,10 @@ Para mutações com cookie, verificar `Origin` exato da interface; rejeitar orig
 
 Token do worker é aleatório, individual, mostrado uma vez e armazenado em hash na API. Rotação revoga o anterior explicitamente. Guardar no computador em arquivo ignorado pelo Git, com permissões locais adequadas. Não usar token humano como segredo de dispositivo.
 
+Na etapa 01, senhas usam Argon2id (64 MiB, três iterações, paralelismo 1); tokens de sessão/worker usam 32 bytes aleatórios e SHA-256 no banco. São tokens de alta entropia, com namespaces separados. O limitador de login é em memória para a instância local: dez tentativas por e-mail e sessenta por IP em cinco minutos, mapa limitado e sem confiar em X-Forwarded-For. Reiniciar o processo reinicia esse limitador; distribuição entre instâncias está fora da bancada. Login também exige Origin exata para evitar login CSRF, e mensagens de falha não distinguem usuário desconhecido de senha incorreta. O corpo JSON tem limite de 64 KiB e validação rejeita propriedades desconhecidas.
+
+`pnpm.cmd setup:owner` e `pnpm.cmd user:create-operator` solicitam senha local com SecureString; transferem-na ao processo filho via ambiente, sem imprimi-la ou gravá-la em arquivo. As variáveis anteriores são restauradas no finally e o buffer BSTR é limpo; isso não promete eliminação de todas as cópias na memória do runtime. Como alternativa, variáveis no `.env` privado são aceitas. Nunca colocar credenciais no comando literal, no `.env.example` ou no relatório. Os scripts não são recuperação/reset de senha.
+
 ## Isolamento e exposição
 
 Toda consulta a incidente, câmera, evento, imagem e auditoria é filtrada pelo tenant validado. Testes com dois tenants verificam leitura, alteração, referência cruzada e evidência. A existência de `tenantId` na tabela não prova isolamento.

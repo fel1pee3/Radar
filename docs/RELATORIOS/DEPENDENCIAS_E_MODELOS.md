@@ -50,8 +50,38 @@ com os peers publicados `eslint-plugin-react@7.37.5` (`^9.7`) e
 Nenhum peer conflitante foi observado na instalação. Reavaliar quando esses plugins
 suportarem a próxima família; não atualizar major automaticamente.
 
-Prisma 7, adapter-pg, pg e ferramentas de testes de domínio não foram instalados:
-serão selecionados nas etapas que os utilizam. Não há ORM nem migração fictícia na 00.
+Na etapa 00 não houve ORM ou migração. As dependências efetivamente introduzidas
+na etapa 01 estão registradas abaixo; versões da web, Nest, Node, pnpm e Python
+foram preservadas.
+
+### Adições da etapa 01 — 21/10/2026
+
+Licenças declaradas verificadas para as versões concretas no registro do publicador npm.
+
+| Pacote / fonte | Versão | Licença declarada | Uso/decisão |
+| --- | --- | --- | --- |
+| [prisma](https://www.npmjs.com/package/prisma/v/7.10.1), [@prisma/client](https://www.npmjs.com/package/@prisma/client/v/7.10.1), [@prisma/adapter-pg](https://www.npmjs.com/package/@prisma/adapter-pg/v/7.10.1) | 7.10.1 | Apache-2.0 | Mesma versão CLI/client/adapter; aceita Node 24 e TS 5.9; gerador prisma-client/ESM com output explícito; sem adotar 8 RC |
+| [pg](https://www.npmjs.com/package/pg/v/8.23.1) / [@types/pg](https://www.npmjs.com/package/@types/pg/v/8.23.1) | 8.23.1 | MIT | Driver/pool PostgreSQL e tipos, com timeouts explícitos |
+| [argon2](https://www.npmjs.com/package/argon2/v/0.45.1) | 0.45.1 | MIT | Binário nativo carregado no Windows/Node 24; hash/verificação Argon2id reais nos testes |
+| [@nestjs/swagger](https://www.npmjs.com/package/@nestjs/swagger/v/11.4.7) | 11.4.7 | MIT | OpenAPI derivado dos controllers/DTOs, JSON local sem UI extra |
+| [class-validator](https://www.npmjs.com/package/class-validator/v/0.14.3) | 0.14.3 | MIT | Validação fechada de entrada no Nest |
+| [class-transformer](https://www.npmjs.com/package/class-transformer/v/0.5.1) | 0.5.1 | MIT | DTOs e conversão explícita de limite de paginação |
+| [@types/express](https://www.npmjs.com/package/@types/express/v/5.0.6) | 5.0.6 | MIT | Tipos do adapter Express 5 do Nest |
+| [jest](https://www.npmjs.com/package/jest/v/30.5.2) / [@types/jest](https://www.npmjs.com/package/@types/jest/v/30.0.0) | 30.5.2 / 30.0.0 | MIT | Integração ESM, usando VM modules somente no processo de testes |
+| [supertest](https://www.npmjs.com/package/supertest/v/7.3.1) / [@types/supertest](https://www.npmjs.com/package/@types/supertest/v/7.2.1) | 7.3.1 / 7.2.1 | MIT | HTTP real contra API compilada e banco exclusivo |
+
+Referências da integração: [Prisma 7](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7),
+[gerador](https://www.prisma.io/docs/orm/prisma-schema/overview/generators),
+[OpenAPI Nest](https://docs.nestjs.com/openapi/introduction) e
+[node-argon2](https://github.com/ranisalt/node-argon2). O config carrega `.env`
+explicitamente pelas APIs do Node; não foi necessário adicionar dotenv.
+
+Build scripts permitidos foram ampliados somente para Prisma/engines e argon2.
+Os scripts de `@scarf/scarf` (telemetria de instalação) e `@parcel/watcher` ficaram
+bloqueados/não necessários aos comandos verificados, registrados na configuração
+do workspace. Avisos de glob transitivo e VM modules do Jest não foram tratados
+como falhas de execução nem ocultados. Não foi feita auditoria completa de todas
+as dependências transitivas ou uma aprovação de redistribuição comercial.
 
 ## Python: artefatos instalados
 

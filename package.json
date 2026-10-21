@@ -20,7 +20,15 @@
     "build": "pnpm -r build",
     "format": "prettier --write .",
     "lint:edge": "uv run --project services/edge --frozen ruff check services/edge && uv run --project services/edge --frozen ruff format --check services/edge",
-    "check:edge": "uv run --project services/edge --frozen radar-edge env"
+    "check:edge": "uv run --project services/edge --frozen radar-edge env",
+    "db:generate": "pnpm --filter @radar/api db:generate",
+    "db:migrate": "pnpm --filter @radar/api db:migrate",
+    "db:seed": "pnpm --filter @radar/api build && pnpm --filter @radar/api db:seed",
+    "setup:owner": "powershell -NoProfile -File scripts/setup-user.ps1 -Mode owner",
+    "user:create-operator": "powershell -NoProfile -File scripts/setup-user.ps1 -Mode operator",
+    "user:operator-env": "pnpm --filter @radar/api build && pnpm --filter @radar/api user:operator-env",
+    "openapi:generate": "pnpm --filter @radar/api build && pnpm --filter @radar/api openapi:generate",
+    "test:api": "pnpm --filter @radar/api build && node scripts/test-api.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

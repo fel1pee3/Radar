@@ -7,3 +7,11 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - sharp
   - unrs-resolver
+  - '@prisma/engines'
+  - prisma
+  - argon2
+
+# Não necessários aos comandos usados; scarf é telemetria de instalação.
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+  - '@parcel/watcher'

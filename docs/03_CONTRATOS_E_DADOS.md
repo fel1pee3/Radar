@@ -143,9 +143,12 @@ Todos os caminhos abaixo têm prefixo `/v1`. Sessão de usuário e bearer de dev
 | `GET /health/ready` | Local, sem sessão | Dependências prontas; 503 se banco indisponível |
 | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | Login/sessão | Sessão local |
 | `GET /sites`, `POST /sites` | Leitura autenticada; criação OWNER | Local de demonstração |
+| `GET /sites/:id`, `PATCH /sites/:id` | Leitura autenticada; alteração OWNER | Detalhe/nome/timezone; 404 para registro de outro tenant |
 | `GET /cameras`, `POST /cameras`, `PATCH /cameras/:id` | Leitura autenticada; alteração OWNER | Nome, local, tipo e expectativa de execução |
+| `GET /cameras/:id` | Sessão | Detalhe no tenant autenticado |
 | `POST /cameras/:id/device-credentials` | OWNER | Emite/rotaciona token uma vez |
 | `DELETE /device-credentials/:id` | OWNER | Revoga token |
+| `GET /edge/me` | Device | Diagnóstico do tenant/câmera/device da credencial; não ingere eventos |
 | `POST /edge/events`, `POST /edge/heartbeat` | Device | Ingestão e saúde |
 | `GET /incidents`, `GET /incidents/:id` | OWNER/OPERATOR | Lista filtrada e detalhe |
 | `POST /incidents/:id/actions` | OWNER/OPERATOR | Transição/revisão/nota auditada |
@@ -156,6 +159,10 @@ Todos os caminhos abaixo têm prefixo `/v1`. Sessão de usuário e bearer de dev
 | `GET /audit?incidentId=...` | Sessão autorizada | Histórico do incidente, sem segredos |
 
 Listagens usam `limit` padrão 20/máximo 100 e cursor estável `(createdAt,id)`. Filtros de incidentes: status, câmera, modo e intervalo. Nenhum filtro pode mudar o tenant da identidade. API gera OpenAPI a partir da implementação; o schema de eventos compartilhado continua sendo a referência entre linguagens.
+
+Definições concretizadas na etapa 01: `Camera.type = FILE | WEBCAM | RTSP` (alinhado ao `source.kind` do worker); `expectedRunning` booleano, inicialmente false, expressa somente expectativa, sem anunciar captura online. POST/PATCH não aceitam URI, senha de câmera ou `tenantId`. GET de câmera inclui apenas o ID do Device, sem hash ou credencial. Emissão/rotação retorna `{id, deviceId, cameraId, version, createdAt, token}` uma vez; não há leitura posterior do token. Todas as listagens da 01 retornam `{items,nextCursor}` e ordenam por `(createdAt,id)` ascendente. Sessões e detalhes são `Cache-Control: no-store`.
+
+O login usa e-mail globalmente único normalizado em minúsculas (D17), sem tenant no payload. Credenciais humanas e de worker usam espaços de tokens distintos; bearer não substitui cookie humano. O OpenAPI inicial é servido em `/v1/openapi.json` e gerado em `docs/OPENAPI.json` por comando local.
 
 ## Modelo relacional mínimo
 
