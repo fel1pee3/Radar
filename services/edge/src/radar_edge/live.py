@@ -257,7 +257,7 @@ def run_live(config):
                         0, round((source.last_acquired_ns - source.info[12]) / 1e6)
                     ),
                 )
-                features = runtime.process(o) if runtime else None
+                features = runtime.process(o, frame) if runtime else None
                 metrics.add(o)
                 health.observation(o, features)
                 health.update(capture="RUNNING")
@@ -321,7 +321,7 @@ def run_live(config):
         },
         "metrics": metrics.summary(),
         "temporal": temporal,
-        "framesSaved": False,
+        "framesSaved": temporal.get("snapshotCaptures", 0) > 0,
         "network": health.network if health else {},
         "heartbeat": health.snapshot() if health else None,
         "reportPath": str(directory / "report.json"),

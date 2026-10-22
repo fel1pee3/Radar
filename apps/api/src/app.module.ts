@@ -17,11 +17,21 @@ import { IngestController, IngestService } from './ingest.js';
 import { HeartbeatController, HeartbeatService } from './heartbeat.js';
 import { IncidentsController, IncidentService, AuditController } from './incidents.js';
 import { NotificationsController, NotificationExecutor } from './notifications.js';
+import {
+  EvidenceController,
+  SnapshotController,
+  PreferencesController,
+  EvidenceService,
+  RetentionJob,
+} from './evidence.js';
 import { CLOCK, SystemClock, NOTIFICATIONS_ENABLED } from './event-support.js';
 import type { Clock } from './event-support.js';
 
 @Module({
   controllers: [
+    EvidenceController,
+    SnapshotController,
+    PreferencesController,
     HealthController,
     IdentityController,
     SitesController,
@@ -35,6 +45,8 @@ import type { Clock } from './event-support.js';
     NotificationsController,
   ],
   providers: [
+    EvidenceService,
+    RetentionJob,
     Database,
     HumanGuard,
     OwnerGuard,

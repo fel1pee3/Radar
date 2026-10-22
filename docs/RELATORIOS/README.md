@@ -18,6 +18,11 @@ pausa/retomada/encerramento conferidos pelo fundador e recuperação controlada.
 Concluída para bancada em 22/10, com falso esqueleto de estante, fluidez e
 evento LIVE positivo ainda tratados como limites da validação final do MVP.
 
+A [etapa 07](ETAPA_07.md) registra JPEG sintético opcional, acesso/exclusão auditados,
+retencão e proteção com relógio controlado e recursos exclusivos. Concluída sem
+habilitar JPEG real, agendamento de limpeza ou purga pessoal. Limitações de
+percepção da 06 continuam para a validação final da 08.
+
 ## Modelo de relatório de etapa
 
 Copiar a estrutura abaixo e preencher com fatos. Não deixar “passou” sem dizer o que foi executado.

@@ -93,7 +93,8 @@ class DeliveryConfig(StrictModel):
 class EventsConfig(StrictModel):
     enabled: bool = False
     outboxPath: str = ".local/edge/outbox.sqlite"
-    evidenceMode: Literal["none", "skeleton"] = "skeleton"
+    evidenceMode: Literal["none", "skeleton", "snapshot"] = "skeleton"
+    snapshotAuthorized: bool = False
     policy: dict = Field(default_factory=dict)
     delivery: DeliveryConfig = Field(default_factory=DeliveryConfig)
 

@@ -60,6 +60,16 @@ Manter aqui decisões novas com data, problema, alternativas consideradas, escol
 | D37 | Limites efetivos e limpeza restrita da outbox na 06 | 21/10/2026: defaults 10.000 itens, 100 MiB incluindo WAL/SHM, reserva de 64 KiB antes de inferir, timeout 5 s e backoff 1–30 s com jitter. Retry-After limitado a 300 s. Purga só de payloads DELIVERED com mais de sete dias e episódio fechado/resetado; chaves e estado técnico preservados. Pendentes/permanentes não são removidos. Não antecipa retenção global/snapshots da 07. |
 | D38 | Credencial local por clipboard explicitamente solicitado | 21/10/2026: colagem em Read-Host oculto confundiu o fundador; copiar o comando também substituía o token no clipboard. `setup-worker.ps1 -FromClipboard` espera token válido por até dois minutos após iniciar, sem colar/Enter; somente lê o clipboard quando o fundador invoca essa opção. Saída sem segredo, arquivo só dentro de .local e destino existente preservado. Não cria conta, não rotaciona credencial e não altera cadastro automaticamente. |
 
+## Decisões da etapa 07 — 22/10/2026
+
+| ID | Decisão | Motivo e consequência |
+| --- | --- | --- |
+| D39 | Modo de evidência opcional no envelope e consentimento OWNER por câmera | Legacy skeleton preserva envelopes/hash antigos. Snapshot exige escolha/autorização na API e flag local separada; sem autorização, metadados continuam aceitos e imagem fica desabilitada. Nenhum vídeo/webcam do fundador foi habilitado para JPEG. |
+| D40 | Hash original, imagem normalizada e slot único originário | SHA-256 dos bytes de entrada torna reenvio idempotente; Sharp 0.35.5 valida/reencodifica sem EXIF. Outra chave do episódio não substitui imagem. Deleção/expiração deixa marcador durável; leitura nunca é pública nem cacheável. |
+| D41 | Filesystem privado serializado e reconciliação durável | Escrita exclusiva/fsync antes de commit; falha deixa órfão reconciliável. Marcador antes de unlink impede ressurreição. Ausência física inesperada é 503; somente reenvio idêntico ainda autorizado pode reparar arquivo ausente sem renovar expiração. |
+| D42 | JPEG pontual em BLOB SQLite, sem arquivo por frame | Até 100 imagens/20 MiB e teto global da outbox. Evento/checkpoint/imagem atômicos, instante igual ao da emissão; upload após ACK do evento. BLOB removido após ACK de imagem ou 24 h; falha de imagem não apaga evento. Formato SQLite v2 aditivo. |
+| D43 | Redação de todas as cópias e opt-in operacional para dados existentes | Poses/recibos detalhados 7 dias, imagens 24 h, metadados 30 dias só com preferência OWNER, recibos mínimos 90 dias. Agendamento API default false para não purgar dados existentes automaticamente; comando explícito e job habilitado verificados em isolamento. Supera a exceção de D37 para payload confirmado de episódio ativo: pode expirar em 7 dias porque o checkpoint guarda apenas estado, não pose. Pendentes permanecem imutáveis/limitados. |
+
 ## O que permanece do dossiê
 
 O caso de uso assistivo, o processamento local, o reconhecimento de concorrentes, o fluxo humano, a necessidade de medir falsos alertas e a evolução por evidências. O pacote atual define uma bancada mais acessível para começar; não apaga os requisitos de um futuro serviço real.

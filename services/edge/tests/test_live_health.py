@@ -89,7 +89,10 @@ def test_capacity_stops_before_event_and_preserves_pending_and_prune_active(tmp_
         r.store.db.execute("UPDATE outbox SET delivered_at='2000-01-01T00:00:00.000Z'")
         r.store.db.commit()
         r.store.prune_confirmed()
-        assert r.store.summary() == {"DELIVERED": 1}  # Active episode cannot lose its payload.
+        assert (
+            r.store.summary() == {}
+        )  # Confirmed visual payload expires; active checkpoint survives.
+        assert r.engine.state == "ACTIVE"
         r.store.reset("synthetic_closed")
         r.store.prune_confirmed()
         assert r.store.summary() == {}

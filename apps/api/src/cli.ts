@@ -8,6 +8,16 @@ import { createApplication } from './application.js';
 
 async function main(): Promise<void> {
   const command = process.argv[2];
+  if (command === 'retention') {
+    const { EvidenceService } = await import('./evidence.js');
+    const { app } = await createApplication(undefined, false);
+    try {
+      console.log(JSON.stringify(await app.get(EvidenceService).retain()));
+    } finally {
+      await app.close();
+    }
+    return;
+  }
   if (command === 'openapi') {
     const { app, document } = await createApplication(undefined, false);
     try {

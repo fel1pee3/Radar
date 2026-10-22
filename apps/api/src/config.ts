@@ -29,9 +29,16 @@ export interface Settings {
   port: number;
   webOrigin: string;
   secureCookie: boolean;
+  localDataDir?: string;
+  retentionEnabled?: boolean;
 }
 
 export function readSettings(env: NodeJS.ProcessEnv = process.env): Settings {
+  if (
+    env.RETENTION_JOBS_ENABLED !== undefined &&
+    !['true', 'false'].includes(env.RETENTION_JOBS_ENABLED)
+  )
+    throw new ConfigurationError('RETENTION_JOBS_ENABLED deve ser true ou false.');
   const host = env.API_HOST ?? '127.0.0.1';
   const port = env.API_PORT ?? '3001';
   if (host !== '127.0.0.1') throw new ConfigurationError('API_HOST deve ser 127.0.0.1.');
@@ -64,6 +71,8 @@ export function readSettings(env: NodeJS.ProcessEnv = process.env): Settings {
     );
   }
   return {
+    localDataDir: env.LOCAL_DATA_DIR,
+    retentionEnabled: env.RETENTION_JOBS_ENABLED === 'true',
     host,
     port: Number(port),
     webOrigin: origin.origin,

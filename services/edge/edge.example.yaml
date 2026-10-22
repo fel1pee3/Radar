@@ -36,6 +36,8 @@ events:
   enabled: false
   outboxPath: .local/edge/outbox.sqlite
   evidenceMode: skeleton
+  # Snapshot real exige escolha OWNER na API e autorização local separada.
+  snapshotAuthorized: false
   # Defaults centralizados floor-v0.1. Alterar parâmetros exige outra version.
   policy: {}
   delivery:

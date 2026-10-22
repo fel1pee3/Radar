@@ -102,10 +102,11 @@ afterAll(async () => {
 test('migração real em banco vazio cria tabelas, índices e registro de migração', async () => {
   const migrations =
     await database.$queryRaw`SELECT migration_name, finished_at FROM "_prisma_migrations"`;
-  expect(migrations).toHaveLength(2);
+  expect(migrations).toHaveLength(3);
   expect(migrations.map((migration) => migration.migration_name).sort()).toEqual([
     '20261021000100_initial_access',
     '20261021000200_events_incidents',
+    '20261022000100_evidence_retention',
   ]);
   for (const migration of migrations) expect(migration.finished_at).not.toBeNull();
   const tables =

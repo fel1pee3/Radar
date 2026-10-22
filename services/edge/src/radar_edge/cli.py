@@ -65,6 +65,10 @@ def main() -> None:
     probe.add_argument("--config", required=True)
     probe.add_argument("--seconds", type=float, default=5.0)
     probe.add_argument("--preview", action="store_true")
+    evidence_status = commands.add_parser(
+        "evidence-status", help="Confere modo sem abrir fonte ou banco."
+    )
+    evidence_status.add_argument("--config", required=True)
     control = commands.add_parser("control", help="Pausa, retoma ou encerra o worker local.")
     control.add_argument("--config", required=True)
     control.add_argument(
@@ -82,7 +86,7 @@ def main() -> None:
     )
     evaluate.add_argument("--manifest", required=True)
     evaluate.add_argument("--replay-speed", type=float, default=0.0)
-    for name in ("reset-episode", "deliver", "outbox-status"):
+    for name in ("reset-episode", "deliver", "outbox-status", "cleanup"):
         command = commands.add_parser(name)
         command.add_argument("--config", default=".local/edge.yaml")
         if name == "reset-episode":
@@ -134,6 +138,23 @@ def main() -> None:
             if config.source.kind != "WEBCAM" or not 1 <= args.seconds <= 60:
                 raise EdgeError("INVALID_ARGUMENT", "Probe exige WEBCAM e 1–60 segundos.")
             result = probe(config, args.seconds, args.preview)
+        elif args.command == "evidence-status":
+            import os
+
+            from radar_edge.config import load_config
+
+            config = load_config(args.config)
+            mode = os.environ.get("EVIDENCE_MODE", config.events.evidenceMode)
+            if mode not in {"none", "skeleton", "snapshot"}:
+                raise EdgeError("INVALID_EVIDENCE_MODE", "Modo de evidencia invalido.")
+            result = {
+                "status": "ok",
+                "mode": mode,
+                "jpegEnabled": mode == "snapshot",
+                "snapshotAuthorized": config.events.snapshotAuthorized,
+                "sourceOpened": False,
+                "databaseOpened": False,
+            }
         elif args.command == "control":
             from radar_edge.config import load_config
             from radar_edge.live import send_control
@@ -144,7 +165,7 @@ def main() -> None:
             from radar_edge.pipeline import doctor, run_pipeline
 
             config = load_config(args.config)
-            if args.command in {"reset-episode", "deliver", "outbox-status"}:
+            if args.command in {"reset-episode", "deliver", "outbox-status", "cleanup"}:
                 from radar_edge.event_runtime import manage_outbox
 
                 result = manage_outbox(

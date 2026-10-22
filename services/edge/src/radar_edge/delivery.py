@@ -144,4 +144,7 @@ class Delivery:
             self.store.update_delivery(row["event_id"], status, attempts, now + delay, error, ack)
             if status == "AUTH_BLOCKED":
                 break
+        from radar_edge.evidence import flush_snapshots
+
+        flush_snapshots(self, resume_auth, limit)
         return self.store.summary()

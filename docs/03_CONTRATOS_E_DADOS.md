@@ -230,3 +230,39 @@ reenviar a mesma tentativa; 409 recarrega o estado e exige conferir/preparar out
 intenção. Polling não reescreve notas nem confirma transição automaticamente.
 Rascunhos e tentativas ficam em memória: sobreviver à expiração com a mesma conta
 não equivale a persistência offline, que continua fora desta etapa.
+
+
+## Evidências implementadas na etapa 07
+
+`event-v1` aceita `evidenceMode?: none | skeleton | snapshot`. Ausência preserva
+legacy skeleton e não altera envelopes anteriores. none gera pose vazia; o
+backend também aplica preferência none da câmera a incidente e recibos, mantendo
+hash original para idempotência. Preferência snapshot exige autorização OWNER
+registrada antes de receber o evento, além da escolha local do worker. Sem ela,
+metadados são aceitos como skeleton e o JPEG permanece desabilitado.
+
+`POST /edge/events/:eventId/snapshot` recebe bytes binários, no máximo 2 MiB,
+JPEG decodificável, maior lado 1280, até 1.638.400 pixels. Retorna 201
+`{eventId,incidentId,hash,duplicate}`; hash é SHA-256 original e duplicate=true no
+reenvio idêntico. 409 para substituição/outra chave do mesmo episódio; 410 para
+marcador excluído/expirado; 403 se desabilitado/sem autorização; 404 fora do device.
+ACK de imagem é distinto do ACK do evento e não muda classe/horários/estado humano.
+
+`GET /incidents/:id` inclui `evidenceMode`, `poseRedactedAt` e
+`snapshot: {mode,state,expiresAt}`. Estado DISABLED, AWAITING, AVAILABLE, DELETED ou
+EXPIRED; AWAITING significa ausente ou pendente, sem inventar saúde da fila remota.
+`GET /incidents/:id/snapshot` autenticado/no-store retorna JPEG, 404 quando
+não disponível, 410 removido/expirado e 503 para falha temporária de disco/leitura.
+`DELETE` exige OWNER/Origin, é idempotente, audita e não altera versão/estado humano.
+O painel não usa URL pública, otimizador de imagem ou armazenamento local durável.
+
+Preferências: `PATCH /cameras/:id/evidence-preference {mode,authorized}` e
+`GET/PATCH /retention-preference` (`{enabled}` na escrita), com OWNER/Origin em
+mutações. Preferência none continua valendo para novos recibos do mesmo incidente
+mesmo depois de outra escolha na câmera. Recibos redigidos mantêm payloadHash;
+novas chaves equivalentes de episódio redigido não repõem pose. Após purga do
+incidente, o recibo mínimo tem incidentId=null/expiredAt e responde EVENT_EXPIRED;
+outra chave do episódio também não o recria durante os 90 dias retidos.
+
+Prazos/ativação e cópias: [segurança](06_SEGURANCA_E_DADOS.md). Comandos e exemplos:
+[roteiro 07](VALIDACAO_MANUAL_ETAPA_07.md).

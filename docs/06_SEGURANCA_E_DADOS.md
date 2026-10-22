@@ -76,3 +76,111 @@ Logs técnicos usam IDs correlacionáveis e códigos de erro. Não imprimir head
 ## Antes de sair da bancada
 
 Reavaliar uso pretendido e alegações do produto, base de tratamento dos dados, responsabilidades de atendimento, aceite dos participantes, requisitos da LGPD e eventual enquadramento sanitário. Uso real precisa de responsável e processo de resposta. Não tratar “MVP” ou “bem-estar” como dispensa automática. Isso é um gate do piloto com terceiros; não altera a decisão de construir a demonstração agora.
+
+
+## Operação implementada na etapa 07 — 22/10/2026
+
+O envelope aceita `evidenceMode` opcional (legacy = skeleton); não se altera um
+envelope já persistido. A preferência de câmera é uma barreira adicional: none
+suprime pontos em incidente/recibo; snapshot sem autorização OWNER vigente no
+recebimento é reduzido a skeleton, sem impedir o incidente. Upload exige a chave
+originária do incidente. Outra chave deduplicada do mesmo episódio recebe 409.
+
+`PATCH /cameras/:id/evidence-preference` recebe `{mode,authorized}` e exige OWNER,
+Origin e confirmação explícita para snapshot. Preferência/autorização são auditadas.
+`PATCH /retention-preference` recebe `{enabled}` e controla somente purga de 30 dias
+por tenant; também exige OWNER/Origin e gera auditoria. Não foi habilitada no tenant
+existente. `GET /retention-preference` permite ao OWNER conferir o estado.
+
+### Imagem, armazenamento e falhas
+
+Upload é corpo binário, sem multipart/caminho/nome do cliente. Limite HTTP de
+2.097.152 bytes, compressão HTTP desabilitada e dois decodificadores simultâneos
+(o excedente recebe 429). Somente JPEG real; maior lado 1280 e teto explícito de
+1.638.400 pixels; decodificação estrita e timeout de processamento de 3 s. Sharp
+0.35.5 reencodifica em JPEG/sRGB sem manter EXIF/XMP/ICC do original. Hash de upload
+é SHA-256 dos **bytes originais**; o hash do JPEG normalizado também é guardado.
+Repetição idêntica responde `{eventId,incidentId,hash,duplicate:true}` (HTTP 201,
+compatível com a resposta inicial); conteúdo diferente dá 409. A expiração não
+é renovada por reenvio. Um arquivo ausente pode ser reparado apenas pelo mesmo
+conteúdo original ainda autorizado/não expirado; nunca por outro frame.
+
+Diretório default `.local/api-evidence`, resolvido na raiz do repositório mesmo
+quando a API roda em apps/api. `LOCAL_DATA_DIR` pode selecionar outro subdiretório
+privado do repositório. Nomes UUID opacos, escrita exclusiva/fsync, sem rota estática
+ou URL pública. Paths fora de .local e links simbólicos nos ancestrais são recusados.
+Teto local: 1000 arquivos e 128 MiB. O serviço é uma instância de bancada, com lock
+transacional PostgreSQL para serializar upload/leitura/exclusão/reconciliação.
+
+Escrita ocorre sob lock antes do commit dos metadados; commit interrompido deixa
+arquivo órfão, removido pela reconciliação. Não há arquivo temporário com nome do
+cliente. Exclusão/expiração grava marcador antes de unlink; falha de filesystem
+retorna diagnóstico e deixa trabalho repetível. Leitura verifica prazo, hash e
+arquivo sob o mesmo lock; bytes expirados não são servidos mesmo se a rotina falhar.
+Estado AVAILABLE com arquivo ausente/corrompido retorna 503, e não 404.
+O painel revoga a URL blob no prazo informado mesmo se o polling ficar indisponível,
+além de revogá-la na saída da sessão, exclusão ou desmontagem da tela. Marcadores
+DELETED/EXPIRED impedem que uma entrega atrasada restaure os bytes.
+
+### Mapa de cópias e limpeza
+
+| Cópia | Conteúdo e política aplicada |
+| --- | --- |
+| Frame/pose corrente | Memória de captura/inferência; sem fila de frames ou gravação contínua |
+| Incident.pose | Pontos de um evento; rotina redige em 7 dias do receivedAt e grava poseRedactedAt |
+| EventReceipt.payload | Envelope detalhado redigível; rotina remove em 7 dias do recebimento, conserva payloadHash/eventId/episodeId/receivedAt/classe |
+| Novo recibo de episódio já redigido | Não repõe pose; compara hash original e grava somente envelope sem pontos |
+| Evidence | Referência/hash e marcador; JPEG expira 24 h do primeiro upload aceito; slot sem upload expira 24 h do incidente |
+| Arquivo JPEG API | Diretório privado; unlink após marcador; órfãos removidos sob lock |
+| SQLite outbox | Envelope pendente imutável; confirmado removido aos 7 dias, inclusive em episódio ativo; estado do episódio permanece sem pontos |
+| SQLite snapshots | BLOB pontual na mesma transação do evento; até 100 imagens / 20 MiB, além do teto global da outbox; expira até 24 h da criação, inclusive permanente/auth bloqueada; ACK válido remove BLOB |
+| SQLite WAL/SHM | secure_delete e checkpoint TRUNCATE, também em limpeza; leitor concorrente pode adiar truncamento, repetido após liberação/fechamento |
+| Diagnósticos Python | Exportação opt-in body-only; none remove pontos também do JSONL; limpeza de observations.jsonl/report.json conhecidos em diretórios UUID, 7 dias e teto conjunto 20 MiB |
+| Logs API | Somente fatos técnicos controlados, sem copiar strings de bibliotecas/headers/payload; segmentos até 1 MiB, teto total 10 MiB e 7 dias, limpeza ao escrever/reiniciar |
+| Metadados/auditoria API | Purga aos 30 dias somente com preferência OWNER habilitada; remove relações e mantém recibo mínimo com incidentId=null/expiredAt |
+| Recibos mínimos | Retidos no mínimo até 90 dias; purgados após esse prazo quando o incidente já foi purgado; impedem recriação por chave/episódio enquanto retidos |
+| CameraRun | Chaves aposentadas por 90 dias; lease atual preservado |
+| Vídeos fonte/modelos/calibrações | Não são copiados por esta etapa; limpeza de diagnóstico não os remove |
+
+Pendentes de metadados não são apagados/redigidos para cumprir prazo: poderiam
+conflitar com o payload cujo ACK se perdeu. Permanecem limitados pela outbox, com
+erro visível quando não entregáveis; é exceção operacional explícita à retenção
+visual até entrega/resolução local. Encerrar episódio não elimina essa pendência.
+Nenhuma limpeza promete apagamento forense do disco, SSD ou cópias externas.
+Saída de terminal e logs redirecionados pelo operador ficam sob sua gestão; não
+são silenciosamente varridos pela aplicação.
+
+### Habilitar a rotina
+
+`RETENTION_JOBS_ENABLED=false` é o default de migração operacional: preserva os dados
+existentes sem executar uma purga retroativa. O `.env` do fundador não foi alterado.
+Com true, `RetentionJob` roda na inicialização e a cada 60 s, sem sobreposição;
+`pnpm.cmd retention:run` executa uma rodada explícita. Ambos usam a mesma rotina e
+mantêm tarefas/estados recuperáveis no banco. Sem agendamento ou rodada manual,
+não alegar que bytes/pontos foram apagados automaticamente. JPEG expirado continua
+bloqueado na leitura. A preferência de metadados de 30 dias é separada e default false.
+No worker ativo com entrega habilitada, a limpeza conhecida roda a cada 60 s;
+com worker parado use `radar-edge cleanup`. Não varre outras outboxes ou vídeos.
+
+### Backup privado e restauração
+
+Não há backup automático nem cópia de mídia implementados. Se o operador fizer
+backup da bancada, o conjunto padrão é somente banco/configuração privada, excluindo
+`.local/api-evidence`, vídeos, modelos, screenshots e diagnósticos visuais. O dump
+continua sensível (inclusive contas e poses ainda retidas): guardar fora do Git,
+com acesso local restrito e prazo de 7 dias; remover manualmente a cópia após esse
+prazo. Não afirmar exclusão de backup externo, sincronizado ou já exportado.
+
+Restaure primeiro num banco e diretório exclusivos, sem servir tráfego. Não copie
+mídia automaticamente. Como o backup padrão não inclui JPEG, marque todos os slots
+restaurados EXPIRED (preserve DELETED), apague referências objectKey e bytes, mantenha
+hashes/chaves e registre a operação técnica. Isso impede reenviar/restaurar imagens
+que a cópia não contém. Execute a rotina de retenção **no banco restaurado** antes
+de abrir a interface: timestamps originais governam poses/recibos expirados. Não
+substitua esses horários pela data do restore. Valide login, ausência de mídia,
+deduplicação e metadados no ambiente exclusivo antes de qualquer troca de banco.
+Esta etapa não criou/restaurou um backup dos dados pessoais do fundador.
+
+Reprodução: [roteiro 07](VALIDACAO_MANUAL_ETAPA_07.md). Decodificação/metadata:
+[Sharp constructor](https://sharp.pixelplumbing.com/api-constructor/) e
+[Sharp output](https://sharp.pixelplumbing.com/api-output/).

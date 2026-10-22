@@ -33,6 +33,8 @@ events:
   enabled: true
   outboxPath: .local/edge-webcam/outbox.sqlite
   evidenceMode: skeleton
+  # Snapshot real exige escolha OWNER na API e autorização local separada.
+  snapshotAuthorized: false
   policy: {}
   delivery:
     # Habilite depois de preparar e conferir a credencial privada.

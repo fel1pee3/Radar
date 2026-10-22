@@ -26,11 +26,21 @@ export class SafeExceptionFilter implements ExceptionFilter {
       typeof error === 'object' &&
       error !== null &&
       'status' in error &&
-      (error.status === 400 || error.status === 413)
+      (error.status === 400 || error.status === 413 || error.status === 415)
     ) {
       status = error.status;
-      code = status === 413 ? 'PAYLOAD_TOO_LARGE' : 'INVALID_JSON';
-      message = status === 413 ? 'Corpo da requisição excede 64 KiB.' : 'JSON inválido.';
+      code =
+        status === 413
+          ? 'PAYLOAD_TOO_LARGE'
+          : status === 415
+            ? 'UNSUPPORTED_ENCODING'
+            : 'INVALID_JSON';
+      message =
+        status === 413
+          ? 'Corpo excede o limite permitido para esta rota.'
+          : status === 415
+            ? 'Codificação de corpo não permitida.'
+            : 'JSON inválido.';
     } else if (typeof error === 'object' && error !== null && 'code' in error) {
       if (error.code === 'P2002') {
         status = 409;

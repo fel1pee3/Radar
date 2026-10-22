@@ -34,7 +34,9 @@
     "demo:simulate": "node scripts/demo/simulate.mjs",
     "test:demo": "node --test scripts/demo/*.test.mjs",
     "test:e2e": "pnpm --filter @radar/api build && node tests/e2e/run.mjs",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "demo:evidence": "pnpm test:e2e --grep \"evidência JPEG sintética\" --project desktop",
+    "retention:run": "pnpm --filter @radar/api retention:run"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

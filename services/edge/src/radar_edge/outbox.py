@@ -4,7 +4,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from radar_edge.config import private_path
@@ -67,7 +67,8 @@ class Outbox:
             self.db.execute("PRAGMA foreign_keys=ON")
             self.db.execute("PRAGMA journal_mode=WAL")
             self.db.execute("PRAGMA synchronous=FULL")
-            if self.db.execute("PRAGMA user_version").fetchone()[0] not in {0, 1}:
+            self.db.execute("PRAGMA secure_delete=ON")
+            if self.db.execute("PRAGMA user_version").fetchone()[0] not in {0, 1, 2}:
                 raise EdgeError(
                     "OUTBOX_SCHEMA_UNSUPPORTED",
                     "Versão SQLite não suportada; preserve a outbox e confira a versão do worker.",
@@ -97,12 +98,18 @@ class Outbox:
                     WHERE state='ACTIVE';
                 CREATE TRIGGER IF NOT EXISTS immutable_payload BEFORE UPDATE OF payload ON outbox
                     BEGIN SELECT RAISE(ABORT, 'immutable payload'); END;
+                CREATE TABLE IF NOT EXISTS snapshots (
+                    event_id TEXT PRIMARY KEY REFERENCES episodes(event_id),
+                    jpeg BLOB, hash TEXT, created_at TEXT NOT NULL, expires_at TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'PENDING', attempts INTEGER NOT NULL DEFAULT 0,
+                    next_attempt REAL NOT NULL DEFAULT 0, error_code TEXT
+                );
                 CREATE TABLE IF NOT EXISTS resets (
                     id TEXT PRIMARY KEY, camera_id TEXT NOT NULL, run_id TEXT,
                     reason TEXT NOT NULL, created_at TEXT NOT NULL
                 );
             """)
-            self.db.execute("PRAGMA user_version=1")
+            self.db.execute("PRAGMA user_version=2")
             self.db.commit()
             cameras = {r[0] for r in self.db.execute("SELECT DISTINCT camera_id FROM executions")}
             if cameras and cameras != {self.camera_id}:
@@ -146,16 +153,36 @@ class Outbox:
             )
         return {"items": count, "bytes": size, "maxItems": max_items, "maxBytes": max_bytes}
 
-    def prune_confirmed(self, retention_days=7):
-        # Only payloads already acknowledged AND episodes no longer active.
+    def prune_confirmed(self, retention_days=7, now=None):
+        # The active episode restores from executions.engine, never the confirmed payload.
+        now = now or datetime.now(UTC)
+        cutoff = (
+            (now - timedelta(days=retention_days))
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z")
+        )
+        current = now.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         with self.transaction():
             self.db.execute(
-                """DELETE FROM outbox WHERE status='DELIVERED'
-                AND delivered_at < strftime('%Y-%m-%dT%H:%M:%fZ','now',?)
-                AND event_id IN (SELECT event_id FROM episodes WHERE state IN ('CLOSED','RESET'))
-            """,
-                (f"-{retention_days} days",),
+                "UPDATE snapshots SET "
+                "jpeg=NULL,status='EXPIRED',error_code='SNAPSHOT_EXPIRED' WHERE jpeg IS NOT "
+                "NULL AND expires_at<=?",
+                (current,),
             )
+            self.db.execute(
+                "DELETE FROM outbox WHERE status='DELIVERED' AND delivered_at<=?", (cutoff,)
+            )
+        # secure_delete + checkpoint also removes confirmed/expired data from WAL when possible.
+        self.db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+    def snapshot_summary(self):
+        return [
+            dict(r)
+            for r in self.db.execute(
+                "SELECT event_id,status,attempts,error_code,LENGTH(jpeg) AS bytes FROM "
+                "snapshots ORDER BY rowid DESC LIMIT 100"
+            )
+        ]
 
     def execution(self, fingerprint):
         row = self.db.execute(
@@ -180,7 +207,16 @@ class Outbox:
             self.db.execute("SELECT * FROM executions WHERE run_id=?", (run_id,)).fetchone()
         ), False
 
-    def checkpoint(self, run_id, observation, engine, event=None, closed=False):
+    def checkpoint(
+        self,
+        run_id,
+        observation,
+        engine,
+        event=None,
+        closed=False,
+        snapshot=None,
+        snapshot_error=None,
+    ):
         # Episode creation + event + checkpoint must commit together before any HTTP.
         with self.transaction():
             if event:
@@ -192,6 +228,31 @@ class Outbox:
                     "INSERT INTO outbox(event_id,payload,created_at) VALUES(?,?,?)",
                     (event["eventId"], encode(event), utc_now()),
                 )
+                if event.get("evidenceMode") == "snapshot":
+                    count, size = self.db.execute(
+                        "SELECT COUNT(jpeg),COALESCE(SUM(LENGTH(jpeg)),0) FROM snapshots"
+                    ).fetchone()
+                    if count >= 100 or size + len(snapshot or b"") > 20 * 1024 * 1024:
+                        snapshot, snapshot_error = None, "SNAPSHOT_STORAGE_FULL"
+                    import hashlib
+
+                    created = datetime.now(UTC)
+                    self.db.execute(
+                        "INSERT INTO "
+                        "snapshots(event_id,jpeg,hash,created_at,expires_at,status,error_code) "
+                        "VALUES(?,?,?,?,?,?,?)",
+                        (
+                            event["eventId"],
+                            snapshot,
+                            hashlib.sha256(snapshot).hexdigest() if snapshot else None,
+                            created.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+                            (created + timedelta(days=1))
+                            .isoformat(timespec="milliseconds")
+                            .replace("+00:00", "Z"),
+                            "PENDING" if snapshot else "PERMANENT_ERROR",
+                            snapshot_error,
+                        ),
+                    )
             if closed:
                 self.db.execute(
                     "UPDATE episodes SET state='CLOSED',closed_at=? "

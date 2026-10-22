@@ -36,4 +36,5 @@ export type EventV1 = {
     policy: string;
     calibration: string;
   };
+  evidenceMode?: 'none' | 'skeleton' | 'snapshot';
 };

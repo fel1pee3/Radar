@@ -10,6 +10,7 @@ import { usePolling } from '../lib/polling';
 import { useSession } from './session';
 import { useCatalog } from './views';
 import { Badge, ResourceState, Stamp, Title, label } from './ui';
+import { Snapshot } from './evidence';
 import { Pose } from './pose';
 const reviews: Review[] = [
   'UNREVIEWED',
@@ -78,9 +79,23 @@ export function IncidentDetail({ id }: { id: string }) {
               <section className="panel">
                 <div className="section-title">
                   <h2>Evidência corporal</h2>
-                  <span className="fine">Sem snapshot</span>
+                  <span className="fine">Evidência mínima</span>
                 </div>
-                <Pose points={incident.pose} mode={incident.mode} />
+                {incident.evidenceMode === 'none' ? (
+                  <p>Evidência corporal desabilitada.</p>
+                ) : incident.poseRedactedAt ? (
+                  <p>Pose expirada pela política de retenção.</p>
+                ) : (
+                  <Pose points={incident.pose} mode={incident.mode} />
+                )}
+                <Snapshot
+                  key={incident.id}
+                  incident={incident}
+                  onChange={() => {
+                    resource.refresh();
+                    audit.refresh();
+                  }}
+                />
                 <h2>Sinais do evento</h2>
                 {incident.signals ? (
                   <dl className="data-list">

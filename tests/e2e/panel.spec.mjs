@@ -612,3 +612,84 @@ test('polling pausa/retoma sem sobreposição; filtros, paginação e layout per
   await expect(page.locator('.source-card')).toHaveCount(1);
   await page.screenshot({ path: info.outputPath('visao-geral.png'), fullPage: true });
 });
+
+test('evidência JPEG sintética: leitura, falha transitória, permissões e exclusão auditada', async ({
+  page,
+  request,
+  fixture,
+}) => {
+  const { syntheticJpeg } = await import('../../apps/api/test/synthetic-jpeg.mjs');
+  const pref = await request.patch(`${apiUrl}/cameras/${fixture.camera.id}/evidence-preference`, {
+    headers: fixture.headers,
+    data: { mode: 'snapshot', authorized: true },
+  });
+  expect(pref.status()).toBe(200);
+  const published = await fixture.publish({ evidenceMode: 'snapshot' });
+  await login(page, fixture);
+  await page.goto(`/incidentes/${published.incidentId}`);
+  await expect(
+    page.getByText('Imagem ausente ou aguardando envio do worker.', { exact: true }),
+  ).toBeVisible();
+  const uploaded = await request.post(`${apiUrl}/edge/events/${published.eventId}/snapshot`, {
+    headers: { Authorization: `Bearer ${fixture.credential.token}`, 'Content-Type': 'image/jpeg' },
+    data: await syntheticJpeg(),
+  });
+  expect(uploaded.status()).toBe(201);
+  await expect(page.getByText('Imagem disponível.', { exact: true })).toBeVisible();
+  await page.route(`**/api/incidents/${published.incidentId}/snapshot`, (route) =>
+    route.fulfill({ status: 503, body: '{}' }),
+  );
+  await page.getByRole('button', { name: 'Abrir imagem', exact: true }).click();
+  await expect(page.getByText(/Leitura temporariamente indisponível/)).toBeVisible();
+  await page.unroute(`**/api/incidents/${published.incidentId}/snapshot`);
+  await page.getByRole('button', { name: 'Abrir imagem', exact: true }).click();
+  await expect(page.getByAltText('Evidência pontual do evento')).toBeVisible();
+  await mkdir('.local/etapa07/screenshots', { recursive: true });
+  await page.screenshot({
+    path: `.local/etapa07/screenshots/${test.info().project.name}-snapshot.png`,
+    fullPage: true,
+  });
+  // A controlled short client deadline also revokes a loaded blob if polling is offline.
+  await page.route(`**/api/incidents/${published.incidentId}`, async (route) => {
+    const response = await route.fetch();
+    const data = await response.json();
+    await route.fulfill({
+      response,
+      json: {
+        ...data,
+        snapshot: { ...data.snapshot, expiresAt: new Date(Date.now() + 2500).toISOString() },
+      },
+    });
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Abrir imagem', exact: true }).click();
+  await expect(page.getByAltText('Evidência pontual do evento')).toBeVisible();
+  await page.route('**/api/incidents/*', (route) => route.abort());
+  await expect(page.getByText('Imagem expirada.', { exact: true })).toBeVisible({ timeout: 6000 });
+  await expect(page.getByAltText('Evidência pontual do evento')).toHaveCount(0);
+  await page.unrouteAll({ behavior: 'wait' });
+  await page.getByRole('button', { name: 'Sair da conta' }).click();
+  await login(page, fixture, true);
+  await page.goto(`/incidentes/${published.incidentId}`);
+  await expect(page.getByRole('button', { name: 'Abrir imagem', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Excluir imagem', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sair da conta' }).click();
+  await login(page, fixture);
+  await page.goto(`/incidentes/${published.incidentId}`);
+  await page.getByRole('button', { name: 'Excluir imagem', exact: true }).click();
+  await expect(page.getByText(/Esta ação não encerra nem descarta o incidente/)).toBeVisible();
+  await page.getByRole('button', { name: 'Confirmar exclusão da imagem', exact: true }).click();
+  await expect(page.getByText('Imagem excluída.', { exact: true })).toBeVisible();
+  await expect(page.getByAltText('Evidência pontual do evento')).toHaveCount(0);
+  const retry = await request.post(`${apiUrl}/edge/events/${published.eventId}/snapshot`, {
+    headers: { Authorization: `Bearer ${fixture.credential.token}`, 'Content-Type': 'image/jpeg' },
+    data: await syntheticJpeg(),
+  });
+  expect(retry.status()).toBe(410);
+  const audits = await request.get(`${apiUrl}/audit?incidentId=${published.incidentId}`, {
+    headers: fixture.headers,
+  });
+  expect((await audits.json()).items.some((a) => a.action === 'SNAPSHOT_DELETED')).toBe(true);
+  await submit(page, 'RECOGNIZE');
+  await expect(page.getByText('Reconhecido', { exact: true }).first()).toBeVisible();
+});

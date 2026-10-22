@@ -7,6 +7,8 @@ export type Camera = {
   siteId: string;
   name: string;
   type: 'FILE' | 'WEBCAM' | 'RTSP';
+  evidenceMode: 'none' | 'skeleton' | 'snapshot';
+  snapshotAuthorizedAt: string | null;
   expectedRunning: boolean;
   device: { id: string };
   health: {
@@ -42,6 +44,9 @@ export type Incident = Pick<
   dismissReason: string | null;
   version: number;
   deliveryClass: string;
+  evidenceMode: 'none' | 'skeleton' | 'snapshot';
+  poseRedactedAt: string | null;
+  snapshot?: { state: string; mode: string; expiresAt: string | null };
   signals: EventV1['signals'] | null;
   pose: EventV1['pose'] | null;
   versions: EventV1['versions'] | null;

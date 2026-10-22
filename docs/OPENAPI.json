@@ -1,6 +1,183 @@
 {
   "openapi": "3.1.0",
   "paths": {
+    "/v1/incidents/{id}/snapshot": {
+      "get": {
+        "operationId": "EvidenceController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "human-session": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      },
+      "delete": {
+        "operationId": "EvidenceController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "human-session": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/v1/edge/events/{eventId}/snapshot": {
+      "post": {
+        "operationId": "SnapshotController_upload",
+        "parameters": [
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "worker-token": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/v1/cameras/{id}/evidence-preference": {
+      "patch": {
+        "operationId": "PreferencesController_evidence",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidencePreferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "human-session": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
+    "/v1/retention-preference": {
+      "get": {
+        "operationId": "PreferencesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "human-session": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      },
+      "patch": {
+        "operationId": "PreferencesController_retention",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionPreferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "human-session": []
+          }
+        ],
+        "tags": [
+          "evidence"
+        ]
+      }
+    },
     "/v1/health/live": {
       "get": {
         "operationId": "HealthController_live",
@@ -815,6 +992,26 @@
       }
     },
     "schemas": {
+      "EvidencePreferenceDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "skeleton",
+              "snapshot"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "RetentionPreferenceDto": {
+        "type": "object",
+        "properties": {}
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -1115,6 +1312,14 @@
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._+\\-]{0,119}$"
               }
             }
+          },
+          "evidenceMode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "skeleton",
+              "snapshot"
+            ]
           }
         },
         "required": [

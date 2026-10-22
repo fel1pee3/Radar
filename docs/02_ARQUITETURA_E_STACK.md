@@ -128,3 +128,24 @@ Limites contam itens e bytes de SQLite/WAL/SHM, com reserva antes de novas decis
 A limpeza da 06 remove somente payloads confirmados há mais de sete dias de
 episódios fechados/resetados; mantém pendentes, erros permanentes e chaves de
 deduplicação. Não implementa retenção global/snapshot da etapa 07.
+
+
+## Evidência e retenção da etapa 07
+
+EvidenceService no monólito, sem serviço externo. Sharp 0.35.5 direto na API
+reaproveita a versão já fixada no lock da web. JPEG privado é normalizado e servido
+somente por sessão/tenant; filesystem e banco usam reconciliação sob lock, não uma
+promessa de transação distribuída. Slot/tombstone único por incidente preserva
+origem e impede substituição/ressurreição.
+
+O worker codifica só o frame que emite o evento; BLOB pontual entra na mesma
+transação SQLite do checkpoint. Usa Delivery/HTTP/credencial existentes após ACK
+de metadados, com limite separado e expiração. Não há fila de frames/imagens
+contínuas. Episódio ativo precisa somente do checkpoint de estado: permite limpar
+envelope confirmado aos sete dias sem perder o bloqueio de duplicação.
+
+RetentionJob chama a mesma rotina idempotente na inicialização/60 s quando
+explicitamente habilitado. Agendamento default false preserva dados existentes;
+purga de metadados é um segundo opt-in OWNER, por tenant. A API nega leitura de
+JPEG expirado independentemente de limpeza física já executada. Ver mapa completo
+em [segurança](06_SEGURANCA_E_DADOS.md) e decisões D39–D43.

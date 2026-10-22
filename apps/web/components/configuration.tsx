@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import type { FormEvent } from 'react';
 import type { Camera, Credential, Page } from '../lib/models';
+import { EvidencePreference, RetentionPreference } from './evidence';
 import { api } from '../lib/api';
 import { usePolling } from '../lib/polling';
 import { useSession } from './session';
@@ -65,6 +66,7 @@ export function Configuration() {
           {message}
         </p>
       )}
+      <RetentionPreference />
       <div className="config-grid">
         <section className="panel">
           <h2>Novo local</h2>
@@ -225,6 +227,7 @@ function CameraEditor({
           {editing ? 'Cancelar edição' : 'Editar câmera'}
         </button>
       </div>
+      <EvidencePreference camera={camera} onSaved={onSaved} />
       {editing && (
         <form className="stack" onSubmit={save}>
           <label>

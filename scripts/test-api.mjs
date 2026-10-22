@@ -93,6 +93,13 @@ try {
   pnpm(['--filter', '@radar/api', 'db:migrate']);
   // O contrato de banco vazio da etapa 01 continua sendo executado antes das novas fixtures.
   pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/access.test.mjs']);
+  pnpm([
+    '--filter',
+    '@radar/api',
+    'test:integration',
+    '--runTestsByPath',
+    'test/evidence.test.mjs',
+  ]);
   pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/events.test.mjs']);
   pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/edge.test.mjs']);
   pnpm([

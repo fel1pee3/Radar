@@ -1,9 +1,10 @@
-import { ConsoleLogger, ValidationPipe, BadRequestException } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import type { LoggerService } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import type { Application, Request, Response, NextFunction } from 'express';
+import { TechnicalLogger } from './technical-logger.js';
 import { AppModule } from './app.module.js';
 import { readSettings } from './config.js';
 import type { Settings } from './config.js';
@@ -13,7 +14,7 @@ import type { Clock } from './event-support.js';
 
 export async function createApplication(
   settings: Settings = readSettings(),
-  logger: LoggerService | false = new ConsoleLogger('RadarAPI', { json: true }),
+  logger: LoggerService | false = new TechnicalLogger(),
   options: { clock?: Clock; notificationsEnabled?: boolean } = {},
 ) {
   const app = await NestFactory.create<NestExpressApplication>(
@@ -31,6 +32,11 @@ export async function createApplication(
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('X-Content-Type-Options', 'nosniff');
     next();
+  });
+  app.useBodyParser('raw', {
+    limit: '2mb',
+    inflate: false,
+    type: (req) => /^\/v1\/edge\/events\/[^/]+\/snapshot(?:\?|$)/.test(req.url ?? ''),
   });
   app.useBodyParser('json', { limit: '64kb', strict: true });
   app.setGlobalPrefix('v1');

@@ -1,6 +1,18 @@
 # Status de construção
 
-**Última atualização — 22/10/2026:** etapa 06 **CONCLUÍDA no escopo da bancada**.
+**Última atualização — 22/10/2026:** etapa 07 **CONCLUÍDA no escopo solicitado**.
+Evidência mínima, JPEG pontual sintético, armazenamento privado, acesso/exclusão
+por papel, auditoria, retenção e deduplicação após redação/purga verificados.
+262 testes Python, 145 API, 91 contratos TS e 18 E2E aprovados; demonstração
+sintética desktop adicional aprovada. Lint, tipos, build e instalações frozen
+aprovados; OpenAPI regenerado. Migração aditiva aplicada em 15432, contagens de
+cadastros/incidentes/recibos/auditoria preservadas. Webcam real permanece skeleton,
+sem JPEG e sem nova captura. Limpeza automática API e purga de 30 dias não foram
+ativadas no ambiente pessoal; os testes usaram recursos exclusivos e relógio
+injetável. Commit e push autorizados pelo fundador em 22/10/2026; sem deploy; etapa 08 não iniciada. Veja [relatório 07](RELATORIOS/ETAPA_07.md)
+e [roteiro 07](VALIDACAO_MANUAL_ETAPA_07.md).
+
+**Histórico — 22/10/2026:** etapa 06 **CONCLUÍDA no escopo da bancada**.
 Calibração WEBCAM v1 e pose no corpo conferidas pelo fundador. Sessão de 384
 análises em 83,72 s, vazão global 4,59 análises/s, inferência média 25,34 ms;
 sessão guiada posterior de 981 análises em 231,23 s terminou sem erro.
@@ -27,7 +39,7 @@ falso reconhecimento de estante relatado. Origem dos arquivos reais anteriores
 declarada pelo fundador, sem verificação independente da internet; vídeo gerado
 por IA permanece separado. **Câmera física:** índice 0 escolhido pelo fundador,
 DSHOW, 640×480, prévia conferida; inventário Windows lista Positivo Theia Camera.
-**Última etapa concluída:** 06; 07 elegível somente por nova solicitação.
+**Última etapa concluída:** 07; 08 elegível somente por nova solicitação.
 
 Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresentam o plano; só atualizar para concluída quando os critérios tiverem evidência real.
 
@@ -40,7 +52,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | 04 | [Visão computacional em arquivo](../etapas/04_VISAO_EM_VIDEO/README.md) | CONCLUÍDA | [ETAPA_04](RELATORIOS/ETAPA_04.md) · 21/10/2026 |
 | 05 | [Motor temporal e eventos de visão](../etapas/05_MOTOR_TEMPORAL/README.md) | CONCLUÍDA | [ETAPA_05](RELATORIOS/ETAPA_05.md) · 21/10/2026 |
 | 06 | [Webcam, disponibilidade e recuperação](../etapas/06_WEBCAM_E_RESILIENCIA/README.md) | CONCLUÍDA · bancada | [ETAPA_06](RELATORIOS/ETAPA_06.md) · 22/10/2026 |
-| 07 | [Evidência opcional, retenção e proteção](../etapas/07_EVIDENCIA_E_PROTECAO/README.md) | NÃO INICIADA | — |
+| 07 | [Evidência opcional, retenção e proteção](../etapas/07_EVIDENCIA_E_PROTECAO/README.md) | CONCLUÍDA | [ETAPA_07](RELATORIOS/ETAPA_07.md) · 22/10/2026 |
 | 08 | [Validação final e entrega da demo](../etapas/08_VALIDACAO_E_ENTREGA/README.md) | NÃO INICIADA | — |
 | 09 | [Câmera IP e verificação da KAP-S069](../etapas/09_CAMERA_IP_OPCIONAL/README.md) | NÃO INICIADA · opcional | — |
 
@@ -66,6 +78,14 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | KAP-S069 / firmware / protocolo | Não confirmado; etapa 09 opcional |
 
 ## Pendências atuais
+
+- Nenhum critério obrigatório da etapa 07 pendente. JPEG funcional comprovado com
+  pixels sintéticos sem pessoas, sem ativar snapshot real. Agendamento API default
+  false e purga de metadados false são escolhas operacionais preservadas, não
+  declaração de dados já apagados. Rodada explícita e job habilitado verificados
+  em banco/diretório exclusivos; [roteiro 07](VALIDACAO_MANUAL_ETAPA_07.md).
+- Na avaliação final da 08 permanecem as limitações anteriores de percepção,
+  incluindo estante, fluidez e evento LIVE positivo. A 07 não alterou detector.
 
 - Nenhuma verificação obrigatória da etapa 00 pendente. Reprodução em [ambiente e comandos](08_AMBIENTE_E_COMANDOS.md).
 - Nenhum critério obrigatório da etapa 01 pendente. Proprietário criado localmente pelo fundador e confirmado por contagem de OWNER ativo/auditoria, sem consulta de senha/hash. Login/configuração por PowerShell no [roteiro manual](VALIDACAO_MANUAL_ETAPA_01.md); a interface foi acrescentada na etapa 03.
@@ -124,7 +144,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
   Os resultados negativos acima pertencem aos ensaios anteriores e não foram
   apagados. Full não resolveu o enquadramento `piso-d` nem todos os casos de baixa
   visibilidade. Evaluate permanece CALIBRATION, sem anotações completas; eficácia
-  não estimável. Histórico/outbox sem limpeza automática até a 07. [Roteiro 05](VALIDACAO_MANUAL_ETAPA_05.md),
+  não estimável. Retenção foi acrescentada na 07; agendamento API e purga do fundador continuam desligados. [Roteiro 05](VALIDACAO_MANUAL_ETAPA_05.md),
   [relatório 05](RELATORIOS/ETAPA_05.md) e [investigação](RELATORIOS/INVESTIGACAO_ETAPA_05.md).
 - Manter KAP-S069 como extensão opcional até confirmar acesso ao stream.
 
@@ -150,6 +170,7 @@ resultado desfavorável registrado, mantendo a etapa parcial.
 | 21/10/2026 | Etapa 05 concluída após investigação e seleção explícita do Full (D34) | 226 Python, 124 API, 87 TS; evento real aos 6000 ms, entrega/reenvio/EOF sem duplicação, prévia e incidente conferidos pelo fundador; [relatório](RELATORIOS/ETAPA_05.md) |
 | 21/10/2026 | Etapa 06 parcial: webcam nativa, saúde, limites e recuperação | Índice 0/DSHOW físico, pausa/retomada e Full em frame real; 125 API exclusivos. Credencial salva pelo fundador e autenticada; piso indisponível impede calibração/conferência integrada. [Relatório](RELATORIOS/ETAPA_06.md) |
 | 22/10/2026 | Etapa 06 concluída no escopo de captura/saúde/recuperação de bancada | Piso próprio, Full contínuo, 384 + 981 análises; fundador confirmou pausa/retomada/encerramento no painel. 243 Python e verificações anteriores preservadas; falso esqueleto de estante e evento LIVE positivo pendentes para validação final. [Relatório](RELATORIOS/ETAPA_06.md) |
+| 22/10/2026 | Etapa 07 concluída: evidência opcional/retencão/proteção | JPEG sintético, permissões, exclusão, recuperação e relógio controlado; 262 Python, 145 API, 91 TS, 18 E2E e demo desktop. Migração preservou dados; JPEG real/purga pessoal não habilitados. [Relatório](RELATORIOS/ETAPA_07.md) |
 
 ## Regra de atualização
 

@@ -38,6 +38,8 @@ export const cameraSelect = {
   name: true,
   type: true,
   expectedRunning: true,
+  evidenceMode: true,
+  snapshotAuthorizedAt: true,
   lastHeartbeat: true,
   heartbeatReceivedAt: true,
   createdAt: true,

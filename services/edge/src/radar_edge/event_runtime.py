@@ -36,7 +36,7 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
         )
 
     points = []
-    if evidence_mode == "skeleton":
+    if evidence_mode in {"skeleton", "snapshot"}:
         points = [
             {"index": p.index, "x": p.x, "y": p.y, "visibility": p.visibility}
             for p in observation.poses[0].landmarks
@@ -73,6 +73,10 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
             "calibration": f"{observation.calibrationId}-v{observation.calibrationVersion}",
         },
     }
+    if evidence_mode == "snapshot":
+        value["evidenceMode"] = "snapshot"
+    elif evidence_mode == "none":
+        value["evidenceMode"] = "none"
     if not validate_contract("event-v1", value, SCHEMAS):
         raise EdgeError(
             "EVENT_CONTRACT_ERROR",
@@ -90,10 +94,15 @@ class EventRuntime:
         self.model_spec = get_model_spec(config.model.variant)
         self.policy = configured_policy(config.events.policy)
         self.evidence_mode = os.environ.get("EVIDENCE_MODE", config.events.evidenceMode)
-        if self.evidence_mode not in {"none", "skeleton"}:
+        if self.evidence_mode not in {"none", "skeleton", "snapshot"}:
             raise EdgeError(
                 "INVALID_EVIDENCE_MODE",
-                "Use EVIDENCE_MODE none ou skeleton; snapshot não faz parte desta etapa.",
+                "Use EVIDENCE_MODE none, skeleton ou snapshot.",
+            )
+        if self.evidence_mode == "snapshot" and not config.events.snapshotAuthorized:
+            raise EdgeError(
+                "SNAPSHOT_AUTHORIZATION_REQUIRED",
+                "Snapshot exige escolha explícita e autorização local do proprietário.",
             )
         if config.processing.minLandmarkVisibility != self.policy.minLandmarkVisibility:
             raise EdgeError(
@@ -165,7 +174,7 @@ class EventRuntime:
     def __exit__(self, *_):
         self.resources.close()
 
-    def process(self, observation):
+    def process(self, observation, frame=None):
         settings = self.config.events.delivery
         self.store.check_capacity(settings.maxItems, settings.maxBytes, extra_bytes=65536)
         f = self.gate.apply(
@@ -185,9 +194,23 @@ class EventRuntime:
             if emission
             else None
         )
+        image, image_error = None, None
+        if value and self.evidence_mode == "snapshot":
+            from radar_edge.evidence import encode_snapshot
+
+            try:
+                image = encode_snapshot(frame, observation)
+            except Exception:
+                image_error = "SNAPSHOT_CAPTURE_FAILED"
         try:
             self.store.checkpoint(
-                self.run["run_id"], observation, self.engine, value, self.engine.closed
+                self.run["run_id"],
+                observation,
+                self.engine,
+                value,
+                self.engine.closed,
+                snapshot=image,
+                snapshot_error=image_error,
             )
         except sqlite3.Error:
             raise EdgeError(
@@ -254,6 +277,10 @@ class EventRuntime:
             "policy": self.policy.to_dict(),
             "outbox": self.store.summary(),
             "deliveryErrors": self.store.delivery_errors(),
+            "snapshots": self.store.snapshot_summary(),
+            "snapshotCaptures": self.store.db.execute(
+                "SELECT COUNT(hash) FROM snapshots"
+            ).fetchone()[0],
             "eventsTruncated": len(events) > 1000,
             "events": [
                 {
@@ -274,7 +301,12 @@ def manage_outbox(config, command, reason=None, resume_auth=False):
         resources.enter_context(FileLock(private_path(f".local/edge-locks/{config.cameraId}.lock")))
         resources.enter_context(FileLock(private_path(config.events.outboxPath + ".lock")))
         store = resources.enter_context(Outbox(config.events.outboxPath, config.cameraId))
-        if command == "reset-episode":
+        if command == "cleanup":
+            from radar_edge.retention import cleanup_diagnostics
+
+            store.prune_confirmed()
+            cleanup_diagnostics(config.diagnostics.outputDirectory)
+        elif command == "reset-episode":
             if not reason or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{2,119}", reason):
                 raise EdgeError(
                     "RESET_REASON_REQUIRED",
@@ -291,4 +323,5 @@ def manage_outbox(config, command, reason=None, resume_auth=False):
             "outbox": store.summary(),
             "deliveryErrors": store.delivery_errors(),
             "items": store.items(),
+            "snapshots": store.snapshot_summary(),
         }

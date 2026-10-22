@@ -40,6 +40,10 @@ export const labels: Record<string, string> = {
   RESOLVE: 'Encerramento',
   DISMISS: 'Descarte',
   ADD_NOTE: 'Nota adicionada',
+  SNAPSHOT_ACCESSED: 'Imagem consultada',
+  SNAPSHOT_DELETED: 'Imagem excluída',
+  EVIDENCE_PREFERENCE_CHANGED: 'Preferência de evidência alterada',
+  RETENTION_PREFERENCE_CHANGED: 'Preferência de retenção alterada',
   INCIDENT_CREATED: 'Incidente criado',
   SIMULATED_NOTIFICATION_RECORDED: 'Aviso local registrado',
 };

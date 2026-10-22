@@ -304,3 +304,16 @@ calibrações e falhas anteriores. Modelo selecionado é identificado por SHA no
 fingerprint e por ID no evento, sem troca automática. Métodos/resultados na
 [investigação 05](INVESTIGACAO_ETAPA_05.md). Os arquivos usados para selecionar o
 modelo continuam CALIBRATION e não constituem avaliação independente.
+
+
+## Complemento da etapa 07 — JPEG privado
+
+Sharp 0.35.5 foi promovido a dependência direta da API com pnpm e versão exata;
+já era a versão transitiva da web. Node 24.22.1 preservado, lock atualizado e
+instalação frozen verificada. `package.json` instalado declara Apache-2.0.
+Decodificação/reencodificação real, remoção EXIF e limites foram testados, sem
+capturar imagem pessoal. Bundles nativos/libvips continuam sujeitos aos respectivos
+avisos da distribuição; não é um parecer de conformidade comercial/legal.
+Fontes primárias: [constructor](https://sharp.pixelplumbing.com/api-constructor/)
+e [output/metadata](https://sharp.pixelplumbing.com/api-output/).
+Nenhuma dependência Python/modelo/cv2 foi trocada nesta etapa.

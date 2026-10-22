@@ -225,6 +225,9 @@ class NetworkWorker:
                     last_prune = -60.0
                     while not self.stop.is_set():
                         if monotonic() - last_prune >= 60:
+                            from radar_edge.retention import cleanup_diagnostics
+
+                            cleanup_diagnostics(self.config.diagnostics.outputDirectory)
                             store.prune_confirmed(
                                 self.config.events.delivery.confirmedRetentionDays
                             )

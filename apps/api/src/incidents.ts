@@ -16,6 +16,7 @@ import {
 import { ApiBody, ApiCookieAuth, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import type { IncidentActionV1 } from '@radar/contracts';
+import { EvidenceService } from './evidence.js';
 import { Database } from './database.js';
 import { IncidentStatus, SourceMode } from './generated/prisma/enums.js';
 import type { Incident } from './generated/prisma/client.js';
@@ -176,6 +177,7 @@ export class IncidentsController {
   constructor(
     private readonly database: Database,
     private readonly service: IncidentService,
+    private readonly evidence: EvidenceService,
   ) {}
   @Get()
   async list(@Req() request: HumanRequest, @Query() query: IncidentListDto) {
@@ -206,7 +208,10 @@ export class IncidentsController {
       where: { tenantId_id: { tenantId: request.principal.tenantId, id } },
     });
     if (!row) throw new NotFoundException('Incidente não encontrado.');
-    return publicIncident(row);
+    return {
+      ...publicIncident(row),
+      snapshot: await this.evidence.describe(request.principal, id),
+    };
   }
   @Post(':id/actions')
   @HttpCode(200)

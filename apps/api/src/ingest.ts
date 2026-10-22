@@ -14,6 +14,7 @@ import {
   fail,
   lockCamera,
 } from './event-support.js';
+import { Prisma } from './generated/prisma/client.js';
 import type { Clock } from './event-support.js';
 
 @Injectable()
@@ -49,12 +50,32 @@ export class IngestService {
         const age = receivedAt.getTime() - Date.parse(event.detectedAt);
         if (age > 30 * 86400000) fail(410, 'EVENT_TOO_OLD');
         if (age < -86400000) fail(422, 'INVALID_EVENT_TIME');
+        const expiredEpisode = await tx.eventReceipt.findFirst({
+          where: {
+            deviceId: worker.deviceId,
+            episodeId: event.episodeId,
+            expiredAt: { not: null },
+          },
+        });
+        if (expiredEpisode) fail(410, 'EVENT_EXPIRED');
         let incident = await tx.incident.findUnique({
           where: { cameraId_episodeId: { cameraId: worker.cameraId, episodeId: event.episodeId } },
         });
         const duplicate = !!incident;
         const immutableHash = episodeHash(event);
         if (incident && incident.episodeHash !== immutableHash) fail(409, 'EPISODE_CONFLICT');
+        const cameraPreference = await tx.camera.findUniqueOrThrow({
+          where: { id: worker.cameraId },
+        });
+        const evidenceMode =
+          cameraPreference.evidenceMode === 'none' || event.evidenceMode === 'none'
+            ? 'none'
+            : event.evidenceMode === 'snapshot' &&
+                (cameraPreference.evidenceMode !== 'snapshot' ||
+                  !cameraPreference.snapshotAuthorizedAt ||
+                  cameraPreference.snapshotAuthorizedAt > receivedAt)
+              ? 'skeleton'
+              : (event.evidenceMode ?? 'skeleton');
         if (!incident) {
           const camera = await tx.camera.findUniqueOrThrow({ where: { id: worker.cameraId } });
           incident = await tx.incident.create({
@@ -74,12 +95,24 @@ export class IngestService {
               receivedAt,
               sourceOffsetMs: event.sourceOffsetMs === null ? null : BigInt(event.sourceOffsetMs),
               signals: event.signals,
-              pose: event.pose,
+              pose: evidenceMode === 'none' ? [] : event.pose,
+              evidenceMode: evidenceMode,
               versions: event.versions,
               createdAt: receivedAt,
               updatedAt: receivedAt,
             },
           });
+          if (evidenceMode === 'snapshot') {
+            // The event remains accepted even if image permission is absent.
+            await tx.evidence.create({
+              data: {
+                tenantId: worker.tenantId,
+                incidentId: incident.id,
+                eventId: event.eventId,
+                expiresAt: new Date(receivedAt.getTime() + 86400000),
+              },
+            });
+          }
           await tx.auditEntry.create({
             data: {
               tenantId: worker.tenantId,
@@ -108,7 +141,11 @@ export class IngestService {
             eventId: event.eventId,
             episodeId: event.episodeId,
             payloadHash: hash,
-            payload: event,
+            payload:
+              incident.poseRedactedAt || incident.evidenceMode === 'none'
+                ? ({ ...event, pose: [] } as Prisma.InputJsonValue)
+                : event,
+            redactedAt: incident.poseRedactedAt,
             receivedAt,
             deliveryClass: incident.deliveryClass,
             incidentId: incident.id,

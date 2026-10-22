@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapas 00–06 concluídas para bancada em 22/10/2026.** FILE positivo com Full foi verificado na 05; webcam, calibração própria e controles no painel foram conferidos na 06. Pose falsa em estante, fluidez e evento LIVE positivo continuam para a validação final do MVP. Consulte [status](STATUS.md), [relatório 06](RELATORIOS/ETAPA_06.md) e [roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md). Os comandos até 06 existem; comandos de etapas seguintes continuam previstos. Proprietário e dados existentes preservados.
+**Etapas 00–07 concluídas no escopo da bancada em 22/10/2026.** FILE positivo com Full foi verificado na 05; webcam, calibração própria e controles no painel foram conferidos na 06. Pose falsa em estante, fluidez e evento LIVE positivo continuam para a validação final do MVP. Consulte [status](STATUS.md), [relatório 06](RELATORIOS/ETAPA_06.md) e [roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md). Os comandos até 07 existem; comandos de etapas seguintes continuam previstos. A 07 validou JPEG sintético/retencão, mantendo snapshot real e purga existentes desligados. Proprietário e dados existentes preservados.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -106,7 +106,7 @@ O bootstrap deve gerar `.env.example` sem segredos e orientar cópia local. Vali
 | `EDGE_MODEL_PATH` | Worker | Bundle obtido de fonte oficial e hash verificado |
 | `EVIDENCE_MODE` | Worker | `skeleton` por padrão; `none`/`snapshot` explícitos |
 | `LOCAL_DATA_DIR` | API/worker | Raiz privada `.local/` e subdiretórios separados |
-| `METADATA_RETENTION_ENABLED` | API | `false` por padrão; proprietário habilita conscientemente a purga de metadados de 30 dias |
+| `RETENTION_JOBS_ENABLED` | API | false por padrão; true habilita limpeza de visuais/reconciliação na inicialização e a cada 60 s; purga de 30 dias é preferência OWNER separada no banco |
 
 Nunca prefixar segredo com `NEXT_PUBLIC_`. Não definir nome de variável de tarefa que substitua `HOME` ou outros diretórios de sistema.
 
@@ -275,3 +275,37 @@ ausência de evento LIVE positivo e fluidez em 5 Hz registradas como
 limitações. Não iniciar detecção com piso de um vídeo.
 
 Webcam ocupada ou sem permissão; caminhos Windows; versão Python sem wheel; múltiplas distribuições `cv2`; falha de decoder; prisma generate ausente; ESM inconsistente; cookie/origin divergentes; banco indisponível; ROI inválida após rotação; token revogado; fim normal de arquivo. Solucionar a causa concreta e registrar o comando real, sem inventar uma compatibilidade universal.
+
+
+## Evidência e retenção — etapa 07
+
+A migração `20261022000100_evidence_retention` é aditiva; `pnpm.cmd db:migrate`
+preserva cadastros/volume. Sharp 0.35.5 na API e lock pnpm atualizado; ambiente
+Python/Full/cv2 preservado. Skeleton é o default e não cria JPEG.
+
+```powershell
+. ./scripts/activate.ps1
+uv run --project services/edge --frozen radar-edge evidence-status --config .local/edge-webcam.yaml
+pnpm.cmd demo:evidence
+pnpm.cmd test:api
+uv run --project services/edge --frozen pytest services/edge/tests/test_evidence.py -q
+```
+
+`demo:evidence` é teste de navegador desktop com JPEG sintético, dados e processos
+isolados, com limpeza dos recursos de teste ao final. Não usa a webcam ou conta
+existentes. Screenshot em `.local/etapa07/screenshots/desktop-snapshot.png`.
+
+`pnpm.cmd retention:run` executa limpeza real usando o `.env` privado da API;
+compilar a API antes. `radar-edge cleanup --config ...` limpa somente a fila e
+os diagnósticos configurados, preservando pendentes. **Não são comandos de simples
+consulta.** Não foram executados nos dados pessoais nesta etapa. Para agendar a
+API, editar conscientemente `RETENTION_JOBS_ENABLED=true` no `.env` e reiniciar.
+Purga de metadados 30 dias só se o OWNER confirmar em Configuração. Agendamento
+false não impede a negação de leitura de JPEG expirado, mas impede sua remoção
+automática do disco. Política efetiva e limites em [segurança](06_SEGURANCA_E_DADOS.md).
+
+Para snapshot real, são exigidas escolha/autorização OWNER da câmera e configuração
+local events.evidenceMode=snapshot/events.snapshotAuthorized=true. Este pedido de
+implementação não habilitou essa escolha nos arquivos/webcam do fundador.
+Roteiro completo, incluindo seis verificações sem dado pessoal:
+[VALIDACAO_MANUAL_ETAPA_07](VALIDACAO_MANUAL_ETAPA_07.md).

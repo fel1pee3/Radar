@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import sqlite3
 from contextlib import ExitStack
 from pathlib import Path
@@ -22,9 +23,10 @@ from radar_edge.source import FileSource, MediaSampler
 
 
 class ObservationExport:
-    def __init__(self, path: Path, config):
+    def __init__(self, path: Path, config, evidence_mode="skeleton"):
         self.stream = path.open("xb") if config.exportObservations else None
         self.config = config
+        self.evidence_mode = evidence_mode
         self.count = 0
         self.bytes = 0
         self.truncated = False
@@ -32,9 +34,10 @@ class ObservationExport:
     def write(self, observation: Observation):
         if self.stream is None or self.truncated:
             return
-        data = (
-            json.dumps(observation.to_dict(), allow_nan=False, separators=(",", ":")) + "\n"
-        ).encode("utf-8")
+        value = observation.to_dict()
+        if self.evidence_mode == "none":
+            value["poses"] = []
+        data = (json.dumps(value, allow_nan=False, separators=(",", ":")) + "\n").encode("utf-8")
         if (
             self.count >= self.config.maxExportObservations
             or self.bytes + len(data) > self.config.maxExportBytes
@@ -62,7 +65,11 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     metrics = Metrics(config.processing.minLandmarkVisibility)
     source = FileSource(config.source, config.processing.maxWidth)
     sequence = hashlib.sha256()
-    exporter = ObservationExport(directory / "observations.jsonl", config.diagnostics)
+    exporter = ObservationExport(
+        directory / "observations.jsonl",
+        config.diagnostics,
+        os.environ.get("EVIDENCE_MODE", config.events.evidenceMode),
+    )
     state = "ENDED"
     error = None
     code = 0
@@ -176,7 +183,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         frame = source.read()
                         continue
                     if runtime is not None:
-                        runtime.process(observation)
+                        runtime.process(observation, frame)
                     if health is not None:
                         health.observation(observation, runtime.previous_features)
                     metrics.add(observation)
@@ -258,7 +265,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
             "bytes": exporter.bytes,
             "truncated": exporter.truncated,
         },
-        "framesSaved": False,
+        "framesSaved": temporal_summary.get("snapshotCaptures", 0) > 0,
         "incidentsEmitted": temporal_summary.get("generatedEvents", 0) > 0,
         "temporal": temporal_summary,
         "trackerWarmupObservations": warmup_observations,
