@@ -11,6 +11,8 @@ source:
   rotation: AUTO
   allowTimestampFallback: true
 model:
+  # Lite preserva a configuração da 04; Full exige variant e path correspondentes.
+  variant: lite
   path: .local/models/pose_landmarker_lite.task
 processing:
   maxWidth: 640
@@ -19,6 +21,8 @@ processing:
   # 0: tão rápido quanto possível; 1: ritmo original; 2: ritmo 2x.
   replaySpeed: 0.0
   preview: false
+  # A CLI --preview-paused abre a prévia pausada; Espaço inicia/pausa/retoma.
+  previewStartPaused: false
   maxObservations: null
 calibrationPath: .local/calibration.json
 diagnostics:
@@ -26,3 +30,16 @@ diagnostics:
   exportObservations: false
   maxExportObservations: 1000
   maxExportBytes: 10485760
+# Etapa 05: habilite explicitamente em uma cópia privada. Configurações da 04
+# continuam extraindo somente poses. SQLite dedicado a esta câmera.
+events:
+  enabled: false
+  outboxPath: .local/edge/outbox.sqlite
+  evidenceMode: skeleton
+  # Defaults centralizados floor-v0.1. Alterar parâmetros exige outra version.
+  policy: {}
+  delivery:
+    enabled: false
+    # JSON privado com apiUrl, cameraId e deviceToken, ou variáveis EDGE_*.
+    credentialFile: null
+    timeoutSeconds: 2.0

@@ -1,8 +1,8 @@
 # Status de construção
 
-**Última atualização:** 21/10/2026 — etapa 04 **CONCLUÍDA**: arquivo autorizado processado integralmente com poses reais, piso selecionado pelo fundador e prévia conferida. Etapas 00–03 e dados anteriores preservados.
+**Última atualização:** 21/10/2026 — etapa 05 **CONCLUÍDA no escopo da bancada**. Após comparar Lite/Full e cadências, o Full produziu PERSON_ON_FLOOR em `piso-f-07`, aos 6000 ms, mantendo floor-v0.1. SQLite e API confirmaram um incidente REPLAY/TEST; o fundador confirmou piso, melhora da pose e sinais/versões/evidência no painel. Retomada e reenvio preservaram o mesmo incidente. 226 testes Python, 124 API e 87 contratos TS aprovados; limites de perspectiva e perdas nos outros vídeos preservados. Etapa 06 não iniciada; commit/push autorizados pelo fundador após a validação, sem deploy.
 
-**Software implementado:** fundação, API, painel, simulador e contratos; pipeline FILE Python com doctor/calibrate/run, poses locais, prévia e medidas. **Modelo executado:** sim, CPU/VIDEO em sintético e em um arquivo autorizado com pessoa; 89 observações por replay completo. **Câmeras físicas testadas:** nenhuma. **Última etapa concluída:** 04; a 05 depende de nova solicitação.
+**Software implementado:** fundação, API, painel, simulador, contratos e pipeline FILE; motor de episódios, outbox SQLite, retomada, transporte local e avaliação. **Modelo executado:** Lite e Full, CPU/VIDEO; Full com evento real em `piso-f-07` e cinco outros arquivos reais sem evento. Origem real declarada pelo fundador, sem verificação independente da procedência da internet. Vídeo gerado por IA permanece separado, com evento apenas local e sem contar como prova real. **Câmeras físicas testadas:** nenhuma. **Última etapa concluída:** 05; 06 não iniciada.
 
 Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresentam o plano; só atualizar para concluída quando os critérios tiverem evidência real.
 
@@ -13,7 +13,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | 02 | [Eventos, incidentes e contratos](../etapas/02_EVENTOS_E_INCIDENTES/README.md) | CONCLUÍDA | [ETAPA_02](RELATORIOS/ETAPA_02.md) · 21/10/2026 |
 | 03 | [Painel e primeira demonstração](../etapas/03_PAINEL_E_SIMULADOR/README.md) | CONCLUÍDA | [ETAPA_03](RELATORIOS/ETAPA_03.md) · 21/10/2026 |
 | 04 | [Visão computacional em arquivo](../etapas/04_VISAO_EM_VIDEO/README.md) | CONCLUÍDA | [ETAPA_04](RELATORIOS/ETAPA_04.md) · 21/10/2026 |
-| 05 | [Motor temporal e eventos de visão](../etapas/05_MOTOR_TEMPORAL/README.md) | NÃO INICIADA | — |
+| 05 | [Motor temporal e eventos de visão](../etapas/05_MOTOR_TEMPORAL/README.md) | CONCLUÍDA | [ETAPA_05](RELATORIOS/ETAPA_05.md) · 21/10/2026 |
 | 06 | [Webcam, disponibilidade e recuperação](../etapas/06_WEBCAM_E_RESILIENCIA/README.md) | NÃO INICIADA | — |
 | 07 | [Evidência opcional, retenção e proteção](../etapas/07_EVIDENCIA_E_PROTECAO/README.md) | NÃO INICIADA | — |
 | 08 | [Validação final e entrega da demo](../etapas/08_VALIDACAO_E_ENTREGA/README.md) | NÃO INICIADA | — |
@@ -37,6 +37,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | Painel / demonstração (03) | Playwright 1.64.1/Chromium 156.0.8078.4; 16 E2E reais aprovados em desktop 1440×1000 e móvel 390×844; 123 regressões API e87 + 87 contratos preservadas; screenshots sintéticas privadas inspecionadas |
 | Visão em arquivo (04) | Python 3.12.15/uv 0.13.4 preservados; PyYAML 6.0.3 novo, NumPy 2.5.4 mantido e declarado direto; 139 testes Python, incluindo 87 contratos, e 87 contratos TS aprovados; arquivo bancada-01: 530 frames/89 observações, mesma sequência em três velocidades; seleção do piso e conferência visual realizadas pelo fundador |
 | Webcam e índice | Não consultados nem abertos na 00; teste físico na 06 |
+| Motor temporal (05) | Sem dependências novas/lock alterado; SQLite nativo; 226 testes Python e 124 API em PostgreSQL exclusivo; 87 contratos TS. Full oficial fixado por hash, 45 análises/40 elegíveis/32 candidatas em piso-f-07; evento aos 6000 ms, incidente REPLAY/TEST conferido. Evaluate sem espera/2× reproduziu o offset; EOF/reenvio sem duplicação |
 | KAP-S069 / firmware / protocolo | Não confirmado; etapa 09 opcional |
 
 ## Pendências atuais
@@ -49,9 +50,47 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 - Monitorar compatibilidade dos plugins React/a11y antes de atualizar ESLint 9 (aviso de fim de suporte registrado no inventário).
 - Nenhum critério obrigatório da etapa 04 pendente. O arquivo autorizado `bancada-01` terminou em três replays (sem espera, 2×, prévia 0,5×): 530 frames lidos, 89 analisados, 84 observações com qualidade suficiente e 5 de baixa confiança, sem fallback temporal. O fundador marcou o piso e confirmou o alinhamento da pose/região; [roteiro 04](VALIDACAO_MANUAL_ETAPA_04.md), [relatório 04](RELATORIOS/ETAPA_04.md). Isso não mede eficácia de queda; múltiplas pessoas reais não foram testadas. Aviso oficial do SDK sobre métricas de uso registrado; ausência total de tráfego nativo não foi comprovada e firewall foi preservado. A retenção do vídeo privado é manual, sem prazo automático configurado.
 - Executar testes físicos de webcam quando chegar à etapa 06.
+- As duas cenas adicionais fornecidas pelo fundador, deitar em vista lateral e
+  pessoa deitada em vista de cima, foram calibradas e processadas. Nenhuma gerou
+  evento: o modelo não sustentou pontos essenciais suficientes. Não há incidente
+  positivo novo para conferir no painel; a baseline permanece experimental e a
+  prova positiva da 05 ficou pendente naquela fase, antes do ensaio Full.
+- A quarta filmagem real, `piso-d`, terminou com 78 observações, 58 elegíveis e
+  zero candidatas/eventos. O fundador confirmou piso, orientação correta e pessoa
+  deitada durante vários segundos na prévia local. Quadril no piso em 58/58,
+  mas ângulo de tronco 0,16–51,46° (mínimo 60°) e razão altura/largura 1,02–2,06
+  (máximo 1). É uma falha observada da baseline nessa cena, compatível com uma
+  limitação de projeção em 2D; não é solucionada apenas remarcando o piso.
+  Nenhum gate ou rotação foi alterado para forçar detecção. Não há anotação
+  temporal completa para estimar taxas de eficácia.
+- Os arquivos seguintes, `piso-e-05` e `piso-f-07`, foram descritos como filmagens
+  reais encontradas na internet, sem URL/licença ou origem verificadas. Ambos
+  receberam calibração manual e terminaram normalmente, com zero eventos:
+  51 análises/15 elegíveis/zero candidatas no primeiro e
+  45 análises/15 elegíveis/6 candidatas sem janela suficiente no segundo.
+  Não houve ajuste de parâmetros nem envio de mídia; outboxes separadas.
+  O fundador reviu as duas prévias e relatou esqueleto verde piscando/sumindo,
+  reconhecível mas insatisfatório. A instabilidade visual é coerente com os
+  pontos insuficientes medidos; precisa ser tratada antes da prova positiva.
+- Nenhum critério obrigatório da etapa 05 pendente. A configuração validada é
+  `.local/edge-piso-f-07-full.yaml`: um evento real, entregue ao incidente
+  `6cfd7d88-ae34-4b48-ad5a-d592cbd020a9`. Fundador conferiu prévia e painel.
+  Os resultados negativos acima pertencem aos ensaios anteriores e não foram
+  apagados. Full não resolveu o enquadramento `piso-d` nem todos os casos de baixa
+  visibilidade. Evaluate permanece CALIBRATION, sem anotações completas; eficácia
+  não estimável. Histórico/outbox sem limpeza automática até a 07. [Roteiro 05](VALIDACAO_MANUAL_ETAPA_05.md),
+  [relatório 05](RELATORIOS/ETAPA_05.md) e [investigação](RELATORIOS/INVESTIGACAO_ETAPA_05.md).
 - Manter KAP-S069 como extensão opcional até confirmar acesso ao stream.
 
 ## Histórico de avanço
+
+Validação adicional da 05: o fundador marcou pisos separados para `piso-a`
+(lateral) e `piso-b` (vista de cima). Ambos terminaram normalmente, sem evento;
+modelo/política/gates preservados. Limitações e hashes no [relatório 05](RELATORIOS/ETAPA_05.md).
+
+Novo ensaio `piso-d`: filmagem de câmera/celular confirmada pelo fundador, piso
+marcado e prévia conferida. Pessoa deitada não detectada pelos critérios em 2D;
+resultado desfavorável registrado, mantendo a etapa parcial.
 
 | Data | Etapa/decisão | Evidência |
 | --- | --- | --- |
@@ -61,6 +100,8 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | 21/10/2026 | Etapa 02 concluída: contratos, eventos, incidentes, heartbeat e avisos locais | 123 testes API (19 anteriores + 104 novos), 87 TS e 87 Python; migração aditiva preservou um OWNER, um local, duas câmeras e volume da demo; [relatório](RELATORIOS/ETAPA_02.md) |
 | 21/10/2026 | Etapa 03 concluída: painel responsivo e simulador bearer | 16 E2E desktop/móvel com PostgreSQL/API/web exclusivos, pose sintética/revisão/aviso persistentes e regressões aprovadas; [relatório](RELATORIOS/ETAPA_03.md) |
 | 21/10/2026 | Etapa 04 concluída: FILE→Tasks CPU→observações/ROI/prévia/medidas | 139 testes Python, 87 TS, modelo real em sintético e em arquivo autorizado; três replays completos com sequência idêntica, piso e prévia conferidos pelo fundador; [relatório](RELATORIOS/ETAPA_04.md) |
+| 21/10/2026 | Etapa 05 inicialmente parcial: motor/SQLite/checkpoints/transporte/evaluate | 185 Python, 124 API, 87 TS; seis filmagens sem evento com Lite. Resultados negativos preservados no relatório |
+| 21/10/2026 | Etapa 05 concluída após investigação e seleção explícita do Full (D34) | 226 Python, 124 API, 87 TS; evento real aos 6000 ms, entrega/reenvio/EOF sem duplicação, prévia e incidente conferidos pelo fundador; [relatório](RELATORIOS/ETAPA_05.md) |
 
 ## Regra de atualização
 

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "matchingToleranceMs": 2000,
+  "videos": [
+    {
+      "videoId": "bancada-01",
+      "config": ".local/edge-events.yaml",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "authorized": false,
+      "retention": "OWNER_MANAGED",
+      "personPseudonym": "participant-01",
+      "sessionId": "session-01",
+      "environmentId": "environment-01",
+      "role": "CALIBRATION",
+      "material": "REAL_VIDEO",
+      "durationMs": 20000,
+      "fps": 30.0,
+      "annotationsComplete": false,
+      "targets": [],
+      "excluded": []
+    }
+  ]
+}

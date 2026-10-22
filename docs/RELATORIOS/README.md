@@ -8,6 +8,11 @@ A [etapa 04](ETAPA_04.md) registra visão em arquivo com modelo real, um vídeo
 autorizado, piso selecionado pelo fundador e prévia conferida. Essa validação
 comprova extração de poses naquele arquivo; não avalia detecção de quedas.
 
+A [etapa 05](ETAPA_05.md) registra motor temporal, outbox, retomada e integração
+real. Após os ensaios negativos iniciais, a comparação Lite/Full produziu um
+incidente REPLAY derivado de filmagem real, conferido pelo fundador; concluída
+para bancada, com limitações na [investigação](INVESTIGACAO_ETAPA_05.md).
+
 ## Modelo de relatório de etapa
 
 Copiar a estrutura abaixo e preencher com fatos. Não deixar “passou” sem dizer o que foi executado.

@@ -1,11 +1,14 @@
 """Optional native window, body-only skeleton and explicit REPLAY labelling."""
 
+import math
+from time import perf_counter
+
 import cv2
 import numpy as np
 
 from radar_edge.calibration import validate_polygon
 from radar_edge.errors import EdgeError
-from radar_edge.observations import Observation
+from radar_edge.observations import Observation, pose_quality
 from radar_edge.source import Frame
 
 CONNECTIONS = (
@@ -53,7 +56,51 @@ def draw_floor(image, points, closed=True):
         cv2.circle(image, (int(x), int(y)), 4, (80, 210, 240), -1)
 
 
-def render(frame: Frame, observation: Observation, floor, visibility: float):
+def usable_point(point, visibility):
+    """Only draw current, finite points with the same two confidence gates as analysis."""
+    values = (point.x, point.y, point.visibility, point.presence)
+    return (
+        11 <= point.index <= 32
+        and all(value is not None and math.isfinite(value) for value in values)
+        and 0 <= point.x <= 1
+        and 0 <= point.y <= 1
+        and visibility <= point.visibility <= 1
+        and visibility <= point.presence <= 1
+    )
+
+
+def diagnostic_lines(observation, visibility, paused=False):
+    """Explain pose quality without implying that visible points satisfy the floor policy."""
+    state, reasons = pose_quality(observation.poses, visibility)
+    state_label = {
+        "NO_POSE": "Sem pose",
+        "MULTIPLE_POSES": "Multiplas poses: classificacao indisponivel",
+        "LOW_CONFIDENCE": "Pose insuficiente para classificacao",
+        "ONE_VALID_POSE": "Uma pose com pontos essenciais suficientes",
+    }[state]
+    reason_labels = {
+        "NO_POSE": "sem pose",
+        "MULTIPLE_POSES": "multiplas poses",
+        "MISSING_LANDMARK": "pontos essenciais ausentes",
+        "BODY_OUT_OF_FRAME": "pontos essenciais fora do quadro",
+        "LOW_LANDMARK_QUALITY": "visibilidade/presenca insuficiente",
+        "DARK_FRAME": "frame escuro",
+    }
+    details = tuple(
+        reason_labels.get(reason, reason)
+        for reason in sorted(set(reasons) | set(observation.qualityReasons))
+    )
+    return (
+        f"REPLAY | t={observation.timestampMs} ms | poses={observation.poseCount}",
+        f"{state_label} | inferencia={observation.inferenceMs:.1f} ms",
+        *(f"Motivo: {detail}" for detail in details),
+        "Verde: pontos observados validos; nao confirma pessoa no piso.",
+        "Sem preencher pontos ausentes",
+        "PAUSADO | SPACE: continuar | Q/Esc: sair" if paused else "SPACE: pausar | Q/Esc: sair",
+    )
+
+
+def render(frame: Frame, observation: Observation, floor, visibility: float, paused=False):
     image = fit_display(frame.bgr)
     draw_floor(image, floor)
     height, width = image.shape[:2]
@@ -61,12 +108,7 @@ def render(frame: Frame, observation: Observation, floor, visibility: float):
         points = {
             point.index: (round(point.x * (width - 1)), round(point.y * (height - 1)))
             for point in pose.landmarks
-            if point.x is not None
-            and point.y is not None
-            and 0 <= point.x <= 1
-            and 0 <= point.y <= 1
-            and point.visibility is not None
-            and point.visibility >= visibility
+            if usable_point(point, visibility)
         }
         for start, end in CONNECTIONS:
             if start in points and end in points:
@@ -76,18 +118,8 @@ def render(frame: Frame, observation: Observation, floor, visibility: float):
     # Keep text outside the source pixels: no implied fall classification.
     canvas_width = max(640, width)
     image = cv2.copyMakeBorder(image, 0, 0, 0, canvas_width - width, cv2.BORDER_CONSTANT)
-    footer = np.zeros((86, canvas_width, 3), dtype=np.uint8)
-    state_label = {
-        "NO_POSE": "Sem pose",
-        "MULTIPLE_POSES": "Multiplas poses",
-        "LOW_CONFIDENCE": "Qualidade insuficiente",
-        "ONE_VALID_POSE": "Uma pose suficiente",
-    }.get(observation.inferenceState, observation.inferenceState)
-    lines = (
-        f"REPLAY | t={observation.timestampMs} ms | poses={observation.poseCount}",
-        f"{state_label} | inferencia={observation.inferenceMs:.1f} ms",
-        "Extracao de pose, sem classificar queda | Q/Esc: sair",
-    )
+    lines = diagnostic_lines(observation, visibility, paused)
+    footer = np.zeros((8 + len(lines) * 26, canvas_width, 3), dtype=np.uint8)
     for index, line in enumerate(lines):
         cv2.putText(
             footer, line, (6, 21 + index * 26), cv2.FONT_HERSHEY_SIMPLEX, 0.43, (240, 240, 240), 1
@@ -96,16 +128,43 @@ def render(frame: Frame, observation: Observation, floor, visibility: float):
 
 
 class LocalPreview:
-    def __init__(self, enabled: bool):
+    def __init__(self, enabled: bool, start_paused: bool = False):
         self.enabled = enabled
         self.opened = False
         self.name = "Radar - poses locais REPLAY"
+        self.paused = bool(enabled and start_paused)
+        self._initial_topmost = self.paused
+        self._pause_started = None
+        self._paused_seconds = 0.0
+
+    @property
+    def paused_seconds(self):
+        return self._paused_seconds + (
+            perf_counter() - self._pause_started if self._pause_started is not None else 0
+        )
+
+    def set_topmost(self, enabled):
+        try:
+            cv2.setWindowProperty(self.name, cv2.WND_PROP_TOPMOST, int(enabled))
+        except cv2.error:
+            pass  # Some GUI backends cannot raise a window; playback remains available.
+
+    def finish_pause(self):
+        if self._pause_started is not None:
+            self._paused_seconds += perf_counter() - self._pause_started
+            self._pause_started = None
+        self.paused = False
+        if self._initial_topmost:
+            self.set_topmost(False)
+            self._initial_topmost = False
 
     def __enter__(self):
         if self.enabled:
             try:
                 cv2.namedWindow(self.name, cv2.WINDOW_AUTOSIZE)
                 self.opened = True
+                if self._initial_topmost:
+                    self.set_topmost(True)
             except cv2.error:
                 raise EdgeError(
                     "PREVIEW_UNAVAILABLE",
@@ -117,13 +176,29 @@ class LocalPreview:
         if not self.enabled:
             return True
         try:
-            cv2.imshow(self.name, render(frame, observation, floor, visibility))
-            key = cv2.waitKey(1) & 0xFF
-            return (
-                key not in (ord("q"), ord("Q"), 27)
-                and cv2.getWindowProperty(self.name, cv2.WND_PROP_VISIBLE) >= 1
-            )
+            cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+            if self.paused:
+                self._pause_started = perf_counter()
+            while True:
+                key = cv2.waitKey(30 if self.paused else 1) & 0xFF
+                if (
+                    key in (ord("q"), ord("Q"), 27)
+                    or cv2.getWindowProperty(self.name, cv2.WND_PROP_VISIBLE) < 1
+                ):
+                    self.finish_pause()
+                    return False
+                if key == ord(" "):
+                    if self.paused:
+                        self.finish_pause()
+                        cv2.imshow(self.name, render(frame, observation, floor, visibility))
+                        return True
+                    self.paused = True
+                    self._pause_started = perf_counter()
+                    cv2.imshow(self.name, render(frame, observation, floor, visibility, True))
+                elif not self.paused:
+                    return True
         except cv2.error:
+            self.finish_pause()
             raise EdgeError(
                 "PREVIEW_UNAVAILABLE",
                 "A janela local falhou. Use --no-preview para execução sem GUI.",
@@ -132,6 +207,7 @@ class LocalPreview:
     def close(self):
         if self.opened:
             try:
+                self.finish_pause()
                 cv2.destroyWindow(self.name)
                 cv2.waitKey(1)
             except cv2.error:

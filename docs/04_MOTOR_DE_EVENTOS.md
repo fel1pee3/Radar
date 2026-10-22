@@ -8,6 +8,13 @@ MediaPipe estima pontos do corpo. Um módulo de regras temporais usa esses ponto
 
 Modelo inicial: Pose Landmarker **Lite**, MediaPipe Tasks. Pedir até duas poses para poder sinalizar múltiplas pessoas detectadas, mantendo a classificação restrita a uma pose válida. Desativar máscara de segmentação. Testar o custo real no notebook.
 
+Resultado da investigação da etapa 05 (D34): o **Full float16/v1** foi comparado
+e passou a ser uma opção explícita para a bancada. Lite permanece como padrão
+das configurações anteriores. Ambos exigem bundle oficial com SHA-256 fixado,
+duas poses e os mesmos gates; não há troca automática nem redução de qualidade.
+O Full viabilizou o fluxo positivo em um arquivo, mas não resolveu todos os
+enquadramentos. Veja [investigação 05](RELATORIOS/INVESTIGACAO_ETAPA_05.md).
+
 Usar inicialmente `VIDEO`/`detect_for_video` com timestamps estritamente crescentes tanto para arquivo quanto para a sequência amostrada de webcam. É uma escolha síncrona para facilitar reprodutibilidade; não exige arquivo físico. Captura ao vivo e análise são desacopladas por buffer de um frame. `LIVE_STREAM` assíncrono só entra por decisão posterior motivada.
 
 ## Observação interna
@@ -46,6 +53,16 @@ Postura candidata exige simultaneamente: exatamente uma pose suficiente, centro 
 Uma descida rápida exige quadris válidos antes e depois, mesma continuidade da pose, fonte sem mudança de configuração e deslocamento descendente no intervalo. Ela só muda o rótulo para `POSSIBLE_FALL` **depois** de satisfazer a persistência no chão. Sem trajetória suficiente, usar `PERSON_ON_FLOOR`.
 
 Essa regra pode confundir alongamento, deitar voluntariamente ou perspectiva. O polígono não mede altura real em 3D. Registrar esse limite e os confundidores; não ocultá-los com linguagem de certeza.
+
+O ângulo e a proporção são relativos aos eixos da imagem. Pessoa deitada na
+direção da profundidade pode projetar tronco vertical e caixa alta, falhando na
+regra mesmo com quadril dentro do piso e pontos suficientes; isso foi observado
+em `piso-d`. Para floor-v0.1, o enquadramento precisa permitir a projeção corporal
+predominantemente horizontal prevista nos gates. Não se declara suporte a toda
+vista superior/diagonal. Uma homografia do piso ou world landmarks centrados no
+quadril não fornecem automaticamente gravidade/altura física para resolver isso.
+Não girar a imagem ou deslocar ROI apenas para forçar alerta. Uma política que
+amplie esse domínio exigirá versão própria, calibração e avaliação separadas.
 
 ## Máquina local por câmera
 

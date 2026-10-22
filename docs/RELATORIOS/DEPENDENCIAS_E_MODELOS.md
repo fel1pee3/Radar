@@ -1,6 +1,6 @@
 # Dependências e modelos — inventário inicial
 
-Data: 21/10/2026. Escopo: etapas 00–04, execução local Windows x64; validação 04 concluída em um arquivo autorizado.
+Data: 21/10/2026. Escopo: etapas 00–05, execução local Windows x64; 04 concluída e 05 com prova positiva real pendente.
 Versões diretas fixadas nos manifests; árvores completas e integridades nos arquivos
 `pnpm-lock.yaml` e `services/edge/uv.lock`. Não foi escolhida uma licença para o código autoral.
 
@@ -229,3 +229,78 @@ O fundador selecionou o piso na GUI e confirmou pose/região na prévia. Três
 execuções terminaram normalmente, sem gravar frames nem exportar poses. Medidas
 e limites no [relatório 04](ETAPA_04.md). Um arquivo não constitui dataset de
 avaliação de eficácia; múltiplas pessoas reais não foram testadas.
+
+## Adições da etapa 05 — motor e entrega local
+
+Nenhuma dependência ou lockfile alterado. SQLite vem com o Python nativo; HTTPX
+0.28.1 e jsonschema 4.26.0 já estavam fixados e agora são usados na entrega local
+e validação do envelope real. MediaPipe/OpenCV/modelo/termos da 04 preservados.
+Nenhum serviço externo ou modelo novo foi introduzido.
+
+O arquivo autorizado bancada-01 foi processado pelo motor floor-v0.1 em dois
+ritmos, com zero candidatos/eventos; hash e calibração da 04 preservados.
+Integração Python→SQLite→API→PostgreSQL validada com observações **sintéticas**.
+Não se confunde esse teste com inferência positiva real. Prova positiva e painel
+continuam pendentes no [relatório 05](ETAPA_05.md).
+
+Depois foram processados `piso-a` (lateral, 109 observações) e `piso-b` (vista de
+cima, 73 observações), fornecidos pelo fundador, com calibrações próprias marcadas
+por ele. Ambos terminaram sem evento: seis candidatas sem continuidade no lateral
+e nenhuma pose elegível na vista de cima. Hashes, medidas e limitações registrados
+no relatório 05; nomes originais, vídeos e manifestos continuam privados. Modelo,
+política, gates e licenças não foram alterados para esses ensaios.
+
+Novo material `piso-c-ai`, confirmado pelo fundador como vídeo gerado no Gemini:
+SHA-256 `22ffc2aaccb4d086da652b8919b3720a0ac3f4fe74ed5751f410f2f59fdd0318`,
+3.134.134 bytes, 24 fps/10 s. Identificado como SYNTHETIC nos manifestos locais.
+Produziu um evento PERSON_ON_FLOOR local, sem HTTP, usando o mesmo modelo/política.
+Não substitui filmagem real nem valida eficácia. Não foram aprovados termos de
+redistribuição/treinamento do conteúdo gerado; arquivo permanece privado.
+
+Quarta filmagem real `piso-d`, confirmada como câmera/celular pelo fundador:
+SHA-256 `76495b5cfff2c33b0c505252832ce5e798222ab14e29565a05fe2199d0fe4a65`,
+1.791.840 bytes, 480×854, aproximadamente 23,9591 fps/15,5265 s. Piso e prévia
+confirmados por ele: orientação correta e pessoa deitada no chão. Processamento
+completo gerou 78 observações, 58 elegíveis, zero candidatas/eventos por limites
+de ângulo/proporção em 2D. Mesmo modelo/política, sem ajuste para forçar disparo.
+Uso local, retenção manual e mídia privada; origem independente e redistribuição
+não verificadas/autorizadas. Resultado desfavorável detalhado no relatório 05.
+
+Mais dois arquivos descritos pelo fundador como filmagens reais da internet:
+`piso-e-05`, SHA-256
+`efbb2c6c4721df503426918056b5ed3f233f77b55595b70dce9f9d68c48e650f`,
+10.206.712 bytes; e `piso-f-07`, SHA-256
+`86a20851a1d3bfacbe11d8977972f95a256893b80cd4de66dc7bb224a4dca55b`,
+9.262.980 bytes. Fonte, autoria e licença não verificadas independentemente;
+sem autorização de redistribuição presumida. Ambos foram calibrados manualmente
+e processados por completo com o mesmo modelo/política, sem evento. Resultados
+51/45 observações e 0/6 candidatas registrados no relatório 05. Mídia privada,
+retenção manual; nenhuma alteração de dependência, lock ou peso de modelo.
+
+### Comparação e seleção explícita do Full na etapa 05
+
+Nenhuma dependência Python nova. Bundle adicional oficial
+`pose-landmarker-full-float16-v1`, obtido via URL versionada
+`https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task`.
+9.398.198 bytes, SHA-256 calculado
+`5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1`.
+Peso privado em `.local/models/pose_landmarker_full.task`, registry fixado e
+reprodução por `radar-edge model-fetch --variant full`. Sem redistribuição de pesos.
+
+O [catálogo oficial](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker#models)
+vincula Lite/Full/Heavy ao mesmo
+[Model Card](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf),
+que declara Apache 2.0 para o modelo (página 2). O uso pretendido é pose/fitness;
+o documento lista vigilância fora desse escopo e não destina o modelo a decisões
+críticas à vida. Isso registra limitações de adequação/validação, sem inventar
+termo adicional que revogue Apache. Não foi feita aprovação de uso comercial ou
+assistencial. D30 sobre métricas nativas permanece aplicável.
+
+Comparação real manteve duas poses e gates iguais: Full melhorou piso-f-07 de
+15 para 40 observações elegíveis e gerou um PERSON_ON_FLOOR aos 6000 ms, entregue
+à API/painel. Não melhorou todos os arquivos. Lite permanece como padrão das
+configurações antigas. Novas configs Full/outboxes e manifestos preservam
+calibrações e falhas anteriores. Modelo selecionado é identificado por SHA no
+fingerprint e por ID no evento, sem troca automática. Métodos/resultados na
+[investigação 05](INVESTIGACAO_ETAPA_05.md). Os arquivos usados para selecionar o
+modelo continuam CALIBRATION e não constituem avaliação independente.

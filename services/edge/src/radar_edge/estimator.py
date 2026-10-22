@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 
 from radar_edge.errors import EdgeError
-from radar_edge.model import verify_model
+from radar_edge.model import ModelVariant, get_model_spec, verify_model
 from radar_edge.observations import Pose, body_poses
 from radar_edge.source import Frame
 
@@ -18,15 +18,19 @@ class PoseEstimator(Protocol):
 
 
 class MediaPipeEstimator:
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str, variant: ModelVariant = "lite"):
         self.model_path = model_path
+        self.variant = variant
+        spec = get_model_spec(variant)
+        self.model_id = spec.model_id
+        self.model_sha256 = spec.sha256
         self.landmarker = None
         self.previous_ms = -1
 
     def __enter__(self):
+        path = verify_model(self.model_path, self.variant)
         from mediapipe.tasks.python import BaseOptions, vision
 
-        path = verify_model(self.model_path)
         try:
             self.landmarker = vision.PoseLandmarker.create_from_options(
                 vision.PoseLandmarkerOptions(

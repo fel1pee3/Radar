@@ -1,7 +1,8 @@
-"""FILE -> local observations/optional preview -> bounded private diagnostics. No HTTP."""
+"""FILE observations, optional temporal events, durable storage and local delivery."""
 
 import hashlib
 import json
+import sqlite3
 from contextlib import ExitStack
 from pathlib import Path
 from time import perf_counter, sleep
@@ -14,7 +15,7 @@ from radar_edge.config import EdgeConfig, private_path
 from radar_edge.errors import EdgeError
 from radar_edge.estimator import MediaPipeEstimator
 from radar_edge.metrics import Metrics
-from radar_edge.model import MODEL_ID, MODEL_SHA256, file_hash
+from radar_edge.model import file_hash, get_model_spec
 from radar_edge.observations import Observation, pose_quality
 from radar_edge.preview import LocalPreview
 from radar_edge.source import FileSource, MediaSampler
@@ -49,11 +50,12 @@ class ObservationExport:
             self.stream.close()
 
 
-def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
+def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, int]:
+    model_spec = get_model_spec(config.model.variant)
     run_id = str(uuid4())
     directory = private_path(config.diagnostics.outputDirectory) / run_id
     directory.mkdir(parents=True, exist_ok=False)
-    metrics = Metrics()
+    metrics = Metrics(config.processing.minLandmarkVisibility)
     source = FileSource(config.source, config.processing.maxWidth)
     sequence = hashlib.sha256()
     exporter = ObservationExport(directory / "observations.jsonl", config.diagnostics)
@@ -63,6 +65,10 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
     video_hash = None
     calibration = None
     model_loaded = False
+    runtime = None
+    temporal_summary = {"enabled": False}
+    warmup_observations = 0
+    preview_paused_seconds = 0.0
     try:
         with ExitStack() as resources:
             resources.callback(exporter.close)
@@ -71,16 +77,40 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
             calibration = load_calibration(config.calibrationPath)
             check_compatibility(calibration, frame.geometry, config.cameraId)
             video_hash = file_hash(Path(config.source.path))
-            estimator = resources.enter_context(MediaPipeEstimator(config.model.path))
+            if config.events.enabled:
+                from radar_edge.event_runtime import EventRuntime
+
+                runtime = resources.enter_context(
+                    EventRuntime(
+                        config, calibration, video_hash, frame.geometry, evaluation_excluded
+                    )
+                )
+                resources.callback(lambda: temporal_summary.update(runtime.summary()))
+                if runtime.run["completed"]:
+                    frame = None
+            estimator = resources.enter_context(
+                MediaPipeEstimator(config.model.path, config.model.variant)
+            )
             model_loaded = True
-            preview = resources.enter_context(LocalPreview(config.processing.preview))
+            preview = resources.enter_context(
+                LocalPreview(config.processing.preview, config.processing.previewStartPaused)
+            )
             sampler = MediaSampler(config.processing.targetAnalysisFps)
             playback_start = perf_counter()
+            last_frame_digest = None
+            identical_since = None
             while frame is not None:
+                frame_digest = hashlib.sha256(frame.bgr.tobytes()).hexdigest()
+                if frame_digest != last_frame_digest:
+                    identical_since = frame.timestamp_ms
+                last_frame_digest = frame_digest
                 if sampler.accepts(frame.timestamp_ms):
                     if config.processing.replaySpeed > 0:
-                        remaining = frame.timestamp_ms / 1000 / config.processing.replaySpeed - (
-                            perf_counter() - playback_start
+                        offset = max(0, runtime.run["timestamp_ms"]) if runtime else 0
+                        remaining = (
+                            frame.timestamp_ms - offset
+                        ) / 1000 / config.processing.replaySpeed - (
+                            perf_counter() - playback_start - preview.paused_seconds
                         )
                         if remaining > 0:
                             sleep(remaining)
@@ -94,7 +124,7 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
                         reasons = (*reasons, "DARK_FRAME")
                     observation = Observation(
                         schemaVersion=1,
-                        runId=run_id,
+                        runId=runtime.run["run_id"] if runtime else run_id,
                         cameraId=config.cameraId,
                         mode="REPLAY",
                         frameIndex=frame.index,
@@ -109,10 +139,20 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
                         qualityReasons=reasons,
                         meanLuminance=luminance,
                         inferenceMs=inference_ms,
-                        modelId=MODEL_ID,
+                        modelId=model_spec.model_id,
                         calibrationId=calibration["calibrationId"],
                         calibrationVersion=calibration["version"],
+                        frameFingerprint=frame_digest,
+                        identicalFrameDurationMs=frame.timestamp_ms - identical_since,
                     )
+                    if runtime is not None and frame.index <= runtime.run["frame_index"]:
+                        # Decode and warm the VIDEO tracker, but do not replay decisions,
+                        # accumulate recovery time or repeat exported observations.
+                        warmup_observations += 1
+                        frame = source.read()
+                        continue
+                    if runtime is not None:
+                        runtime.process(observation)
                     metrics.add(observation)
                     sequence.update(f"{frame.index}:{frame.timestamp_ms}\n".encode())
                     exporter.write(observation)
@@ -133,11 +173,21 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
                 else:
                     metrics.skipped += 1
                 frame = source.read()
+            if runtime is not None and state == "ENDED":
+                runtime.finish()
+            preview_paused_seconds = preview.paused_seconds
     except KeyboardInterrupt:
         state, code = "INTERRUPTED", 130
     except EdgeError as failure:
         state, code = "ERROR", 1
         error = {"code": failure.code, "message": failure.message}
+    except sqlite3.Error:
+        state, code = "ERROR", 1
+        error = {
+            "code": "STORAGE_ERROR",
+            "message": "Falha no SQLite; verifique espaço e acesso. "
+            "Evento não confirmado permanece local.",
+        }
     except Exception:
         state, code = "ERROR", 1
         error = {
@@ -150,15 +200,16 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
         "schemaVersion": 1,
         "command": "run",
         "status": "ok" if code == 0 else "error",
-        "runId": run_id,
+        "runId": temporal_summary.get("runId", run_id),
+        "diagnosticReportId": run_id,
         "mode": "REPLAY",
         "captureState": state,
         "error": error,
-        "workerVersion": "edge-pose-v1",
+        "workerVersion": "edge-temporal-v1" if config.events.enabled else "edge-pose-v1",
         "source": {**source.metadata(), "sha256": video_hash},
         "model": {
-            "id": MODEL_ID,
-            "sha256": MODEL_SHA256,
+            "id": model_spec.model_id,
+            "sha256": model_spec.sha256,
             "loaded": model_loaded,
             "delegate": "CPU",
             "runningMode": "VIDEO",
@@ -179,7 +230,10 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
             "truncated": exporter.truncated,
         },
         "framesSaved": False,
-        "incidentsEmitted": False,
+        "incidentsEmitted": temporal_summary.get("generatedEvents", 0) > 0,
+        "temporal": temporal_summary,
+        "trackerWarmupObservations": warmup_observations,
+        "previewPausedSeconds": preview_paused_seconds,
         "warnings": ["INDEX_FPS assumes constant frame rate; not reliable VFR timing"]
         if source.clock and source.clock.fallback
         else [],
@@ -191,9 +245,10 @@ def run_pipeline(config: EdgeConfig) -> tuple[dict, int]:
 
 
 def doctor(config: EdgeConfig) -> dict:
+    model_spec = get_model_spec(config.model.variant)
     with FileSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()
-        with MediaPipeEstimator(config.model.path) as estimator:
+        with MediaPipeEstimator(config.model.path, config.model.variant) as estimator:
             poses, duration = estimator.estimate(frame)
         calibration_status = "MISSING"
         if private_path(config.calibrationPath).exists():
@@ -206,8 +261,8 @@ def doctor(config: EdgeConfig) -> dict:
             "command": "doctor",
             "mode": "REPLAY",
             "source": {**source.metadata(), "sha256": file_hash(Path(config.source.path))},
-            "modelId": MODEL_ID,
-            "modelSha256": MODEL_SHA256,
+            "modelId": model_spec.model_id,
+            "modelSha256": model_spec.sha256,
             "modelLoaded": True,
             "inferenceExecuted": True,
             "poseCount": len(poses),

@@ -94,6 +94,7 @@ try {
   // O contrato de banco vazio da etapa 01 continua sendo executado antes das novas fixtures.
   pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/access.test.mjs']);
   pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/events.test.mjs']);
+  pnpm(['--filter', '@radar/api', 'test:integration', '--runTestsByPath', 'test/edge.test.mjs']);
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Falha na validação isolada.');
   process.exitCode = 1;

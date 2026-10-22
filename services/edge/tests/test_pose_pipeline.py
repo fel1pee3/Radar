@@ -228,7 +228,7 @@ def test_model_failure_releases_resources_and_cannot_become_no_pose(configured, 
     closed = []
 
     class FailedEstimator:
-        def __init__(self, _path):
+        def __init__(self, _path, _variant="lite"):
             pass
 
         def __enter__(self):
@@ -273,7 +273,7 @@ def test_requested_stop_or_keyboard_interrupt_closes_source_model_preview(
         closed.append("source")
 
     class TestEstimator:
-        def __init__(self, _path):
+        def __init__(self, _path, _variant="lite"):
             pass
 
         def __enter__(self):
@@ -288,8 +288,8 @@ def test_requested_stop_or_keyboard_interrupt_closes_source_model_preview(
             closed.append("model")
 
     class TestPreview:
-        def __init__(self, _enabled):
-            pass
+        def __init__(self, _enabled, _start_paused=False):
+            self.paused_seconds = 0.0
 
         def __enter__(self):
             return self

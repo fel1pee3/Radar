@@ -1,10 +1,15 @@
 """Bounded aggregates and OS process counters, not a host-wide performance monitor."""
 
 import ctypes
+import math
 import os
 import platform
 from collections import Counter
 from time import perf_counter, process_time
+
+from radar_edge.observations import ESSENTIAL
+
+LANDMARK_FAILURE_REASONS = ("missing", "nonfinite", "outOfFrame", "lowVisibility", "lowPresence")
 
 
 def process_peak_memory() -> tuple[int | None, str]:
@@ -54,7 +59,10 @@ def process_peak_memory() -> tuple[int | None, str]:
 
 
 class Metrics:
-    def __init__(self):
+    def __init__(self, visibility=0.5):
+        if not math.isfinite(visibility) or not 0 <= visibility <= 1:
+            raise ValueError("Invalid landmark visibility threshold")
+        self.visibility = visibility
         self.wall_start = perf_counter()
         self.cpu_start = process_time()
         self.analyzed = 0
@@ -66,11 +74,49 @@ class Metrics:
         self.inference_min = None
         self.first_ms = None
         self.last_ms = None
+        self.pose_observations = Counter({"none": 0, "one": 0, "multiple": 0})
+        self.pose_count_mismatches = 0
+        self.landmark_failures = {
+            index: Counter(dict.fromkeys(LANDMARK_FAILURE_REASONS, 0))
+            for index in sorted(ESSENTIAL)
+        }
+
+    def add_landmark_diagnostics(self, observation):
+        count = len(observation.poses)
+        self.pose_observations["none" if count == 0 else "one" if count == 1 else "multiple"] += 1
+        if observation.poseCount != count:
+            self.pose_count_mismatches += 1
+            return
+        if count != 1:
+            return  # No pose is not eight missing joints; never mix people from multiple poses.
+        points = {point.index: point for point in observation.poses[0].landmarks}
+        for index, counts in self.landmark_failures.items():
+            point = points.get(index)
+            if point is None:
+                counts["missing"] += 1
+                continue
+            values = (point.x, point.y, point.visibility, point.presence)
+            counts["missing"] += any(value is None for value in values)
+            counts["nonfinite"] += any(
+                value is not None and not math.isfinite(value) for value in values
+            )
+            counts["outOfFrame"] += any(
+                value is not None and math.isfinite(value) and not 0 <= value <= 1
+                for value in (point.x, point.y)
+            )
+            for reason, value in (
+                ("lowVisibility", point.visibility),
+                ("lowPresence", point.presence),
+            ):
+                counts[reason] += (
+                    value is not None and math.isfinite(value) and not self.visibility <= value <= 1
+                )
 
     def add(self, observation):
         self.analyzed += 1
         self.states[observation.inferenceState] += 1
         self.reasons.update(observation.qualityReasons)
+        self.add_landmark_diagnostics(observation)
         self.inference_sum += observation.inferenceMs
         self.inference_max = max(self.inference_max, observation.inferenceMs)
         self.inference_min = (
@@ -94,6 +140,15 @@ class Metrics:
             "multiplePoseObservations": self.states["MULTIPLE_POSES"],
             "lowConfidenceObservations": self.states["LOW_CONFIDENCE"],
             "qualityReasons": dict(self.reasons),
+            "landmarkDiagnostics": {
+                "minLandmarkVisibility": self.visibility,
+                "scope": "SINGLE_POSE_ONLY",
+                "poseObservations": dict(self.pose_observations),
+                "poseCountMismatchObservations": self.pose_count_mismatches,
+                "essentialLandmarkFailures": {
+                    str(index): dict(counts) for index, counts in self.landmark_failures.items()
+                },
+            },
             "firstAnalyzedTimestampMs": self.first_ms,
             "lastAnalyzedTimestampMs": self.last_ms,
             "analysisSamplesPerMediaSecond": (

@@ -43,6 +43,8 @@ class Observation:
     modelId: str
     calibrationId: str
     calibrationVersion: int
+    frameFingerprint: str | None = None
+    identicalFrameDurationMs: int | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

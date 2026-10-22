@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapas 00–04 concluídas em 21/10/2026.** A 04 foi verificada com arquivo autorizado, modelo real, piso selecionado pelo fundador e prévia conferida. Consulte o [status](STATUS.md), o [relatório 04](RELATORIOS/ETAPA_04.md) e o [roteiro de visão em arquivo](VALIDACAO_MANUAL_ETAPA_04.md). Os comandos 04 abaixo existem; os de 05 em diante continuam previstos. O proprietário existente é preservado; não há necessidade de repetir provisionamento para abrir o painel.
+**Etapas 00–04 concluídas; 05 parcial em 21/10/2026.** A 04 foi verificada com arquivo autorizado, modelo real, piso selecionado pelo fundador e prévia conferida. A 05 tem motor/SQLite/entrega/evaluate testados, mas falta vídeo positivo gerando incidente. Consulte o [status](STATUS.md), o [relatório 05](RELATORIOS/ETAPA_05.md) e o [roteiro 05](VALIDACAO_MANUAL_ETAPA_05.md). Os comandos até 05 existem; os de 06 em diante continuam previstos. O proprietário existente é preservado.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -143,6 +143,8 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `uv run --project services/edge pytest` | 05 | Testes de regras, contrato e persistência |
 | `uv run --project services/edge radar-edge evaluate --manifest .local/evaluation.json` | 05/08 | Replay e métricas em relatório privado |
 | `uv run --project services/edge radar-edge reset-episode --config .local/edge.yaml --reason scene_reset` | 05 | Reset local explícito, com worker de captura parado e auditoria; não encerra incidente humano |
+| `uv run --project services/edge --frozen radar-edge outbox-status --config .local/edge-events.yaml` | 05 | Mostra contagens, códigos de erro e confirmações sem expor payload/token |
+| `uv run --project services/edge --frozen radar-edge deliver --config .local/edge-events.yaml` | 05 | Tenta pendentes respeitando backoff; --resume-auth explícito após corrigir credencial |
 | `uv run --project services/edge radar-edge probe --config .local/edge.yaml` | 06/09 | Verifica fonte configurada, sem detectar incidente |
 | `pnpm demo:check` | 08 | Checa pré-requisitos e consistência sem fabricar resultados |
 
@@ -202,6 +204,39 @@ Detalhes, limites da biblioteca e resultados no
 [roteiro 04](VALIDACAO_MANUAL_ETAPA_04.md) e [relatório 04](RELATORIOS/ETAPA_04.md).
 
 ### Sequência completa prevista até a entrega
+
+O percurso temporal da 05 usa configuração privada separada, preservando a da 04:
+
+```powershell
+. ./scripts/activate.ps1
+uv run --project services/edge --frozen radar-edge run --config .local/edge-events.yaml --no-preview
+uv run --project services/edge --frozen radar-edge outbox-status --config .local/edge-events.yaml
+uv run --project services/edge --frozen radar-edge deliver --config .local/edge-events.yaml
+uv run --project services/edge --frozen radar-edge evaluate --manifest .local/evaluation.json
+```
+
+events.enabled/delivery.enabled são explícitos; configurações antigas mantêm
+somente poses. Repetir run retoma checkpoint/EOF; nova análise intencional exige
+reset-episode com motivo ou evaluate isolado sem HTTP. Troca de fonte/calibração
+na mesma outbox é bloqueada até reset explícito, sem apagar histórico. O arquivo
+original com Lite terminou sem eventos; depois a seleção explícita do Full gerou
+um incidente real em piso-f-07, conferido pelo fundador. Comandos da demonstração:
+
+```powershell
+uv run --project services/edge --frozen radar-edge model-fetch --variant full
+uv run --project services/edge --frozen radar-edge doctor --config .local/edge-piso-f-07-full.yaml
+uv run --project services/edge --frozen radar-edge run --config .local/edge-piso-f-07-full.yaml --poses-only --preview-paused --replay-speed 0.5
+uv run --project services/edge --frozen radar-edge outbox-status --config .local/edge-piso-f-07-full.yaml
+uv run --project services/edge --frozen radar-edge evaluate --manifest .local/evaluation-full.json
+```
+
+Espaço inicia/pausa/retoma; Q/Esc encerra. A prévia poses-only não cria outro
+evento. Run normal na execução concluída retoma EOF sem reanalisar. Em outra
+máquina, prepare seus arquivos privados; eles não acompanham o Git. Full requer
+model.variant=full e model.path correspondente, com hash verificado. Troca de
+modelo também exige nova execução/outbox ou reset explícito.
+Passos de calibração positiva, retomada e interpretação em
+[VALIDACAO_MANUAL_ETAPA_05.md](VALIDACAO_MANUAL_ETAPA_05.md).
 
 1. Instalar dependências e preparar `.env`/configuração privada.
 2. Subir PostgreSQL; gerar client, aplicar migrações e seed idempotente.

@@ -6,7 +6,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–04 implementadas e verificadas. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. O comando `pnpm.cmd demo:simulate` publica eventos SIMULATED na API real, sem câmera ou IA. A etapa 04 processa arquivos locais com poses reais, calibração de piso e prévia nativa. Veja [status](docs/STATUS.md), [relatório 04](docs/RELATORIOS/ETAPA_04.md) e [roteiro de apresentação do painel](docs/VALIDACAO_MANUAL_ETAPA_03.md). Proprietário, cadastros, configurações privadas e volume preservados. Classificação temporal e captura ao vivo pertencem às próximas etapas.
+> **Estado atual:** etapas 00–05 implementadas e verificadas para a demonstração de bancada. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. A visão em arquivo gerou um incidente REPLAY real com MediaPipe Full, conferido pelo fundador. O simulador permanece identificado como SIMULATED e não comprova visão. Veja [status](docs/STATUS.md), [relatório 05](docs/RELATORIOS/ETAPA_05.md) e [roteiro 05](docs/VALIDACAO_MANUAL_ETAPA_05.md). Proprietário, cadastros, configurações privadas e volume preservados. Captura ao vivo pertence à etapa 06, ainda não iniciada.
 
 Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
 `pnpm.cmd dev:api` e `pnpm.cmd dev:web` separadamente. Abra
@@ -20,6 +20,22 @@ local e medidas. Um vídeo autorizado foi processado integralmente em três
 velocidades, com 89 observações por execução. O fundador marcou o piso e confirmou
 o alinhamento da pose na prévia. Veja o [roteiro 04](docs/VALIDACAO_MANUAL_ETAPA_04.md) e o
 [relatório 04](docs/RELATORIOS/ETAPA_04.md). Não cria incidentes nem classifica queda.
+
+A etapa 05 acrescenta motor temporal, SQLite com retomada, entrega idempotente e
+avaliação por episódios, habilitados explicitamente em configuração privada.
+Está **concluída no escopo da bancada**: o Full produziu PERSON_ON_FLOOR em
+`piso-f-07`, aos 6000 ms, com os mesmos gates de qualidade e persistência. A API
+confirmou um incidente REPLAY/TEST; o fundador conferiu a prévia melhorada e os
+sinais/versões/pose no painel. Retomada e reenvio não duplicaram esse incidente.
+Lite continua disponível e é o padrão das configurações anteriores.
+Os seis ensaios negativos iniciais com Lite e as falhas restantes com Full foram
+preservados: não há detecção garantida para qualquer enquadramento ou estimativa
+de eficácia independente. Veja o [roteiro 05](docs/VALIDACAO_MANUAL_ETAPA_05.md) e o
+[relatório 05](docs/RELATORIOS/ETAPA_05.md). Não há captura ao vivo nesta etapa.
+
+Um vídeo adicional confirmado como gerado por IA produziu um evento local por
+análise de poses, identificado como material sintético, sem entrega HTTP. Essa
+evidência de processamento não conclui a prova em filmagem real da etapa 05.
 
 ## 1. A decisão de partida
 
