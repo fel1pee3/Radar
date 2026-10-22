@@ -51,11 +51,11 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
         "episodeId": str(uuid4()),
         "cameraId": observation.cameraId,
         "runId": run["run_id"],
-        "mode": "REPLAY",
+        "mode": observation.mode,
         "kind": emission.kind,
         "occurredAt": instant(emission.startedMs),
         "detectedAt": instant(emission.detectedMs),
-        "sourceOffsetMs": emission.detectedMs,
+        "sourceOffsetMs": emission.detectedMs if observation.mode == "REPLAY" else None,
         "signals": {
             "floorDurationMs": emission.floorDurationMs,
             "torsoAngleDeg": features.torsoAngleDeg,
@@ -82,8 +82,11 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
 
 
 class EventRuntime:
-    def __init__(self, config, calibration, video_hash, geometry, excluded=None):
+    def __init__(
+        self, config, calibration, video_hash, geometry, excluded=None, async_delivery=False
+    ):
         self.config, self.calibration = config, calibration
+        self.async_delivery = async_delivery
         self.model_spec = get_model_spec(config.model.variant)
         self.policy = configured_policy(config.events.policy)
         self.evidence_mode = os.environ.get("EVIDENCE_MODE", config.events.evidenceMode)
@@ -111,7 +114,12 @@ class EventRuntime:
             encode(
                 {
                     "video": video_hash,
-                    "videoId": config.source.videoId,
+                    "videoId": getattr(config.source, "videoId", None),
+                    **(
+                        {"device": config.source.model_dump()}
+                        if config.source.kind == "WEBCAM"
+                        else {}
+                    ),
                     "calibration": calibration,
                     "policy": self.policy.to_dict(),
                     "geometry": geometry.to_dict()
@@ -141,8 +149,11 @@ class EventRuntime:
                 Outbox(self.config.events.outboxPath, self.config.cameraId)
             )
             self.run, self.resumed = self.store.execution(self.fingerprint)
+            # Session identity is never resumed after ENDED. The SQLite execution
+            # retains checkpoints/episodes; already stored envelopes stay immutable.
+            self.capture_run_id = str(uuid4())
             self.engine.restore(json.loads(self.run["engine"]))
-            if self.config.events.delivery.enabled:
+            if self.config.events.delivery.enabled and not self.async_delivery:
                 self.delivery = Delivery(self.store, self.config.events.delivery)
                 self.resources.callback(self.delivery.close)
                 self.delivery.flush()
@@ -155,13 +166,22 @@ class EventRuntime:
         self.resources.close()
 
     def process(self, observation):
+        settings = self.config.events.delivery
+        self.store.check_capacity(settings.maxItems, settings.maxBytes, extra_bytes=65536)
         f = self.gate.apply(
             observation,
             extract_features(observation, self.calibration["floorPolygon"], self.policy),
         )
         emission = self.engine.step(f)
         value = (
-            event_payload(observation, f, emission, self.run, self.policy, self.evidence_mode)
+            event_payload(
+                observation,
+                f,
+                emission,
+                {**self.run, "run_id": self.capture_run_id},
+                self.policy,
+                self.evidence_mode,
+            )
             if emission
             else None
         )

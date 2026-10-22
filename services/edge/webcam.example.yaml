@@ -1,0 +1,44 @@
+schemaVersion: 1
+purpose: RADAR_LIVE_POSE
+# Troque pelo ID da sua camera logica WEBCAM.
+cameraId: '11111111-1111-4111-8111-111111111111'
+source:
+  kind: WEBCAM
+  # Exemplo: escolha o indice explicitamente; nao ha busca automatica.
+  index: 0
+  backend: DSHOW
+  authorized: false
+  width: 640
+  height: 480
+  fps: 30.0
+  rotation: 0
+  frameTimeoutSeconds: 2.0
+  openTimeoutSeconds: 10.0
+  reconnectAttempts: 3
+  reconnectDelaySeconds: 1.0
+model:
+  variant: full
+  path: .local/models/pose_landmarker_full.task
+calibrationPath: .local/calibration-webcam.json
+processing:
+  maxWidth: 640
+  targetAnalysisFps: 5.0
+  minLandmarkVisibility: 0.5
+  preview: true
+  maxRunSeconds: 120.0
+diagnostics:
+  outputDirectory: .local/results/edge
+  exportObservations: false
+events:
+  enabled: true
+  outboxPath: .local/edge-webcam/outbox.sqlite
+  evidenceMode: skeleton
+  policy: {}
+  delivery:
+    # Habilite depois de preparar e conferir a credencial privada.
+    enabled: false
+    credentialFile: .local/webcam-device.json
+    timeoutSeconds: 5.0
+    maxItems: 10000
+    maxBytes: 104857600
+    confirmedRetentionDays: 7

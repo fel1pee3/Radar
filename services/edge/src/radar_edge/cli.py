@@ -61,6 +61,15 @@ def main() -> None:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("env", help="Importa bibliotecas sem abrir arquivo/modelo.")
+    probe = commands.add_parser("probe", help="Abre somente a webcam explicitamente configurada.")
+    probe.add_argument("--config", required=True)
+    probe.add_argument("--seconds", type=float, default=5.0)
+    probe.add_argument("--preview", action="store_true")
+    control = commands.add_parser("control", help="Pausa, retoma ou encerra o worker local.")
+    control.add_argument("--config", required=True)
+    control.add_argument(
+        "--action", required=True, choices=["pause", "resume", "reconnect", "stop"]
+    )
     fetch = commands.add_parser(
         "model-fetch", help="Obtém explicitamente o bundle oficial com hash fixado."
     )
@@ -117,6 +126,19 @@ def main() -> None:
             from radar_edge.evaluation import evaluate_manifest
 
             result, code = evaluate_manifest(args.manifest, args.replay_speed)
+        elif args.command == "probe":
+            from radar_edge.config import load_config
+            from radar_edge.webcam import probe
+
+            config = load_config(args.config)
+            if config.source.kind != "WEBCAM" or not 1 <= args.seconds <= 60:
+                raise EdgeError("INVALID_ARGUMENT", "Probe exige WEBCAM e 1–60 segundos.")
+            result = probe(config, args.seconds, args.preview)
+        elif args.command == "control":
+            from radar_edge.config import load_config
+            from radar_edge.live import send_control
+
+            result = send_control(load_config(args.config), args.action)
         else:
             from radar_edge.config import DiagnosticsConfig, ProcessingConfig, load_config
             from radar_edge.pipeline import doctor, run_pipeline

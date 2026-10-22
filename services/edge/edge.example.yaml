@@ -42,4 +42,7 @@ events:
     enabled: false
     # JSON privado com apiUrl, cameraId e deviceToken, ou variáveis EDGE_*.
     credentialFile: null
-    timeoutSeconds: 2.0
+    timeoutSeconds: 5.0
+    maxItems: 10000
+    maxBytes: 104857600
+    confirmedRetentionDays: 7

@@ -1,8 +1,33 @@
 # Status de construção
 
-**Última atualização:** 21/10/2026 — etapa 05 **CONCLUÍDA no escopo da bancada**. Após comparar Lite/Full e cadências, o Full produziu PERSON_ON_FLOOR em `piso-f-07`, aos 6000 ms, mantendo floor-v0.1. SQLite e API confirmaram um incidente REPLAY/TEST; o fundador confirmou piso, melhora da pose e sinais/versões/evidência no painel. Retomada e reenvio preservaram o mesmo incidente. 226 testes Python, 124 API e 87 contratos TS aprovados; limites de perspectiva e perdas nos outros vídeos preservados. Etapa 06 não iniciada; commit/push autorizados pelo fundador após a validação, sem deploy.
+**Última atualização — 22/10/2026:** etapa 06 **CONCLUÍDA no escopo da bancada**.
+Calibração WEBCAM v1 e pose no corpo conferidas pelo fundador. Sessão de 384
+análises em 83,72 s, vazão global 4,59 análises/s, inferência média 25,34 ms;
+sessão guiada posterior de 981 análises em 231,23 s terminou sem erro.
+Fundador confirmou no painel LIVE → Pausada → retomada → Fonte encerrada,
+e fechamento da janela. Frames novos e estados foram conferidos localmente e
+no servidor. Recuperação/limites/duplicação verificados em recursos dedicados;
+243 testes Python aprovados e 125 API/87 contratos TS anteriores preservados.
+Pose falsa na estante, fluidez em 5 Hz e falta de evento LIVE positivo são
+limitações/pendências da validação final do MVP. Commit/push autorizados pelo
+fundador após a validação; sem deploy. Etapa 07 não iniciada.
 
-**Software implementado:** fundação, API, painel, simulador, contratos e pipeline FILE; motor de episódios, outbox SQLite, retomada, transporte local e avaliação. **Modelo executado:** Lite e Full, CPU/VIDEO; Full com evento real em `piso-f-07` e cinco outros arquivos reais sem evento. Origem real declarada pelo fundador, sem verificação independente da procedência da internet. Vídeo gerado por IA permanece separado, com evento apenas local e sem contar como prova real. **Câmeras físicas testadas:** nenhuma. **Última etapa concluída:** 05; 06 não iniciada.
+**Histórico anterior — 21/10/2026:** etapa 06 parcial naquele momento, com captura
+física e inferência em um frame, mas sem calibração. A abertura de calibração pela
+IA retornou ValueError/CONFIG_OR_ENVIRONMENT_ERROR, sem causa identificada. O
+fundador concluiu a calibração e uma sessão contínua em 22/10; o erro anterior não
+reapareceu nessa execução, sem comprovar sua causa. A regressão API de 125 testes
+e os testes de entrega/recuperação anteriores continuam registrados no relatório.
+
+**Software implementado:** fundação, API, painel, simulador, contratos, FILE e WEBCAM;
+motor temporal, SQLite com retomada/limites, envio/heartbeat independentes e
+controles locais. **Modelo executado:** Lite/Full CPU/VIDEO em arquivos; Full
+também em sessão física contínua, com pose no corpo conferida pelo fundador e
+falso reconhecimento de estante relatado. Origem dos arquivos reais anteriores
+declarada pelo fundador, sem verificação independente da internet; vídeo gerado
+por IA permanece separado. **Câmera física:** índice 0 escolhido pelo fundador,
+DSHOW, 640×480, prévia conferida; inventário Windows lista Positivo Theia Camera.
+**Última etapa concluída:** 06; 07 elegível somente por nova solicitação.
 
 Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresentam o plano; só atualizar para concluída quando os critérios tiverem evidência real.
 
@@ -14,7 +39,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | 03 | [Painel e primeira demonstração](../etapas/03_PAINEL_E_SIMULADOR/README.md) | CONCLUÍDA | [ETAPA_03](RELATORIOS/ETAPA_03.md) · 21/10/2026 |
 | 04 | [Visão computacional em arquivo](../etapas/04_VISAO_EM_VIDEO/README.md) | CONCLUÍDA | [ETAPA_04](RELATORIOS/ETAPA_04.md) · 21/10/2026 |
 | 05 | [Motor temporal e eventos de visão](../etapas/05_MOTOR_TEMPORAL/README.md) | CONCLUÍDA | [ETAPA_05](RELATORIOS/ETAPA_05.md) · 21/10/2026 |
-| 06 | [Webcam, disponibilidade e recuperação](../etapas/06_WEBCAM_E_RESILIENCIA/README.md) | NÃO INICIADA | — |
+| 06 | [Webcam, disponibilidade e recuperação](../etapas/06_WEBCAM_E_RESILIENCIA/README.md) | CONCLUÍDA · bancada | [ETAPA_06](RELATORIOS/ETAPA_06.md) · 22/10/2026 |
 | 07 | [Evidência opcional, retenção e proteção](../etapas/07_EVIDENCIA_E_PROTECAO/README.md) | NÃO INICIADA | — |
 | 08 | [Validação final e entrega da demo](../etapas/08_VALIDACAO_E_ENTREGA/README.md) | NÃO INICIADA | — |
 | 09 | [Câmera IP e verificação da KAP-S069](../etapas/09_CAMERA_IP_OPCIONAL/README.md) | NÃO INICIADA · opcional | — |
@@ -36,7 +61,7 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 | Eventos / contratos (02) | Migração 20261021000200_events_incidents aplicada em banco vazio exclusivo e radar:15432; 19 testes anteriores + 104 novos aprovados; contratos: 87 TS e 87 Python; roteiro PowerShell exercitado por HTTP real em banco isolado |
 | Painel / demonstração (03) | Playwright 1.64.1/Chromium 156.0.8078.4; 16 E2E reais aprovados em desktop 1440×1000 e móvel 390×844; 123 regressões API e87 + 87 contratos preservadas; screenshots sintéticas privadas inspecionadas |
 | Visão em arquivo (04) | Python 3.12.15/uv 0.13.4 preservados; PyYAML 6.0.3 novo, NumPy 2.5.4 mantido e declarado direto; 139 testes Python, incluindo 87 contratos, e 87 contratos TS aprovados; arquivo bancada-01: 530 frames/89 observações, mesma sequência em três velocidades; seleção do piso e conferência visual realizadas pelo fundador |
-| Webcam e índice | Não consultados nem abertos na 00; teste físico na 06 |
+| Webcam e índice | Etapa 06 concluída para bancada: índice 0/DSHOW, 640×480, Full/piso v1. Probe inicial 10 FPS, sessão contínua de 384 análises e sessão guiada de 981 análises, controles conferidos no painel. Zero candidatos/eventos nos dois ensaios; pose falsa na estante relatada. 243 Python, 125 API/87 contratos TS; checks aprovados, sem comprovar evento LIVE positivo |
 | Motor temporal (05) | Sem dependências novas/lock alterado; SQLite nativo; 226 testes Python e 124 API em PostgreSQL exclusivo; 87 contratos TS. Full oficial fixado por hash, 45 análises/40 elegíveis/32 candidatas em piso-f-07; evento aos 6000 ms, incidente REPLAY/TEST conferido. Evaluate sem espera/2× reproduziu o offset; EOF/reenvio sem duplicação |
 | KAP-S069 / firmware / protocolo | Não confirmado; etapa 09 opcional |
 
@@ -49,7 +74,28 @@ Este arquivo é a fonte de verdade de progresso. Os READMEs das etapas apresenta
 - Uso manual revelou falha de transporte após gravar o incidente: a API em modo watch reiniciou no mesmo intervalo. O comando do simulador deixou de recompilar contratos e ganhou retry limitado com envelope estável e erro de encerramento explícito. Quatro testes de transporte e um E2E real desktop aprovados após a correção; a execução original do fundador permaneceu parcial, sem confirmação de ENDED. O incidente persistido pode ser revisado normalmente; não foi substituído nem duplicado pelos testes.
 - Monitorar compatibilidade dos plugins React/a11y antes de atualizar ESLint 9 (aviso de fim de suporte registrado no inventário).
 - Nenhum critério obrigatório da etapa 04 pendente. O arquivo autorizado `bancada-01` terminou em três replays (sem espera, 2×, prévia 0,5×): 530 frames lidos, 89 analisados, 84 observações com qualidade suficiente e 5 de baixa confiança, sem fallback temporal. O fundador marcou o piso e confirmou o alinhamento da pose/região; [roteiro 04](VALIDACAO_MANUAL_ETAPA_04.md), [relatório 04](RELATORIOS/ETAPA_04.md). Isso não mede eficácia de queda; múltiplas pessoas reais não foram testadas. Aviso oficial do SDK sobre métricas de uso registrado; ausência total de tráfego nativo não foi comprovada e firewall foi preservado. A retenção do vídeo privado é manual, sem prazo automático configurado.
-- Executar testes físicos de webcam quando chegar à etapa 06.
+- Nenhuma verificação obrigatória da etapa 06 pendente no escopo solicitado.
+  Fundador confirmou piso, pose, pausa, retomada e encerramento no painel.
+  Para a validação final do MVP: investigar pose falsa na estante em ensaio
+  negativo delimitado e medir eficácia com anotações, sem confundir zero eventos
+  nestas sessões com rejeição garantida de objetos. Fluidez acompanha análise em 5 Hz.
+  Morte abrupta do adaptador físico com heartbeat liberou o driver e resultou em
+  OFFLINE após mais de 15 s; o teste não teve inferência nem conferência visual. Evento LIVE
+  positivo não foi observado e permanece para a validação final do MVP.
+  [Roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md) e [relatório 06](RELATORIOS/ETAPA_06.md).
+- A janela de calibração usa imagem parada para marcar o piso; isso foi
+  esclarecido após o fundador esperar vídeo ao vivo. Título e instruções ajustados;
+  o roteiro separa probe (movimento), calibrate (pontos) e run (análise).
+  A interação não concluiu a calibração nem a validação física integrada.
+- A tentativa posterior de abrir calibrate pela IA falhou com
+  CONFIG_OR_ENVIRONMENT_ERROR (ValueError). Causa histórica ainda desconhecida;
+  em 22/10 o fundador salvou a calibração v1 e executou o pipeline. Não afirmar
+  correção da causa por não ter reaparecido nessa tentativa.
+- Prévia preta posterior: fundador confirmou tampinha de privacidade fechada.
+  Depois confirmou que conseguiu conferir o enquadramento ao vivo seguindo o
+  roteiro em pé, com corpo inteiro/chão. Sem alteração de driver/backend/permissões.
+  Depois salvou o piso e conferiu pose durante run. A prévia probe anterior
+  não executava inferência; controles no painel confirmados posteriormente.
 - As duas cenas adicionais fornecidas pelo fundador, deitar em vista lateral e
   pessoa deitada em vista de cima, foram calibradas e processadas. Nenhuma gerou
   evento: o modelo não sustentou pontos essenciais suficientes. Não há incidente
@@ -102,6 +148,8 @@ resultado desfavorável registrado, mantendo a etapa parcial.
 | 21/10/2026 | Etapa 04 concluída: FILE→Tasks CPU→observações/ROI/prévia/medidas | 139 testes Python, 87 TS, modelo real em sintético e em arquivo autorizado; três replays completos com sequência idêntica, piso e prévia conferidos pelo fundador; [relatório](RELATORIOS/ETAPA_04.md) |
 | 21/10/2026 | Etapa 05 inicialmente parcial: motor/SQLite/checkpoints/transporte/evaluate | 185 Python, 124 API, 87 TS; seis filmagens sem evento com Lite. Resultados negativos preservados no relatório |
 | 21/10/2026 | Etapa 05 concluída após investigação e seleção explícita do Full (D34) | 226 Python, 124 API, 87 TS; evento real aos 6000 ms, entrega/reenvio/EOF sem duplicação, prévia e incidente conferidos pelo fundador; [relatório](RELATORIOS/ETAPA_05.md) |
+| 21/10/2026 | Etapa 06 parcial: webcam nativa, saúde, limites e recuperação | Índice 0/DSHOW físico, pausa/retomada e Full em frame real; 125 API exclusivos. Credencial salva pelo fundador e autenticada; piso indisponível impede calibração/conferência integrada. [Relatório](RELATORIOS/ETAPA_06.md) |
+| 22/10/2026 | Etapa 06 concluída no escopo de captura/saúde/recuperação de bancada | Piso próprio, Full contínuo, 384 + 981 análises; fundador confirmou pausa/retomada/encerramento no painel. 243 Python e verificações anteriores preservadas; falso esqueleto de estante e evento LIVE positivo pendentes para validação final. [Relatório](RELATORIOS/ETAPA_06.md) |
 
 ## Regra de atualização
 

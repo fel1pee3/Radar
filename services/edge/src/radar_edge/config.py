@@ -1,4 +1,4 @@
-"""Private FILE-only configuration. Paths are relative to the repository working directory."""
+"""Private FILE/WEBCAM configuration, relative to the repository working directory."""
 
 from pathlib import Path
 from typing import Literal
@@ -37,6 +37,21 @@ class SourceConfig(StrictModel):
         return value
 
 
+class WebcamConfig(StrictModel):
+    kind: Literal["WEBCAM"]
+    index: int = Field(ge=0, le=15)
+    backend: Literal["DSHOW", "MSMF"] = "DSHOW"
+    authorized: bool = False
+    width: int = Field(default=640, ge=160, le=1920)
+    height: int = Field(default=480, ge=120, le=1080)
+    fps: float = Field(default=30.0, gt=0, le=120)
+    rotation: Literal[0, 90, 180, 270] = 0
+    frameTimeoutSeconds: float = Field(default=2.0, ge=0.5, le=10)
+    openTimeoutSeconds: float = Field(default=10.0, ge=1, le=30)
+    reconnectAttempts: int = Field(default=3, ge=0, le=10)
+    reconnectDelaySeconds: float = Field(default=1.0, ge=0.1, le=10)
+
+
 class ModelConfig(StrictModel):
     variant: Literal["lite", "full"] = "lite"
     path: str = ".local/models/pose_landmarker_lite.task"
@@ -56,6 +71,7 @@ class ProcessingConfig(StrictModel):
     preview: bool = False
     previewStartPaused: bool = False
     maxObservations: int | None = Field(default=None, ge=1, le=1000000)
+    maxRunSeconds: float | None = Field(default=None, gt=0, le=86400)
 
 
 class DiagnosticsConfig(StrictModel):
@@ -68,7 +84,10 @@ class DiagnosticsConfig(StrictModel):
 class DeliveryConfig(StrictModel):
     enabled: bool = False
     credentialFile: str | None = None
-    timeoutSeconds: float = Field(default=2.0, gt=0, le=15)
+    timeoutSeconds: float = Field(default=5.0, gt=0, le=15)
+    maxItems: int = Field(default=10000, ge=1, le=10000)
+    maxBytes: int = Field(default=100 * 1024 * 1024, ge=65536, le=100 * 1024 * 1024)
+    confirmedRetentionDays: int = Field(default=7, ge=1, le=90)
 
 
 class EventsConfig(StrictModel):
@@ -94,20 +113,33 @@ class EventsConfig(StrictModel):
 
 class EdgeConfig(StrictModel):
     schemaVersion: Literal[1] = 1
-    purpose: Literal["RADAR_FILE_POSE"] = "RADAR_FILE_POSE"
+    purpose: Literal["RADAR_FILE_POSE", "RADAR_LIVE_POSE"] = "RADAR_FILE_POSE"
     cameraId: str
-    source: SourceConfig
+    source: SourceConfig | WebcamConfig = Field(discriminator="kind")
     model: ModelConfig = Field(default_factory=ModelConfig)
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
     calibrationPath: str = ".local/calibration.json"
     diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig)
     events: EventsConfig = Field(default_factory=EventsConfig)
 
+    @field_validator("source", mode="before")
+    @classmethod
+    def preserve_file_default(cls, value):
+        if isinstance(value, dict) and "kind" not in value:
+            return {"kind": "FILE", **value}
+        return value
+
     @field_validator("cameraId")
     @classmethod
     def uuid_camera(cls, value: str) -> str:
         UUID(value)
         return value
+
+    @model_validator(mode="after")
+    def live_model_is_explicit(self):
+        if self.source.kind == "WEBCAM" and self.model.variant != "full":
+            raise ValueError("A webcam da bancada exige seleção explícita do modelo Full.")
+        return self
 
 
 def private_path(value: str | Path) -> Path:
@@ -134,8 +166,10 @@ def load_config(filename: str | Path) -> EdgeConfig:
             private_path(config.events.delivery.credentialFile)
         if not config.source.authorized:
             raise EdgeError(
-                "VIDEO_AUTHORIZATION_REQUIRED",
-                "Autorize o vídeo local em source.authorized antes de abri-lo.",
+                "CAMERA_AUTHORIZATION_REQUIRED"
+                if config.source.kind == "WEBCAM"
+                else "VIDEO_AUTHORIZATION_REQUIRED",
+                "Confirme source.authorized para a fonte local antes de abri-la.",
             )
         return config
     except EdgeError:

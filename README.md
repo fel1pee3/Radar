@@ -6,7 +6,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–05 implementadas e verificadas para a demonstração de bancada. O painel oferece login, fontes, incidentes com sinais/pose e revisão auditada, avisos locais e configuração por papel. A visão em arquivo gerou um incidente REPLAY real com MediaPipe Full, conferido pelo fundador. O simulador permanece identificado como SIMULATED e não comprova visão. Veja [status](docs/STATUS.md), [relatório 05](docs/RELATORIOS/ETAPA_05.md) e [roteiro 05](docs/VALIDACAO_MANUAL_ETAPA_05.md). Proprietário, cadastros, configurações privadas e volume preservados. Captura ao vivo pertence à etapa 06, ainda não iniciada.
+> **Estado atual:** etapas 00–06 verificadas no escopo da bancada. Webcam nativa, piso próprio, Full contínuo e pausa/retomada/encerramento no painel conferidos pelo fundador; recuperação e limites testados. A etapa 06 está concluída, com limitações registradas: pose falsa na estante, fluidez da prévia e ausência de incidente LIVE positivo por visão. O incidente positivo anterior continua REPLAY; a validação final do MVP ainda não terminou. Veja [status](docs/STATUS.md), [relatório 06](docs/RELATORIOS/ETAPA_06.md) e [roteiro 06](docs/VALIDACAO_MANUAL_ETAPA_06.md). Dados privados e volume preservados; etapa 07 não iniciada.
 
 Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
 `pnpm.cmd dev:api` e `pnpm.cmd dev:web` separadamente. Abra

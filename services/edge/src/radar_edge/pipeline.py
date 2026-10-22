@@ -51,6 +51,10 @@ class ObservationExport:
 
 
 def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, int]:
+    if config.source.kind == "WEBCAM":
+        from radar_edge.live import run_live
+
+        return run_live(config)
     model_spec = get_model_spec(config.model.variant)
     run_id = str(uuid4())
     directory = private_path(config.diagnostics.outputDirectory) / run_id
@@ -66,6 +70,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     calibration = None
     model_loaded = False
     runtime = None
+    health = network = None
     temporal_summary = {"enabled": False}
     warmup_observations = 0
     preview_paused_seconds = 0.0
@@ -82,12 +87,23 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
 
                 runtime = resources.enter_context(
                     EventRuntime(
-                        config, calibration, video_hash, frame.geometry, evaluation_excluded
+                        config,
+                        calibration,
+                        video_hash,
+                        frame.geometry,
+                        evaluation_excluded,
+                        async_delivery=True,
                     )
                 )
                 resources.callback(lambda: temporal_summary.update(runtime.summary()))
                 if runtime.run["completed"]:
                     frame = None
+                from radar_edge.health import LiveHealth, NetworkWorker
+
+                health = LiveHealth(config, runtime.capture_run_id, calibration)
+                if frame is None:
+                    health.update(capture="ENDED", flags=set())
+                network = resources.enter_context(NetworkWorker(config, health))
             estimator = resources.enter_context(
                 MediaPipeEstimator(config.model.path, config.model.variant)
             )
@@ -95,11 +111,19 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
             preview = resources.enter_context(
                 LocalPreview(config.processing.preview, config.processing.previewStartPaused)
             )
+            if health is not None:
+                preview.on_pause = lambda paused: health.update(
+                    capture="PAUSED" if paused else "RUNNING", flags=set()
+                )
             sampler = MediaSampler(config.processing.targetAnalysisFps)
             playback_start = perf_counter()
             last_frame_digest = None
             identical_since = None
             while frame is not None:
+                if health is not None and health.run_conflict:
+                    raise EdgeError("RUN_CONFLICT", "Outra execução controla a saúde desta câmera.")
+                if health is not None and health.network["events"] == "STORAGE_ERROR":
+                    raise EdgeError("STORAGE_ERROR", "Falha na persistência local de eventos.")
                 frame_digest = hashlib.sha256(frame.bgr.tobytes()).hexdigest()
                 if frame_digest != last_frame_digest:
                     identical_since = frame.timestamp_ms
@@ -124,7 +148,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         reasons = (*reasons, "DARK_FRAME")
                     observation = Observation(
                         schemaVersion=1,
-                        runId=runtime.run["run_id"] if runtime else run_id,
+                        runId=runtime.capture_run_id if runtime else run_id,
                         cameraId=config.cameraId,
                         mode="REPLAY",
                         frameIndex=frame.index,
@@ -153,6 +177,8 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         continue
                     if runtime is not None:
                         runtime.process(observation)
+                    if health is not None:
+                        health.observation(observation, runtime.previous_features)
                     metrics.add(observation)
                     sequence.update(f"{frame.index}:{frame.timestamp_ms}\n".encode())
                     exporter.write(observation)
@@ -202,6 +228,9 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "status": "ok" if code == 0 else "error",
         "runId": temporal_summary.get("runId", run_id),
         "diagnosticReportId": run_id,
+        "captureRunId": runtime.capture_run_id if runtime else run_id,
+        "health": health.snapshot() if health else None,
+        "network": network.health.network if network else None,
         "mode": "REPLAY",
         "captureState": state,
         "error": error,
@@ -245,6 +274,10 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
 
 
 def doctor(config: EdgeConfig) -> dict:
+    if config.source.kind == "WEBCAM":
+        from radar_edge.live import doctor_live
+
+        return doctor_live(config)
     model_spec = get_model_spec(config.model.variant)
     with FileSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()

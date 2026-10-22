@@ -128,6 +128,35 @@ class Outbox:
             self.db.rollback()
             raise
 
+    def check_capacity(self, max_items=10000, max_bytes=100 * 1024 * 1024, extra_bytes=0):
+        count = self.db.execute("SELECT COUNT(*) FROM outbox").fetchone()[0]
+        size = sum(
+            p.stat().st_size
+            for p in [
+                self.path,
+                self.path.with_name(self.path.name + "-wal"),
+                self.path.with_name(self.path.name + "-shm"),
+            ]
+            if p.exists()
+        )
+        if count >= max_items or size + extra_bytes >= max_bytes:
+            raise EdgeError(
+                "STORAGE_FULL",
+                "Outbox no limite; novas inferências interrompidas. Pendentes preservados.",
+            )
+        return {"items": count, "bytes": size, "maxItems": max_items, "maxBytes": max_bytes}
+
+    def prune_confirmed(self, retention_days=7):
+        # Only payloads already acknowledged AND episodes no longer active.
+        with self.transaction():
+            self.db.execute(
+                """DELETE FROM outbox WHERE status='DELIVERED'
+                AND delivered_at < strftime('%Y-%m-%dT%H:%M:%fZ','now',?)
+                AND event_id IN (SELECT event_id FROM episodes WHERE state IN ('CLOSED','RESET'))
+            """,
+                (f"-{retention_days} days",),
+            )
+
     def execution(self, fingerprint):
         row = self.db.execute(
             "SELECT * FROM executions WHERE camera_id=? AND retired=0", (self.camera_id,)

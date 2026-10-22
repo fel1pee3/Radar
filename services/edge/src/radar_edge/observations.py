@@ -27,7 +27,7 @@ class Observation:
     schemaVersion: int
     runId: str
     cameraId: str
-    mode: Literal["REPLAY"]
+    mode: Literal["REPLAY", "LIVE"]
     frameIndex: int
     timestampMs: int
     timestampSource: str

@@ -91,7 +91,7 @@ def diagnostic_lines(observation, visibility, paused=False):
         for reason in sorted(set(reasons) | set(observation.qualityReasons))
     )
     return (
-        f"REPLAY | t={observation.timestampMs} ms | poses={observation.poseCount}",
+        f"{observation.mode} | t={observation.timestampMs} ms | poses={observation.poseCount}",
         f"{state_label} | inferencia={observation.inferenceMs:.1f} ms",
         *(f"Motivo: {detail}" for detail in details),
         "Verde: pontos observados validos; nao confirma pessoa no piso.",
@@ -136,6 +136,9 @@ class LocalPreview:
         self._initial_topmost = self.paused
         self._pause_started = None
         self._paused_seconds = 0.0
+        self.on_pause = None
+        self.blocking_pause = True
+        self._last_view = None
 
     @property
     def paused_seconds(self):
@@ -172,13 +175,54 @@ class LocalPreview:
                 ) from None
         return self
 
+    def set_paused(self, value):
+        if value == self.paused and (not value or self._pause_started is not None):
+            return
+        if value:
+            self.paused = True
+            self._pause_started = perf_counter()
+        else:
+            self.finish_pause()
+        if self.on_pause:
+            self.on_pause(value)
+        if self.opened and not self.blocking_pause and self._last_view is not None:
+            frame, observation, floor, visibility = self._last_view
+            cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+
+    def poll(self):
+        """Pump native events while LIVE capture is paused or waiting for a frame."""
+        if not self.enabled or not self.opened:
+            return True
+        try:
+            key = cv2.waitKey(1) & 0xFF
+            if (
+                key in (ord("q"), ord("Q"), 27)
+                or cv2.getWindowProperty(self.name, cv2.WND_PROP_VISIBLE) < 1
+            ):
+                return False
+            if key == ord(" "):
+                self.set_paused(not self.paused)
+            return True
+        except cv2.error:
+            raise EdgeError(
+                "PREVIEW_UNAVAILABLE", "Falha na janela local; encerre e tente novamente."
+            ) from None
+
     def show(self, frame: Frame, observation: Observation, floor, visibility: float) -> bool:
         if not self.enabled:
             return True
         try:
+            if not self.blocking_pause:
+                self._last_view = (frame, observation, floor, visibility)
+                if self.paused and self._pause_started is None:
+                    self.set_paused(True)
+                cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+                return self.poll()
             cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
             if self.paused:
                 self._pause_started = perf_counter()
+                if self.on_pause:
+                    self.on_pause(True)
             while True:
                 key = cv2.waitKey(30 if self.paused else 1) & 0xFF
                 if (
@@ -190,10 +234,14 @@ class LocalPreview:
                 if key == ord(" "):
                     if self.paused:
                         self.finish_pause()
+                        if self.on_pause:
+                            self.on_pause(False)
                         cv2.imshow(self.name, render(frame, observation, floor, visibility))
                         return True
                     self.paused = True
                     self._pause_started = perf_counter()
+                    if self.on_pause:
+                        self.on_pause(True)
                     cv2.imshow(self.name, render(frame, observation, floor, visibility, True))
                 elif not self.paused:
                     return True
@@ -214,13 +262,14 @@ class LocalPreview:
                 pass  # A window already closed by its owner needs no further destruction.
             finally:
                 self.opened = False
+                self._last_view = None
 
     def __exit__(self, *_):
         self.close()
 
 
 def select_floor(frame: Frame):
-    name = "Radar - marque somente o piso"
+    name = "Radar - IMAGEM PARADA para marcar o piso - Q cancela"
     points = []
     displayed = fit_display(frame.bgr)
 
@@ -237,6 +286,9 @@ def select_floor(frame: Frame):
         opened = True
         cv2.setMouseCallback(name, click)
         print(
+            "CALIBRAÇÃO: esta imagem fica parada para marcar o piso. "
+            "Posicione a câmera antes de executar este comando. "
+            "Se o chão não aparece, Q/Esc cancela; reposicione e execute calibrate novamente.\n"
             "Clique no contorno do piso, excluindo cama/sofá. "
             "Botão direito desfaz; C limpa; Enter confirma; Q/Esc cancela.",
             flush=True,

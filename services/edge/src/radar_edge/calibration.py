@@ -135,7 +135,13 @@ def calibrate(
 ) -> dict:
     from radar_edge.preview import select_floor
 
-    with FileSource(config.source, config.processing.maxWidth) as source:
+    if config.source.kind == "WEBCAM":
+        from radar_edge.webcam import WebcamSource
+
+        source_type = WebcamSource
+    else:
+        source_type = FileSource
+    with source_type(config.source, config.processing.maxWidth) as source:
         while True:
             frame = source.read()
             if frame is None:
@@ -174,7 +180,9 @@ def calibrate(
             "frameIndex": frame.index,
             "timestampMs": frame.timestamp_ms,
             "timestampSource": frame.timestamp_source,
-            "videoId": config.source.videoId,
+            "videoId": getattr(config.source, "videoId", None),
+            "sourceKind": config.source.kind,
+            "deviceIndex": getattr(config.source, "index", None),
         }
     path.parent.mkdir(parents=True, exist_ok=True)
     # Preserve previous revisions as private metadata, never the source frame.

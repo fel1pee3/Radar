@@ -2,8 +2,10 @@
 
 import json
 import os
+import random
 import re
 from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from time import time
 from urllib.parse import urlparse
 from uuid import UUID
@@ -48,13 +50,14 @@ def credentials(settings, camera_id):
         ) from None
 
 
-def valid_ack(value, event_id, status):
+def valid_ack(value, event_id, status, mode="REPLAY"):
     try:
         UUID(value["incidentId"])
         received = value["receivedAt"]
         return (
             value["eventId"] == event_id
-            and value["deliveryClass"] == "TEST"
+            and value["deliveryClass"]
+            in ({"CURRENT", "DELAYED", "CLOCK_UNCERTAIN"} if mode == "LIVE" else {"TEST"})
             and type(value["duplicate"]) is bool
             and value["duplicate"] == (status == 200)
             and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z", received))
@@ -65,20 +68,21 @@ def valid_ack(value, event_id, status):
 
 
 class Delivery:
-    def __init__(self, store, settings, client=None, clock=time):
+    def __init__(self, store, settings, client=None, clock=time, jitter=random.uniform):
         self.store, self.settings, self.clock = store, settings, clock
         self.url, token = credentials(settings, store.camera_id)
         self.client = client or httpx.Client(
             timeout=settings.timeoutSeconds, trust_env=False, follow_redirects=False
         )
         self.owned = client is None
+        self.jitter = jitter
         self.headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
 
     def close(self):
         if self.owned:
             self.client.close()
 
-    def flush(self, resume_auth=False):
+    def flush(self, resume_auth=False, limit=20):
         if resume_auth:
             with self.store.transaction():
                 self.store.db.execute(
@@ -90,13 +94,13 @@ class Delivery:
             return self.store.summary()
         rows = self.store.db.execute(
             "SELECT * FROM outbox WHERE status='PENDING' AND next_attempt<=? "
-            "ORDER BY rowid LIMIT 20",
-            (self.clock(),),
+            "ORDER BY rowid LIMIT ?",
+            (self.clock(), limit),
         ).fetchall()
         for row in rows:
             attempts, now = row["attempts"] + 1, self.clock()
             status, error, ack = "PENDING", None, None
-            delay = min(60.0, 2.0 ** min(attempts - 1, 6))
+            delay = min(30.0, max(1.0, 2.0 ** min(attempts - 1, 5) * self.jitter(0.8, 1.2)))
             try:
                 # Stream and cap even an untrusted/malformed local ACK.
                 with self.client.stream(
@@ -113,7 +117,9 @@ class Delivery:
                     http_status = response.status_code
                     if http_status in {200, 201}:
                         value = json.loads(data)
-                        if not valid_ack(value, row["event_id"], http_status):
+                        if not valid_ack(
+                            value, row["event_id"], http_status, json.loads(row["payload"])["mode"]
+                        ):
                             raise ValueError()
                         status, ack = "DELIVERED", value
                     elif http_status in {401, 403}:
@@ -123,6 +129,12 @@ class Delivery:
                         retry = response.headers.get("retry-after", "")
                         if retry.isdigit():
                             delay = max(delay, min(float(retry), 300))
+                        elif retry:
+                            try:
+                                until = parsedate_to_datetime(retry).timestamp()
+                                delay = max(delay, min(max(0, until - now), 300))
+                            except (ValueError, TypeError, OverflowError):
+                                pass
                     else:
                         status, error = "PERMANENT_ERROR", f"HTTP_{http_status}"
             except httpx.HTTPError:

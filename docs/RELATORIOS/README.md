@@ -13,6 +13,11 @@ real. Após os ensaios negativos iniciais, a comparação Lite/Full produziu um
 incidente REPLAY derivado de filmagem real, conferido pelo fundador; concluída
 para bancada, com limitações na [investigação](INVESTIGACAO_ETAPA_05.md).
 
+A [etapa 06](ETAPA_06.md) registra webcam nativa, piso/Full contínuo,
+pausa/retomada/encerramento conferidos pelo fundador e recuperação controlada.
+Concluída para bancada em 22/10, com falso esqueleto de estante, fluidez e
+evento LIVE positivo ainda tratados como limites da validação final do MVP.
+
 ## Modelo de relatório de etapa
 
 Copiar a estrutura abaixo e preencher com fatos. Não deixar “passou” sem dizer o que foi executado.

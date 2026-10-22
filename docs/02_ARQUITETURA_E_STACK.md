@@ -104,3 +104,27 @@ Snapshot é um JPEG de evento, habilitado explicitamente, enviado em endpoint se
 - Evidência binária tem limites separados; falha de snapshot não remove metadados do incidente.
 
 Os números são limites iniciais de bancada, ajustáveis por configuração documentada. Não representam capacidade certificada ou compromisso de serviço.
+
+## Implementação de captura e recuperação da etapa 06
+
+WEBCAM usa processo nativo Windows com spawn e um único slot de pixels em memória
+compartilhada (3.932.160 bytes). Captura numera aquisições e usa relógio monotônico;
+inferência consome somente o frame novo mais recente. Modelo Full explícito,
+CPU/VIDEO e política floor-v0.1 preservados. Um lock de SO mantém uma única webcam
+ativa de bancada, inclusive durante pausa. Arquivos mantêm o relógio de mídia.
+
+Heartbeat e entrega usam threads HTTP separadas, sem bloquear a inferência e sem
+fila histórica de heartbeat. Cada thread possui suas conexões SQLite/HTTP. O runId
+da sessão é novo a cada inicialização; a execução persistente guarda checkpoint
+e episódio ativo. Eventos já gravados conservam seu runId e payload nos reenvios.
+Essa separação também permite retomar FILE após um heartbeat ENDED.
+
+Open/read podem bloquear no driver: a captura é encerrada por prazo no processo
+pai, com IPC novo a cada reconexão. O filho monitora a morte do pai. A recuperação
+automática é limitada por configuração. Nenhuma propriedade de timeout do OpenCV
+foi presumida como garantia de timeout no DSHOW.
+
+Limites contam itens e bytes de SQLite/WAL/SHM, com reserva antes de novas decisões.
+A limpeza da 06 remove somente payloads confirmados há mais de sete dias de
+episódios fechados/resetados; mantém pendentes, erros permanentes e chaves de
+deduplicação. Não implementa retenção global/snapshot da etapa 07.

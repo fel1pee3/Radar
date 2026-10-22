@@ -2,7 +2,7 @@
 
 [Voltar ao README central](../README.md)
 
-**Etapas 00–04 concluídas; 05 parcial em 21/10/2026.** A 04 foi verificada com arquivo autorizado, modelo real, piso selecionado pelo fundador e prévia conferida. A 05 tem motor/SQLite/entrega/evaluate testados, mas falta vídeo positivo gerando incidente. Consulte o [status](STATUS.md), o [relatório 05](RELATORIOS/ETAPA_05.md) e o [roteiro 05](VALIDACAO_MANUAL_ETAPA_05.md). Os comandos até 05 existem; os de 06 em diante continuam previstos. O proprietário existente é preservado.
+**Etapas 00–06 concluídas para bancada em 22/10/2026.** FILE positivo com Full foi verificado na 05; webcam, calibração própria e controles no painel foram conferidos na 06. Pose falsa em estante, fluidez e evento LIVE positivo continuam para a validação final do MVP. Consulte [status](STATUS.md), [relatório 06](RELATORIOS/ETAPA_06.md) e [roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md). Os comandos até 06 existem; comandos de etapas seguintes continuam previstos. Proprietário e dados existentes preservados.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
 
@@ -145,7 +145,8 @@ Executados a partir da raiz do repositório. Scripts pnpm encapsulam caminhos pa
 | `uv run --project services/edge radar-edge reset-episode --config .local/edge.yaml --reason scene_reset` | 05 | Reset local explícito, com worker de captura parado e auditoria; não encerra incidente humano |
 | `uv run --project services/edge --frozen radar-edge outbox-status --config .local/edge-events.yaml` | 05 | Mostra contagens, códigos de erro e confirmações sem expor payload/token |
 | `uv run --project services/edge --frozen radar-edge deliver --config .local/edge-events.yaml` | 05 | Tenta pendentes respeitando backoff; --resume-auth explícito após corrigir credencial |
-| `uv run --project services/edge radar-edge probe --config .local/edge.yaml` | 06/09 | Verifica fonte configurada, sem detectar incidente |
+| `uv run --project services/edge --frozen radar-edge probe --config .local/edge-webcam.yaml --seconds 5 --preview` | 06 | Diagnóstico de webcam explicitamente escolhida, sem inferência ou incidente |
+| `uv run --project services/edge --frozen radar-edge control --config .local/edge-webcam.yaml --action pause` | 06 | Pausa local; ações resume/reconnect/stop permitem retomar, reabrir ou encerrar |
 | `pnpm demo:check` | 08 | Checa pré-requisitos e consistência sem fabricar resultados |
 
 Definir no Python a descoberta de testes de modo que o comando a partir da raiz funcione; o argumento `--project` do uv seleciona o projeto, não garante sozinho o diretório de trabalho de toda ferramenta. Não esconder falha com `|| true` ou placeholder que sempre retorna sucesso.
@@ -250,5 +251,27 @@ Passos de calibração positiva, retomada e interpretação em
 Sem `docker compose down -v`, reset de banco, exclusão de `.local` ou regravação de vídeo como parte do fluxo normal. Testes usam banco dedicado claramente identificado; nunca apontar rotina de limpeza ao banco da demo.
 
 ## Falhas comuns a documentar durante a implementação
+
+### Webcam nativa — etapa 06 concluída para bancada
+
+O [roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md) descreve seleção explícita do índice,
+credencial por clipboard, piso próprio, controles e testes isolados. Exemplo sem
+segredos: `services/edge/webcam.example.yaml`. Não sobrescreva a configuração FILE.
+
+```powershell
+. ./scripts/activate.ps1
+uv run --project services/edge --frozen radar-edge probe --config .local/edge-webcam.yaml --seconds 5 --preview
+uv run --project services/edge --frozen radar-edge doctor --config .local/edge-webcam.yaml
+uv run --project services/edge --frozen radar-edge calibrate --config .local/edge-webcam.yaml --frame-ms 0
+uv run --project services/edge --frozen radar-edge run --config .local/edge-webcam.yaml --preview
+```
+
+Outro terminal ativado permite `radar-edge control --config .local/edge-webcam.yaml
+--action pause`, `resume`, `reconnect` ou `stop`. O índice 0/DSHOW foi escolhido
+pelo fundador e testado em 640×480. Em 22/10, o fundador salvou piso próprio e
+conferiu pose numa sessão LIVE de 384 análises; depois confirmou pausa, retomada e
+encerramento no painel numa sessão guiada de 981 análises. Pose falsa em estante,
+ausência de evento LIVE positivo e fluidez em 5 Hz registradas como
+limitações. Não iniciar detecção com piso de um vídeo.
 
 Webcam ocupada ou sem permissão; caminhos Windows; versão Python sem wheel; múltiplas distribuições `cv2`; falha de decoder; prisma generate ausente; ESM inconsistente; cookie/origin divergentes; banco indisponível; ROI inválida após rotação; token revogado; fim normal de arquivo. Solucionar a causa concreta e registrar o comando real, sem inventar uma compatibilidade universal.

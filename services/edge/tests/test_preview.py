@@ -58,6 +58,39 @@ def test_render_hides_bad_presence_and_never_reuses_previous_pose():
     assert any("nao confirma pessoa no piso" in line for line in lines)
 
 
+def test_live_preview_accepts_remote_resume_and_q_while_paused(monkeypatch):
+    import radar_edge.preview as module
+
+    keys = iter([-1, -1, ord(" "), ord("q")])
+    transitions = []
+    monkeypatch.setattr(module.cv2, "namedWindow", lambda *_: None)
+    monkeypatch.setattr(module.cv2, "imshow", lambda *_: None)
+    monkeypatch.setattr(module.cv2, "waitKey", lambda *_: next(keys))
+    monkeypatch.setattr(module.cv2, "getWindowProperty", lambda *_: 1)
+    monkeypatch.setattr(module.cv2, "destroyWindow", lambda *_: None)
+    frame = Frame(
+        0,
+        0,
+        "HOST_MONOTONIC",
+        np.zeros((360, 640, 3), dtype=np.uint8),
+        Geometry(640, 360, 640, 360, 640, 360, 0),
+    )
+    preview = LocalPreview(True)
+    preview.blocking_pause = False
+    preview.on_pause = transitions.append
+    preview.__enter__()
+    assert preview.show(frame, observation(0), (), 0.5)
+    preview.set_paused(True)  # Remote pause must not enter a blocking GUI loop.
+    assert preview.poll() and preview.paused
+    preview.set_paused(False)  # A subsequent terminal command can resume.
+    assert preview.poll() and preview.paused  # Space pauses again, without blocking.
+    assert not preview.poll()  # Q remains responsive while capture is released.
+    assert transitions == [True, False, True]  # Q never reopens the camera to stop it.
+    monkeypatch.setattr(module.cv2, "waitKey", lambda *_: -1)
+    preview.close()
+    assert preview._last_view is None
+
+
 @pytest.mark.parametrize("field,value", [("x", float("nan")), ("y", float("inf"))])
 def test_render_nonfinite_coordinates_reports_quality_without_crashing(field, value):
     o = observation(0)
