@@ -53,3 +53,9 @@ __pycache__/
 Thumbs.db
 .idea/
 apps/api/src/generated/
+
+# Skills locais dos assistentes de desenvolvimento
+/apps/api/.agents/
+/apps/api/.claude/
+/apps/api/.windsurf/
+/apps/api/skills-lock.json
