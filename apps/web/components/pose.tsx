@@ -34,7 +34,10 @@ export function Pose({ points, mode }: { points: EventV1['pose'] | null; mode: E
         <small>A ausência de pose não informa se há uma pessoa no local.</small>
       </div>
     );
-  const visible = points.filter((point) => point.visibility >= 0.5);
+  const usesKeypointScore = points.some((point) => 'confidence' in point);
+  const visible = points.filter(
+    (point) => ('confidence' in point ? point.confidence : point.visibility) >= 0.5,
+  );
   const byId = new Map(visible.map((point) => [point.index, point]));
   return (
     <figure className="pose-figure">
@@ -76,7 +79,11 @@ export function Pose({ points, mode }: { points: EventV1['pose'] | null; mode: E
         {mode === 'SIMULATED'
           ? 'POSE SINTÉTICA · EVIDÊNCIA SIMULADA'
           : 'POSE CORPORAL · EVIDÊNCIA DO EVENTO'}
-        <small>Pontos com visibilidade ≥ 0,5. Sem imagem de câmera.</small>
+        <small>
+          {usesKeypointScore
+            ? 'RTMO experimental · Score articular ≥ 0,5; não comprova visibilidade. Sem imagem de câmera.'
+            : 'Pontos com visibilidade ≥ 0,5. Sem imagem de câmera.'}
+        </small>
       </figcaption>
     </figure>
   );

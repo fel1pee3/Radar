@@ -12,13 +12,14 @@ from uuid import uuid4
 import cv2
 
 from radar_edge.calibration import check_compatibility, load_calibration
-from radar_edge.config import private_path
+from radar_edge.config import private_path, quality_threshold
 from radar_edge.errors import EdgeError
-from radar_edge.estimator import MediaPipeEstimator
+from radar_edge.estimator import create_estimator
 from radar_edge.event_runtime import EventRuntime
 from radar_edge.health import LiveHealth, NetworkWorker
+from radar_edge.local_status import publish_status, safe_diagnostic
 from radar_edge.metrics import Metrics
-from radar_edge.model import get_model_spec
+from radar_edge.model import get_model_spec, model_metadata
 from radar_edge.observations import Observation, pose_quality
 from radar_edge.preview import LocalPreview
 from radar_edge.webcam import WebcamSource
@@ -59,7 +60,7 @@ def doctor_live(config):
     spec = get_model_spec(config.model.variant)
     with WebcamSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()
-        with MediaPipeEstimator(config.model.path, config.model.variant) as estimator:
+        with create_estimator(config.model.path, config.model.variant) as estimator:
             poses, duration = estimator.estimate(frame)
         return {
             "status": "ok",
@@ -82,7 +83,7 @@ def run_live(config):
     report_id = str(uuid4())
     directory = private_path(config.diagnostics.outputDirectory) / report_id
     directory.mkdir(parents=True)
-    metrics = Metrics(config.processing.minLandmarkVisibility)
+    metrics = Metrics(quality_threshold(config), model_metadata(spec)["qualitySource"])
     source = WebcamSource(config.source, config.processing.maxWidth)
     calibration = None
     runtime = None
@@ -91,6 +92,7 @@ def run_live(config):
     temporal = {"enabled": config.events.enabled}
     state, code, error = "ENDED", 0, None
     last_status = 0.0
+    status_retries = 0
     previous_command = _control(config)
     started = monotonic()
     preview = None
@@ -125,9 +127,11 @@ def run_live(config):
             network = resources.enter_context(NetworkWorker(config, health))
             # Save error/final state before the network resource is closed.
             estimator = resources.enter_context(
-                MediaPipeEstimator(config.model.path, config.model.variant)
+                create_estimator(config.model.path, config.model.variant)
             )
             preview = LocalPreview(config.processing.preview, config.processing.previewStartPaused)
+            if config.processing.previewStabilization:
+                preview.enable_stabilization()
             preview.name = "Radar - poses locais LIVE"
             preview.blocking_pause = False
             resources.enter_context(preview)
@@ -191,10 +195,7 @@ def run_live(config):
                         "episodeExecutionId": runtime.run["run_id"] if runtime else None,
                     }
                     target = private_path(f".local/edge-control/{config.cameraId}-status.json")
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    temporary = target.with_suffix(".tmp")
-                    temporary.write_text(json.dumps(status, indent=2), encoding="utf-8")
-                    temporary.replace(target)
+                    status_retries += publish_status(target, status)
                     last_status = now
                 if paused or health.run_conflict or now < next_analysis:
                     sleep(0.02)
@@ -231,7 +232,7 @@ def run_live(config):
                     health.update(flags={"FRAME_TIMEOUT", "LOW_FPS"})
                     next_analysis = monotonic()
                     continue
-                inference, reasons = pose_quality(poses, config.processing.minLandmarkVisibility)
+                inference, reasons = pose_quality(poses, quality_threshold(config))
                 o = Observation(
                     schemaVersion=1,
                     runId=capture_run,
@@ -262,7 +263,7 @@ def run_live(config):
                 health.observation(o, features)
                 health.update(capture="RUNNING")
                 if not preview.show(
-                    frame, o, calibration["floorPolygon"], config.processing.minLandmarkVisibility
+                    frame, o, calibration["floorPolygon"], quality_threshold(config)
                 ):
                     break
                 next_analysis = max(now + 1 / config.processing.targetAnalysisFps, monotonic())
@@ -281,11 +282,14 @@ def run_live(config):
             if isinstance(failure, EdgeError)
             else "Falha SQLite; pendentes preservados.",
         }
-    except Exception:
+        if isinstance(failure, EdgeError) and failure.__cause__ is not None:
+            error["diagnostic"] = safe_diagnostic(failure.__cause__)
+    except Exception as failure:
         state, code = "ERROR", 1
         error = {
             "code": "PROCESSING_ERROR",
             "message": "Falha local; confira recursos e configuração. Nenhum segredo exibido.",
+            "diagnostic": safe_diagnostic(failure),
         }
     finally:
         source.close()
@@ -297,9 +301,11 @@ def run_live(config):
                 if error["code"].startswith("CALIBRATION")
                 else "MODEL_ERROR"
                 if error["code"].startswith("MODEL")
+                else None
+                if error["code"] in {"LOCAL_STATUS_WRITE_ERROR", "PROCESSING_ERROR"}
                 else "CAPTURE_ERROR"
             )
-            health.update(capture="ERROR", flags={flag})
+            health.update(capture="ERROR", flags={flag} if flag else set())
         if network:
             network.close()
     report = {
@@ -310,14 +316,11 @@ def run_live(config):
         "diagnosticReportId": report_id,
         "captureState": state,
         "error": error,
+        "localStatusRetries": status_retries,
         "runId": health.run_id if health else None,
         "source": source.metadata(),
         "model": {
-            "id": spec.model_id,
-            "sha256": spec.sha256,
-            "delegate": "CPU",
-            "runningMode": "VIDEO",
-            "numPoses": 2,
+            **model_metadata(spec),
         },
         "metrics": metrics.summary(),
         "temporal": temporal,

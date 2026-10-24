@@ -12,11 +12,11 @@ from uuid import uuid4
 import cv2
 
 from radar_edge.calibration import check_compatibility, load_calibration
-from radar_edge.config import EdgeConfig, private_path
+from radar_edge.config import EdgeConfig, private_path, quality_threshold
 from radar_edge.errors import EdgeError
-from radar_edge.estimator import MediaPipeEstimator
+from radar_edge.estimator import create_estimator
 from radar_edge.metrics import Metrics
-from radar_edge.model import file_hash, get_model_spec
+from radar_edge.model import file_hash, get_model_spec, model_metadata
 from radar_edge.observations import Observation, pose_quality
 from radar_edge.preview import LocalPreview
 from radar_edge.source import FileSource, MediaSampler
@@ -62,7 +62,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     run_id = str(uuid4())
     directory = private_path(config.diagnostics.outputDirectory) / run_id
     directory.mkdir(parents=True, exist_ok=False)
-    metrics = Metrics(config.processing.minLandmarkVisibility)
+    metrics = Metrics(quality_threshold(config), model_metadata(model_spec)["qualitySource"])
     source = FileSource(config.source, config.processing.maxWidth)
     sequence = hashlib.sha256()
     exporter = ObservationExport(
@@ -112,12 +112,14 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                     health.update(capture="ENDED", flags=set())
                 network = resources.enter_context(NetworkWorker(config, health))
             estimator = resources.enter_context(
-                MediaPipeEstimator(config.model.path, config.model.variant)
+                create_estimator(config.model.path, config.model.variant)
             )
             model_loaded = True
             preview = resources.enter_context(
                 LocalPreview(config.processing.preview, config.processing.previewStartPaused)
             )
+            if config.processing.previewStabilization:
+                preview.enable_stabilization()
             if health is not None:
                 preview.on_pause = lambda paused: health.update(
                     capture="PAUSED" if paused else "RUNNING", flags=set()
@@ -146,9 +148,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         if remaining > 0:
                             sleep(remaining)
                     poses, inference_ms = estimator.estimate(frame)
-                    inference_state, reasons = pose_quality(
-                        poses, config.processing.minLandmarkVisibility
-                    )
+                    inference_state, reasons = pose_quality(poses, quality_threshold(config))
                     luminance = float(cv2.cvtColor(frame.bgr, cv2.COLOR_BGR2GRAY).mean())
                     # Instantaneous luminance diagnostic; temporal LOW_LIGHT policy belongs to 05.
                     if luminance < 25:
@@ -193,7 +193,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         frame,
                         observation,
                         calibration["floorPolygon"],
-                        config.processing.minLandmarkVisibility,
+                        quality_threshold(config),
                     ):
                         state = "STOPPED_REQUEST"
                         break
@@ -244,13 +244,8 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "workerVersion": "edge-temporal-v1" if config.events.enabled else "edge-pose-v1",
         "source": {**source.metadata(), "sha256": video_hash},
         "model": {
-            "id": model_spec.model_id,
-            "sha256": model_spec.sha256,
+            **model_metadata(model_spec),
             "loaded": model_loaded,
-            "delegate": "CPU",
-            "runningMode": "VIDEO",
-            "numPoses": 2,
-            "segmentationMasks": False,
         },
         "calibration": {"id": calibration["calibrationId"], "version": calibration["version"]}
         if calibration
@@ -288,7 +283,7 @@ def doctor(config: EdgeConfig) -> dict:
     model_spec = get_model_spec(config.model.variant)
     with FileSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()
-        with MediaPipeEstimator(config.model.path, config.model.variant) as estimator:
+        with create_estimator(config.model.path, config.model.variant) as estimator:
             poses, duration = estimator.estimate(frame)
         calibration_status = "MISSING"
         if private_path(config.calibrationPath).exists():

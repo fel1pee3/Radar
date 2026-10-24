@@ -15,11 +15,13 @@ class Landmark:
     z: float | None
     visibility: float | None
     presence: float | None
+    confidence: float | None = None
 
 
 @dataclass(frozen=True)
 class Pose:
     landmarks: tuple[Landmark, ...]
+    qualitySource: str = "MEDIAPIPE"
 
 
 @dataclass(frozen=True)
@@ -52,6 +54,35 @@ class Observation:
 
 def finite_or_none(value) -> float | None:
     return float(value) if value is not None and math.isfinite(value) else None
+
+
+def point_confidence(point: Landmark, quality_source: str) -> float | None:
+    """Keep backend scores distinct; never invent visibility or presence."""
+    if quality_source == "MEDIAPIPE":
+        values = (point.visibility, point.presence)
+        if point.confidence is not None:
+            return None
+    elif quality_source == "RTMO_KEYPOINT_SCORE":
+        if point.visibility is not None or point.presence is not None:
+            return None
+        values = (point.confidence,)
+    else:
+        return None
+    if not all(v is not None and math.isfinite(v) and 0 <= v <= 1 for v in values):
+        return None
+    return min(values)
+
+
+def point_usable(point: Landmark, threshold: float, quality_source: str) -> bool:
+    score = point_confidence(point, quality_source)
+    return (
+        point.x is not None
+        and point.y is not None
+        and math.isfinite(point.x)
+        and math.isfinite(point.y)
+        and score is not None
+        and score >= threshold
+    )
 
 
 def body_poses(result) -> tuple[Pose, ...]:
@@ -87,11 +118,6 @@ def pose_quality(poses: tuple[Pose, ...], visibility: float) -> tuple[str, tuple
             continue
         if not 0 <= point.x <= 1 or not 0 <= point.y <= 1:
             reasons.add("BODY_OUT_OF_FRAME")
-        if (
-            point.visibility is None
-            or not visibility <= point.visibility <= 1
-            or point.presence is None
-            or not visibility <= point.presence <= 1
-        ):
+        if not point_usable(point, visibility, poses[0].qualitySource):
             reasons.add("LOW_LANDMARK_QUALITY")
     return ("LOW_CONFIDENCE", tuple(sorted(reasons))) if reasons else ("ONE_VALID_POSE", ())

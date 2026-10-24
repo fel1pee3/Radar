@@ -95,3 +95,32 @@ Defaults técnicos de qualidade, também experimentais: FRAME_TIMEOUT após 2 s 
 Separar captura, estimativa de pose, extração de features, regras, persistência e transporte. A primeira avaliação pode mostrar que MediaPipe não basta nas condições pretendidas. Nesse caso, manter o fluxo e comparar outro modelo via interface, com licença e regressão documentadas.
 
 Feedback de operador não atualiza parâmetros automaticamente. Revisar, criar nova versão de política e reexecutar cenários separados da calibração. Não ajustar no conjunto final e reapresentá-lo como teste independente. IDs de modelo/política/calibração devem permitir reproduzir cada resultado.
+
+## Candidato RTMO da etapa 08 — 23/10/2026
+
+RTMO-s é selecionável explicitamente para investigação da pose falsa na cadeira.
+Não altera os defaults Lite/Full nem as configurações já existentes. Usa ONNX
+Runtime CPU, quatro threads intra-op/uma inter-op, sem RTMLib. Só exporta os doze
+pontos corporais COCO correspondentes aos índices anatômicos 11–16 e 23–28 usados
+pelo Radar. Ausentes não são interpolados, e não são inventados dedos/pés, z,
+visibility ou presence. Pessoas distintas detectadas são preservadas após NMS;
+a existência de uma única pose continua obrigatória para classificar.
+
+Política `floor-rtmo-score-v0.1`: `qualitySource=RTMO_KEYPOINT_SCORE` e
+`minKeypointScore=0.5`. Exige todos os oito pontos essenciais, finitos, dentro
+do quadro e com score suficiente. Score é uma medida nativa do estimador,
+sem equivalência comprovada com visibilidade física, presence ou probabilidade
+de emergência. Modelos/políticas de origens de qualidade distintas não podem
+ser misturados. Os demais gates geométricos, de qualidade temporal, persistência,
+rearmamento e idempotência são preservados. A família de política e o novo campo
+de evidência são definidos por D46/D47 e pelo contrato compartilhado atualizado.
+
+Na comparação integrada de 20 clipes, os três perdidos continuaram sem evento.
+Qualidade de pose melhorou, mas os quadris estimados ficaram fora da ROI nos
+trechos deitados. Uma ROI de pixels do chão não mede a altura real do quadril ou
+a espessura do corpo na projeção. Não expandir ROI para parede/móvel nem reduzir
+os gates para transformar perdas em aprovação. Estudar/calibrar a geometria com
+versão explícita e avaliação independente antes de prometer correção geral.
+Novos alertas em ADL podem corresponder a postura voluntária no piso; não
+presumir necessidade de ajuda ou classificar automaticamente como falso/verdadeiro
+sem anotação de cena. [Resultados](RELATORIOS/INTEGRACAO_RTMO_ETAPA_08.md).

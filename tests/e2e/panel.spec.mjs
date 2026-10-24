@@ -96,6 +96,27 @@ async function submit(page, action) {
   await expect(page.getByText('Ação registrada com sucesso.', { exact: true })).toBeVisible();
 }
 
+test('pose RTMO experimental mantém score distinto de visibilidade no painel', async ({
+  page,
+  fixture,
+}) => {
+  const cases = JSON.parse(await readFile('packages/contracts/fixtures/cases.json', 'utf8'));
+  const value = cases.find((item) => item.name === 'event-rtmo-score').value;
+  const receipt = await fixture.publish({
+    mode: 'REPLAY',
+    sourceOffsetMs: 2000,
+    pose: value.pose,
+    versions: value.versions,
+  });
+  await login(page, fixture);
+  await page.goto(`/incidentes/${receipt.incidentId}`);
+  await expect(page.getByRole('img', { name: 'Esqueleto corporal de evidência' })).toBeVisible();
+  await expect(page.locator('figcaption')).toContainText('RTMO experimental');
+  await expect(page.locator('figcaption')).toContainText('não comprova visibilidade');
+  await expect(page.locator('figcaption')).not.toContainText('Pontos com visibilidade');
+  await expect(page.locator('.pose-figure svg circle')).toHaveCount(value.pose.length);
+});
+
 test('login, proteção de rota, cookie HttpOnly, logout e ausência de cache de outra conta', async ({
   page,
   context,

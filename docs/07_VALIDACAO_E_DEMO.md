@@ -12,7 +12,7 @@ Não misturar esses resultados. Gerar um incidente artificial não valida a vis�
 
 ## Conjunto inicial proposto
 
-Meta de trabalho: 12 vídeos curtos autorizados, sendo 4 com pessoa posicionada no chão e 8 com atividades confundidoras, mais 30 minutos de observação cotidiana para procurar avisos indevidos. É uma amostra exploratória pequena, sem poder para estimar segurança clínica.
+Meta de trabalho: 12 vídeos curtos autorizados, sendo 4 com pessoa posicionada no chão e 8 com atividades confundidoras, mais uma sessão nominal de 10 minutos de observação cotidiana para procurar avisos indevidos (D51, limite de 600 s do worker). A proposta original de 30 minutos não foi comprovada e foi revista expressamente pelo fundador. É uma amostra exploratória pequena, sem poder para estimar segurança clínica.
 
 Separar sessões de calibração e avaliação. Se apenas o fundador participar, declarar que não houve avaliação em pessoas diferentes. Não exigir parceiro para reunir material inicial. Usar pessoas já deitadas, transições controladas e fixtures sintéticas para “trajetória rápida”; nunca provocar quedas físicas.
 
@@ -67,14 +67,21 @@ Revisar também períodos sem alertas para localizar perdas. Não apresentar int
 - Etapas 00–07 concluídas com evidência; testes determinísticos de acesso, idempotência, estados e recuperação passam.
 - Pelo menos um arquivo autorizado e um teste físico de webcam percorrem visão → motor → incidente → revisão, sem injetar o evento por botão no percurso de visão.
 - Um cenário de postura-alvo e um confundidor são demonstrados e seus resultados documentados. Se o confundidor dispara, mostrar isso e registrar a limitação; não alegar que o detector distingue necessidade de ajuda.
-- Teste contínuo de bancada de pelo menos 30 min com medição e sem perda silenciosa de eventos; registrar avisos indevidos e interrupções.
+- Ensaio curto contínuo de bancada com limite de 600 s do worker (10 min nominais, D51), encerramento normal e sem perda silenciosa de eventos. Medir separadamente aquecimento, captura/inferência efetivas, recursos, avisos indevidos, períodos inelegíveis e interrupções. O timer inclui abertura/modelo; não equivale a 600 s de frames úteis. O teste original de 30 min não foi comprovado, e passar o ensaio curto não resolve a falha histórica aos 27min45s.
 - Relatório completo de percepção, inclusive falhas, e ambiente reproduzível com dependências/modelo fixados.
 - Demo roda sem internet depois de instalar dependências e obter o modelo. Documentar exceções verificadas.
 - Problema crítico de acesso indevido, perda de evento ou classificação apoiada em frames antigos impede liberar a demo como pronta. Corrigir antes de concluir.
 
 O gate libera **uma demonstração técnica experimental**. Não aprova piloto assistencial, desempenho em casas desconhecidas ou alegações de prevenção. Se a baseline não produzir sequer o fluxo real controlado, registrar parcial e corrigir a visão; não usar simulador para declarar a release pronta.
 
-## Roteiro de apresentação de 5–7 minutos
+## Roteiro opcional de apresentação de 5–7 minutos
+
+Atualização de 23/10/2026: por decisão do fundador (D50), a apresentação formal
+cronometrada não é requisito de conclusão nem uma etapa de aprendizado.
+O roteiro abaixo permanece opcional. Evidências operacionais durante o
+desenvolvimento são preservadas; não registrar apresentação como executada.
+Critérios técnicos e avaliação permanecem; a duração física atual segue D51
+(10 min nominais), sem comprovação do teste original de 30 min.
 
 1. Abrir painel, indicar “MVP de demonstração” e explicar o caso de uso em uma frase.
 2. Mostrar câmera, calibração e estado de observação.

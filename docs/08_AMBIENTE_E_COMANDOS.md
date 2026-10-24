@@ -2,6 +2,27 @@
 
 [Voltar ao README central](../README.md)
 
+**Atualização 08 — 22/10/2026: PARCIAL.** Comandos de validação, instalação limpa,
+backup/restore e candidata local agora existem. [Operação e backup](OPERACAO_E_BACKUP.md),
+[roteiro 08](VALIDACAO_MANUAL_ETAPA_08.md) e [matriz](RELATORIOS/VALIDACAO_MVP.md)
+descrevem os resultados e gates físicos/offline ainda pendentes. Etapas posteriores
+permanecem fora do escopo. Os parágrafos históricos abaixo registram a evolução.
+
+| Comando existente na 08 | Resultado/efeito |
+| --- | --- |
+| `pnpm.cmd demo:verify` | Executa engenharia e registra código/comandos/saídas em .local/etapa08 |
+| `pnpm.cmd demo:check --engineering` | Exit 0 somente com pré-requisitos/evidência atual aprovados; 1 para falha/ausência |
+| `pnpm.cmd demo:check` | Exit 2 enquanto gates físicos/manuais pendentes; releaseReady=false |
+| `pnpm.cmd demo:install-check` | Instalação limpa em cópia/banco exclusivos; não altera demonstração |
+| `pnpm.cmd test:backup` | Dump/restore real sintético, autorização/redação/deduplicação |
+| `pnpm.cmd backup:create --stopped` | Backup real do banco, exige processos parados; não é diagnóstico |
+| `pnpm.cmd backup:restore --backup .local/backups/<id>` | Banco novo e mídia expirada, credenciais revogadas; não inicia aplicações |
+| `pnpm.cmd demo:package` | Snapshot local de fontes com hashes; candidata parcial, sem publicação |
+| `uv run --project services/edge --frozen python scripts/validation/prepare.py` | Configuração/piso/fila separados, originais preservados, sem abrir câmera |
+| `powershell -NoProfile -File scripts/validation/observe.ps1` | Ensaio físico e amostras de recursos/saúde; não executado nesta etapa |
+| `radar-edge backup-outbox --config ... --output ...` | Fila parada consistente sem JPEG, evento/checkpoint preservados |
+| `radar-edge restore-outbox --input ... --output ...` | Destino novo, sem captura/entrega; configurar retomada intencional |
+
 **Etapas 00–07 concluídas no escopo da bancada em 22/10/2026.** FILE positivo com Full foi verificado na 05; webcam, calibração própria e controles no painel foram conferidos na 06. Pose falsa em estante, fluidez e evento LIVE positivo continuam para a validação final do MVP. Consulte [status](STATUS.md), [relatório 06](RELATORIOS/ETAPA_06.md) e [roteiro 06](VALIDACAO_MANUAL_ETAPA_06.md). Os comandos até 07 existem; comandos de etapas seguintes continuam previstos. A 07 validou JPEG sintético/retencão, mantendo snapshot real e purga existentes desligados. Proprietário e dados existentes preservados.
 
 ## Iniciar a fundação nesta máquina (PowerShell, raiz do repositório)
@@ -309,3 +330,42 @@ local events.evidenceMode=snapshot/events.snapshotAuthorized=true. Este pedido d
 implementação não habilitou essa escolha nos arquivos/webcam do fundador.
 Roteiro completo, incluindo seis verificações sem dado pessoal:
 [VALIDACAO_MANUAL_ETAPA_07](VALIDACAO_MANUAL_ETAPA_07.md).
+
+## Candidato experimental RTMO — etapa 08
+
+Prévia estabilizada opcional FILE/LIVE: adicionar `previewStabilization: true`
+dentro de processing na configuração privada. Default false. Pontos ciano são
+desenho filtrado; evidência e alertas usam pose bruta. Não aumenta FPS nem completa
+validação física. [Medições e reprodução](RELATORIOS/EXECUCAO_REAL_E_PREVIA_ETAPA_08.md).
+
+```powershell
+. ./scripts/activate.ps1
+uv sync --project services/edge --frozen
+uv run --project services/edge --frozen radar-edge env
+uv run --project services/edge --frozen radar-edge model-fetch --variant rtmo-s
+```
+
+Não há download automático em run/doctor. A obtenção explícita verifica SHA do
+ZIP e do ONNX e grava somente `.local/models/rtmo_s_body7_640.onnx`. Exemplo
+sem segredos: `services/edge/rtmo.example.yaml`, autorização e eventos desligados.
+Copiar para `.local/`, configurar arquivo autorizado/câmera/piso correspondentes
+e selecionar `model.variant=rtmo-s`, com path explícito. Para motor, selecionar
+política `floor-rtmo-score-v0.1`, qualitySource RTMO_KEYPOINT_SCORE e score 0,5.
+Não copiar score para visibility/presence. Configurações antigas continuam Full/Lite.
+
+Após preparar uma configuração privada, por exemplo `.local/edge-rtmo.yaml`:
+
+```powershell
+uv run --project services/edge --frozen radar-edge doctor --config .local/edge-rtmo.yaml
+uv run --project services/edge --frozen radar-edge run --config .local/edge-rtmo.yaml --poses-only --preview-paused
+```
+
+Espaço toca/pausa; Q/Esc encerra. Esses dois comandos com o nome de exemplo
+exigem preparação; não foram registrados como executados com esse path genérico.
+As execuções reais usaram cópias dedicadas descritas no
+[relatório de integração](RELATORIOS/INTEGRACAO_RTMO_ETAPA_08.md).
+API/web/contracts/Python devem ser atualizados juntos para a variante confidence.
+O fluxo LIVE com revisão e replay/serviços offline foram comprovados posteriormente
+no escopo registrado no STATUS. O teste contínuo interrompido aos 27min45s não
+completa 30 min. A opção nova de estabilização ainda não foi conferida em webcam
+física e não transforma as provas anteriores em aprovação geral de percepção.

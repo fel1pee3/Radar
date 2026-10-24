@@ -4,7 +4,7 @@ import math
 from collections import deque
 from dataclasses import dataclass, replace
 
-from radar_edge.observations import ESSENTIAL, Observation
+from radar_edge.observations import ESSENTIAL, Observation, point_usable
 from radar_edge.policy import DEFAULT_POLICY, Policy
 
 
@@ -51,15 +51,17 @@ def extract_features(o: Observation, polygon, policy: Policy = DEFAULT_POLICY) -
         reasons.add("MULTIPLE_POSES" if len(o.poses) > 1 else "NO_POSE")
     points = {}
     if len(o.poses) == 1:
+        if o.poses[0].qualitySource != policy.qualitySource:
+            reasons.add("QUALITY_POLICY_MISMATCH")
         if len({p.index for p in o.poses[0].landmarks}) != len(o.poses[0].landmarks):
             reasons.add("DUPLICATE_LANDMARK")
         for p in o.poses[0].landmarks:
-            valid = all(
-                v is not None and math.isfinite(v) for v in (p.x, p.y, p.visibility, p.presence)
+            threshold = (
+                policy.minKeypointScore
+                if policy.qualitySource == "RTMO_KEYPOINT_SCORE"
+                else policy.minLandmarkVisibility
             )
-            valid = valid and all(
-                policy.minLandmarkVisibility <= v <= 1 for v in (p.visibility, p.presence)
-            )
+            valid = point_usable(p, threshold, o.poses[0].qualitySource)
             if not valid:
                 if p.index in ESSENTIAL:
                     reasons.add("LOW_LANDMARK_QUALITY")

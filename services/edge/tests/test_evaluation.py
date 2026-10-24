@@ -1,6 +1,35 @@
 from radar_edge.evaluation import Interval, Target, match_episodes
 
 
+def test_evaluation_rejects_duplicate_files_and_calibration_session_leakage():
+    import json
+    from pathlib import Path
+
+    import pytest
+    from pydantic import ValidationError
+
+    from radar_edge.evaluation import Manifest
+
+    example = json.loads(
+        (Path(__file__).parents[1] / "evaluation.example.json").read_text(encoding="utf-8")
+    )
+    original = example["videos"][0]
+    example["videos"].append({**original, "videoId": "another-clip"})
+    with pytest.raises(ValidationError):
+        Manifest.model_validate(example)
+    example["videos"][1].update(sha256="1" * 64, role="EVALUATION")
+    with pytest.raises(ValidationError):
+        Manifest.model_validate(example)
+    example["videos"][1]["sessionId"] = "independent-session"
+    assert len(Manifest.model_validate(example).videos) == 2
+
+
+def test_missed_targets_require_complete_annotations():
+    target = Target(startMs=0, endMs=4000, kind="PERSON_ON_FLOOR")
+    assert match_episodes([], [target], [], 4000)["PERSON_ON_FLOOR"]["missed"] == 1
+    assert match_episodes([], [target], [], 4000, False)["PERSON_ON_FLOOR"]["missed"] is None
+
+
 def test_episode_matching_counts_duplicates_exclusions_and_zero_denominators():
     targets = [
         Target(

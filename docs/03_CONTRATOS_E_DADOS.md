@@ -57,7 +57,19 @@ Endpoint `POST /v1/edge/events`, com `Authorization: Bearer <deviceToken>`. Corp
 }
 ```
 
-`pose` pode ser vazio, inclusive quando a retenção visual foi desabilitada. Quando presente, é uma lista limitada de `{index, x, y, visibility}` com índices corporais 11 a 32 do MediaPipe; não enviar pontos faciais, `worldLandmarks` ou imagem no JSON. `x/y` devem ser finitos; podem sair ligeiramente de 0–1 por extrapolação do modelo. O motor não considera válido um ponto essencial fora do enquadramento. O desenho recorta no viewport; não alterar a medição antes da classificação.
+`pose` pode ser vazio, inclusive quando a retenção visual foi desabilitada. A variante original é uma lista limitada de `{index, x, y, visibility}` com índices corporais 11 a 32 do MediaPipe; não enviar pontos faciais, `worldLandmarks` ou imagem no JSON. `x/y` devem ser finitos; podem sair ligeiramente de 0–1 por extrapolação do modelo. O motor não considera válido um ponto essencial fora do enquadramento. O desenho recorta no viewport; não alterar a medição antes da classificação.
+
+Extensão experimental de 23/10/2026 (D47): o modelo
+`rtmo-s-body7-640x640-20231211-onnx-v1`, com política `floor-rtmo-score-*`,
+usa `{index, x, y, confidence}`. O score nativo não é visibility/presence.
+São permitidos somente doze pontos anatômicos correspondentes a ombros,
+cotovelos, punhos, quadris, joelhos e tornozelos: índices comuns 11–16 e 23–28.
+Não misturar confidence e visibility, nem atribuir confidence a outro modelo.
+Schema e validadores dos dois runtimes impõem essa distinção; a interface
+identifica o score experimental. Não há inferência de necessidade de ajuda
+ou visibilidade física a partir dele. A extensão do envelope v1 preserva os
+envelopes antigos no conjunto local atualizado; leitores antigos não aceitam
+a nova variante. Atualizar todos os componentes juntos, sem publicar API.
 
 `occurredAt` é o início estimado da sequência candidata e `detectedAt` é a emissão. No modo ao vivo, derivar do relógio monotônico ancorado a UTC no começo da execução. No replay, usar relógio virtual ancorado ao começo da execução e armazenar `sourceOffsetMs`; esses horários não representam a data original de gravação. Replay nunca gera aviso urgente, mesmo que o relógio virtual esteja à frente do recebimento.
 

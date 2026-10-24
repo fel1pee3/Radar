@@ -59,10 +59,11 @@ def process_peak_memory() -> tuple[int | None, str]:
 
 
 class Metrics:
-    def __init__(self, visibility=0.5):
+    def __init__(self, visibility=0.5, quality_source="MEDIAPIPE"):
         if not math.isfinite(visibility) or not 0 <= visibility <= 1:
             raise ValueError("Invalid landmark visibility threshold")
         self.visibility = visibility
+        self.quality_source = quality_source
         self.wall_start = perf_counter()
         self.cpu_start = process_time()
         self.analyzed = 0
@@ -76,6 +77,8 @@ class Metrics:
         self.last_ms = None
         self.pose_observations = Counter({"none": 0, "one": 0, "multiple": 0})
         self.pose_count_mismatches = 0
+        self.quality_sources = Counter()
+        self.keypoint_score_failures = Counter(dict.fromkeys(sorted(ESSENTIAL), 0))
         self.landmark_failures = {
             index: Counter(dict.fromkeys(LANDMARK_FAILURE_REASONS, 0))
             for index in sorted(ESSENTIAL)
@@ -89,13 +92,20 @@ class Metrics:
             return
         if count != 1:
             return  # No pose is not eight missing joints; never mix people from multiple poses.
+        quality_source = observation.poses[0].qualitySource
+        self.quality_sources[quality_source] += 1
         points = {point.index: point for point in observation.poses[0].landmarks}
         for index, counts in self.landmark_failures.items():
             point = points.get(index)
             if point is None:
                 counts["missing"] += 1
                 continue
-            values = (point.x, point.y, point.visibility, point.presence)
+            score_mode = quality_source == "RTMO_KEYPOINT_SCORE"
+            values = (
+                (point.x, point.y, point.confidence)
+                if score_mode
+                else (point.x, point.y, point.visibility, point.presence)
+            )
             counts["missing"] += any(value is None for value in values)
             counts["nonfinite"] += any(
                 value is not None and not math.isfinite(value) for value in values
@@ -104,6 +114,13 @@ class Metrics:
                 value is not None and math.isfinite(value) and not 0 <= value <= 1
                 for value in (point.x, point.y)
             )
+            if score_mode:
+                self.keypoint_score_failures[index] += (
+                    point.confidence is None
+                    or not math.isfinite(point.confidence)
+                    or not self.visibility <= point.confidence <= 1
+                )
+                continue
             for reason, value in (
                 ("lowVisibility", point.visibility),
                 ("lowPresence", point.presence),
@@ -141,7 +158,17 @@ class Metrics:
             "lowConfidenceObservations": self.states["LOW_CONFIDENCE"],
             "qualityReasons": dict(self.reasons),
             "landmarkDiagnostics": {
-                "minLandmarkVisibility": self.visibility,
+                "minLandmarkVisibility": self.visibility
+                if self.quality_source == "MEDIAPIPE"
+                else None,
+                "minKeypointScore": self.visibility
+                if self.quality_source == "RTMO_KEYPOINT_SCORE"
+                else None,
+                "qualitySources": dict(self.quality_sources),
+                "thresholdSemantics": "Backend-specific; keypoint score is not visibility/presence",
+                "keypointScoreFailures": {
+                    str(k): v for k, v in self.keypoint_score_failures.items()
+                },
                 "scope": "SINGLE_POSE_ONLY",
                 "poseObservations": dict(self.pose_observations),
                 "poseCountMismatchObservations": self.pose_count_mismatches,

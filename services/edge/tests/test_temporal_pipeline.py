@@ -44,8 +44,65 @@ def prepared(tmp_path, monkeypatch):
             floor = not 4000 <= frame.timestamp_ms < 10000
             return observation(frame.timestamp_ms, floor).poses, 1.0
 
-    monkeypatch.setattr("radar_edge.pipeline.MediaPipeEstimator", Estimator)
+    monkeypatch.setattr("radar_edge.estimator.MediaPipeEstimator", Estimator)
     return c
+
+
+def test_preview_stabilization_preserves_observations_decisions_and_execution_identity(
+    prepared, monkeypatch
+):
+    import radar_edge.preview as preview_module
+    from radar_edge.calibration import load_calibration
+    from radar_edge.event_runtime import EventRuntime
+    from radar_edge.source import FileSource
+
+    for name in ("namedWindow", "imshow", "destroyWindow"):
+        monkeypatch.setattr(preview_module.cv2, name, lambda *_: None)
+    monkeypatch.setattr(preview_module.cv2, "waitKey", lambda *_: -1)
+    monkeypatch.setattr(preview_module.cv2, "getWindowProperty", lambda *_: 1)
+    reports, fingerprints = [], []
+    for enabled in (False, True):
+        config = prepared.model_copy(deep=True)
+        config.processing.preview = True
+        config.processing.previewStabilization = enabled
+        config.diagnostics.exportObservations = True
+        config.events.outboxPath = f".local/preview-{enabled}.sqlite"
+        config.diagnostics.outputDirectory = f".local/preview-{enabled}"
+        with FileSource(config.source, config.processing.maxWidth) as source:
+            frame = source.read()
+            runtime = EventRuntime(
+                config,
+                load_calibration(config.calibrationPath),
+                file_hash(Path(config.source.path)),
+                frame.geometry,
+            )
+            fingerprints.append(runtime.fingerprint)
+        report, code = run_pipeline(config)
+        assert code == 0
+        reports.append(report)
+    assert fingerprints[0] == fingerprints[1]
+    assert (
+        reports[0]["temporal"]["generatedEvents"] == reports[1]["temporal"]["generatedEvents"] > 0
+    )
+    observations = []
+    for report in reports:
+        path = Path(report["reportPath"]).parent / "observations.jsonl"
+        observations.append(
+            [
+                {
+                    k: o[k]
+                    for k in (
+                        "frameIndex",
+                        "timestampMs",
+                        "poses",
+                        "qualityReasons",
+                        "inferenceState",
+                    )
+                }
+                for o in map(json.loads, path.read_text().splitlines())
+            ]
+        )
+    assert observations[0] == observations[1]
 
 
 def test_checkpoint_resume_never_replays_decisions_or_old_rearm_time(prepared):

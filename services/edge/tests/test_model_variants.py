@@ -56,7 +56,7 @@ def test_full_configuration_requires_explicit_path_and_legacy_remains_lite():
 @pytest.fixture
 def artifacts(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    contents = {"lite": b"test-lite-model", "full": b"test-full-model"}
+    contents = {variant: f"test-{variant}-model".encode() for variant in model.MODEL_SPECS}
     specs = {
         variant: replace(spec, sha256=hashlib.sha256(contents[variant]).hexdigest())
         for variant, spec in model.MODEL_SPECS.items()
@@ -113,7 +113,7 @@ def test_fetch_uses_selected_url_destination_and_reuses_valid_artifact(
 def test_failed_download_keeps_no_model_or_partial_file(artifacts, monkeypatch, oversized):
     _, specs = artifacts
     if oversized:
-        monkeypatch.setattr(model, "MAX_MODEL_BYTES", 4)
+        specs["full"] = replace(specs["full"], max_bytes=4)
 
     @contextmanager
     def response(*_args, **_options):

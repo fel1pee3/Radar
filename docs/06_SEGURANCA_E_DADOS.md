@@ -75,6 +75,15 @@ Logs técnicos usam IDs correlacionáveis e códigos de erro. Não imprimir head
 
 ## Antes de sair da bancada
 
+**Complemento 08:** backup/restore local implementado e verificado em dados
+sintéticos exclusivos. [Procedimento](OPERACAO_E_BACKUP.md): dump sensível com prazo
+de sete dias, sem mídia/configuração de segredo automática; SQLite copia estado
+e pendentes sem JPEG. Restore cria banco novo, revoga sessões/bearers, expira mídia,
+redige todas as cópias vencidas e reaplica retenção antes de qualquer HTTP. Não
+inicia worker nem reutiliza credencial restaurada. Não criou dump pessoal, alterou
+retenção do fundador, cifrou disco ou certificou conformidade legal. A seção
+histórica da 07 abaixo descreve o estado anterior ao procedimento da 08.
+
 Reavaliar uso pretendido e alegações do produto, base de tratamento dos dados, responsabilidades de atendimento, aceite dos participantes, requisitos da LGPD e eventual enquadramento sanitário. Uso real precisa de responsável e processo de resposta. Não tratar “MVP” ou “bem-estar” como dispensa automática. Isso é um gate do piloto com terceiros; não altera a decisão de construir a demonstração agora.
 
 

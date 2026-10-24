@@ -17,6 +17,14 @@ class PoseEstimator(Protocol):
     def close(self) -> None: ...
 
 
+def create_estimator(model_path, variant="lite"):
+    if variant == "rtmo-s":
+        from radar_edge.rtmo import RtmoEstimator
+
+        return RtmoEstimator(model_path)
+    return MediaPipeEstimator(model_path, variant)
+
+
 class MediaPipeEstimator:
     def __init__(self, model_path: str, variant: ModelVariant = "lite"):
         self.model_path = model_path

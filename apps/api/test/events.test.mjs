@@ -279,6 +279,25 @@ test('episódio equivalente concorrente com eventIds distintos continua único',
   ).toBe(10);
 });
 
+test('pose RTMO preserva score explícito no incidente e no reenvio idempotente', async () => {
+  const fixture = fixtures.find((item) => item.name === 'event-rtmo-score').value;
+  const body = event({
+    mode: 'REPLAY',
+    sourceOffsetMs: 2000,
+    pose: fixture.pose,
+    versions: fixture.versions,
+  });
+  const receipt = await ingest(body);
+  expect((await detail(receipt.incidentId)).body).toMatchObject({
+    pose: fixture.pose,
+    versions: { model: fixture.versions.model },
+  });
+  const duplicate = await worker('events', body);
+  expect(duplicate.status).toBe(200);
+  expect(duplicate.body.incidentId).toBe(receipt.incidentId);
+  expect(duplicate.body.duplicate).toBe(true);
+});
+
 test('classes e limites exatos de tempo, TEST e preservação de timestamps originais', async () => {
   for (const [mode, lag, occurredDelta, expected] of [
     ['SIMULATED', 200000, -2000, 'TEST'],

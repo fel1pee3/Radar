@@ -1,0 +1,36 @@
+# Candidato experimental da etapa 08; não substitui validação independente/LIVE.
+schemaVersion: 1
+purpose: RADAR_FILE_POSE
+cameraId: '11111111-1111-4111-8111-111111111111'
+source:
+  kind: FILE
+  path: .local/videos/teste.mp4
+  videoId: teste-rtmo
+  authorized: false
+  rotation: AUTO
+  allowTimestampFallback: true
+model:
+  variant: rtmo-s
+  path: .local/models/rtmo_s_body7_640.onnx
+processing:
+  maxWidth: 640
+  targetAnalysisFps: 5.0
+  minKeypointScore: 0.5
+  replaySpeed: 0.0
+  preview: false
+calibrationPath: .local/calibration.json
+diagnostics:
+  outputDirectory: .local/results/rtmo
+  exportObservations: false
+events:
+  enabled: false
+  outboxPath: .local/edge/rtmo.sqlite
+  evidenceMode: skeleton
+  snapshotAuthorized: false
+  policy:
+    version: floor-rtmo-score-v0.1
+    qualitySource: RTMO_KEYPOINT_SCORE
+    minKeypointScore: 0.5
+  delivery:
+    enabled: false
+    credentialFile: null

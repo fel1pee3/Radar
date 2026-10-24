@@ -25,6 +25,26 @@ percepção da 06 continuam para a validação final da 08.
 
 ## Modelo de relatório de etapa
 
+A [etapa 08](ETAPA_08.md) registra validação de engenharia, instalação limpa,
+backup/restore e candidata local, com [matriz final](VALIDACAO_MVP.md).
+**Concluída no escopo revisado da bancada (D50/D51), 24/10:** sessão física de
+600,660 s auditada e encerramento confirmado pelo fundador; tempo elegível e
+lacunas separados. [Resultados e possível perda no trecho no chão sem alerta](SESSAO_WEBCAM_10MIN_ETAPA_08.md).
+Teste original de 30 min
+não comprovado; falha histórica preservada. Apresentação formal dispensada pelo fundador
+(D50), sem declarar sua execução. Avaliação independente
+CAUCAFall executada: 3/4 alvos, uma perda e zero alertas nos oito ADL, com
+cobertura limitada. [Resultados e limites](CAUCAFALL_ETAPA_08.md).
+LIVE positivo/revisão e replay/serviços offline comprovados na 08.
+Não confundir fechamento da demonstração técnica com eficácia geral ou liberação
+assistencial/comercial. O checker não consome o aceite manual e mantém sua lista
+original fixa; sem aprovação automática alegada.
+
+O [complemento dos materiais 08](MATERIAIS_ETAPA_08.md) registra fontes, hashes,
+licenças, ensaios dos 23 novos vídeos e recuperação dos dois históricos. A avaliação
+reservada é provisória e desfavorável; não há melhora de precisão comprovada nem
+aprovação física obtida com os vídeos longos.
+
 Copiar a estrutura abaixo e preencher com fatos. Não deixar “passou” sem dizer o que foi executado.
 
 ```markdown

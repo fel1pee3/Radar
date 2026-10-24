@@ -1,6 +1,5 @@
 """Optional native window, body-only skeleton and explicit REPLAY labelling."""
 
-import math
 from time import perf_counter
 
 import cv2
@@ -8,7 +7,7 @@ import numpy as np
 
 from radar_edge.calibration import validate_polygon
 from radar_edge.errors import EdgeError
-from radar_edge.observations import Observation, pose_quality
+from radar_edge.observations import Observation, point_usable, pose_quality
 from radar_edge.source import Frame
 
 CONNECTIONS = (
@@ -56,22 +55,22 @@ def draw_floor(image, points, closed=True):
         cv2.circle(image, (int(x), int(y)), 4, (80, 210, 240), -1)
 
 
-def usable_point(point, visibility):
+def usable_point(point, visibility, quality_source="MEDIAPIPE"):
     """Only draw current, finite points with the same two confidence gates as analysis."""
-    values = (point.x, point.y, point.visibility, point.presence)
     return (
         11 <= point.index <= 32
-        and all(value is not None and math.isfinite(value) for value in values)
+        and point_usable(point, visibility, quality_source)
         and 0 <= point.x <= 1
         and 0 <= point.y <= 1
-        and visibility <= point.visibility <= 1
-        and visibility <= point.presence <= 1
     )
 
 
 def diagnostic_lines(observation, visibility, paused=False):
     """Explain pose quality without implying that visible points satisfy the floor policy."""
     state, reasons = pose_quality(observation.poses, visibility)
+    score_mode = observation.modelId.startswith("rtmo-") or any(
+        p.qualitySource == "RTMO_KEYPOINT_SCORE" for p in observation.poses
+    )
     state_label = {
         "NO_POSE": "Sem pose",
         "MULTIPLE_POSES": "Multiplas poses: classificacao indisponivel",
@@ -83,7 +82,9 @@ def diagnostic_lines(observation, visibility, paused=False):
         "MULTIPLE_POSES": "multiplas poses",
         "MISSING_LANDMARK": "pontos essenciais ausentes",
         "BODY_OUT_OF_FRAME": "pontos essenciais fora do quadro",
-        "LOW_LANDMARK_QUALITY": "visibilidade/presenca insuficiente",
+        "LOW_LANDMARK_QUALITY": "score articular insuficiente"
+        if score_mode
+        else "visibilidade/presenca insuficiente",
         "DARK_FRAME": "frame escuro",
     }
     details = tuple(
@@ -94,31 +95,61 @@ def diagnostic_lines(observation, visibility, paused=False):
         f"{observation.mode} | t={observation.timestampMs} ms | poses={observation.poseCount}",
         f"{state_label} | inferencia={observation.inferenceMs:.1f} ms",
         *(f"Motivo: {detail}" for detail in details),
-        "Verde: pontos observados validos; nao confirma pessoa no piso.",
+        (
+            "RTMO EXPERIMENTAL | score articular; nao comprova visibilidade."
+            if score_mode
+            else "Verde: pontos observados validos; nao confirma pessoa no piso."
+        ),
         "Sem preencher pontos ausentes",
         "PAUSADO | SPACE: continuar | Q/Esc: sair" if paused else "SPACE: pausar | Q/Esc: sair",
     )
 
 
-def render(frame: Frame, observation: Observation, floor, visibility: float, paused=False):
+def render(
+    frame: Frame,
+    observation: Observation,
+    floor,
+    visibility: float,
+    paused=False,
+    visual_points=None,
+):
     image = fit_display(frame.bgr)
     draw_floor(image, floor)
     height, width = image.shape[:2]
-    for pose in observation.poses:
+    groups = []
+    if visual_points is not None:
+        groups.append(
+            {
+                key: (
+                    round(x * (width - 1) / max(1, observation.width - 1)),
+                    round(y * (height - 1) / max(1, observation.height - 1)),
+                )
+                for key, (x, y) in visual_points.items()
+            }
+        )
+    for pose in observation.poses if visual_points is None else ():
         points = {
             point.index: (round(point.x * (width - 1)), round(point.y * (height - 1)))
             for point in pose.landmarks
-            if usable_point(point, visibility)
+            if usable_point(point, visibility, pose.qualitySource)
         }
+        groups.append(points)
+    color = (90, 220, 100) if visual_points is None else (255, 210, 40)
+    for points in groups:
         for start, end in CONNECTIONS:
             if start in points and end in points:
-                cv2.line(image, points[start], points[end], (90, 220, 100), 2)
+                cv2.line(image, points[start], points[end], color, 2)
         for point in points.values():
-            cv2.circle(image, point, 3, (90, 220, 100), -1)
+            cv2.circle(image, point, 3, color, -1)
     # Keep text outside the source pixels: no implied fall classification.
     canvas_width = max(640, width)
     image = cv2.copyMakeBorder(image, 0, 0, 0, canvas_width - width, cv2.BORDER_CONSTANT)
     lines = diagnostic_lines(observation, visibility, paused)
+    if visual_points is not None:
+        lines = (
+            *lines,
+            "Ciano: estabilizacao visual experimental; evidencia/alertas usam pose bruta.",
+        )
     footer = np.zeros((8 + len(lines) * 26, canvas_width, 3), dtype=np.uint8)
     for index, line in enumerate(lines):
         cv2.putText(
@@ -139,6 +170,24 @@ class LocalPreview:
         self.on_pause = None
         self.blocking_pause = True
         self._last_view = None
+        self._smoother = None
+        self._visual_points = None
+
+    def enable_stabilization(self):
+        from radar_edge.visual_smoothing import VisualSmoother
+
+        self._smoother = VisualSmoother() if self.enabled else None
+        self._visual_points = None
+
+    def _render(self, frame, observation, floor, visibility, paused=False):
+        return render(
+            frame,
+            observation,
+            floor,
+            visibility,
+            paused,
+            visual_points=self._visual_points,
+        )
 
     @property
     def paused_seconds(self):
@@ -187,7 +236,7 @@ class LocalPreview:
             self.on_pause(value)
         if self.opened and not self.blocking_pause and self._last_view is not None:
             frame, observation, floor, visibility = self._last_view
-            cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+            cv2.imshow(self.name, self._render(frame, observation, floor, visibility, self.paused))
 
     def poll(self):
         """Pump native events while LIVE capture is paused or waiting for a frame."""
@@ -211,14 +260,27 @@ class LocalPreview:
     def show(self, frame: Frame, observation: Observation, floor, visibility: float) -> bool:
         if not self.enabled:
             return True
+        if self._smoother is not None:
+            if (
+                observation.frameIndex != frame.index
+                or observation.timestampMs != frame.timestamp_ms
+                or observation.width != frame.geometry.width
+                or observation.height != frame.geometry.height
+            ):
+                raise EdgeError(
+                    "PREVIEW_FRAME_MISMATCH", "Pose e imagem da prévia não correspondem."
+                )
+            self._visual_points = self._smoother.update(observation, visibility)
         try:
             if not self.blocking_pause:
                 self._last_view = (frame, observation, floor, visibility)
                 if self.paused and self._pause_started is None:
                     self.set_paused(True)
-                cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+                cv2.imshow(
+                    self.name, self._render(frame, observation, floor, visibility, self.paused)
+                )
                 return self.poll()
-            cv2.imshow(self.name, render(frame, observation, floor, visibility, self.paused))
+            cv2.imshow(self.name, self._render(frame, observation, floor, visibility, self.paused))
             if self.paused:
                 self._pause_started = perf_counter()
                 if self.on_pause:
@@ -236,13 +298,13 @@ class LocalPreview:
                         self.finish_pause()
                         if self.on_pause:
                             self.on_pause(False)
-                        cv2.imshow(self.name, render(frame, observation, floor, visibility))
+                        cv2.imshow(self.name, self._render(frame, observation, floor, visibility))
                         return True
                     self.paused = True
                     self._pause_started = perf_counter()
                     if self.on_pause:
                         self.on_pause(True)
-                    cv2.imshow(self.name, render(frame, observation, floor, visibility, True))
+                    cv2.imshow(self.name, self._render(frame, observation, floor, visibility, True))
                 elif not self.paused:
                     return True
         except cv2.error:
@@ -263,6 +325,9 @@ class LocalPreview:
             finally:
                 self.opened = False
                 self._last_view = None
+                self._visual_points = None
+                if self._smoother is not None:
+                    self._smoother.reset()
 
     def __exit__(self, *_):
         self.close()

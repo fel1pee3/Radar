@@ -24,12 +24,20 @@ export type EventV1 = {
   /**
    * @maxItems 22
    */
-  pose: {
-    index: number;
-    x: number;
-    y: number;
-    visibility: number;
-  }[];
+  pose: (
+    | {
+        index: number;
+        x: number;
+        y: number;
+        visibility: number;
+      }
+    | {
+        index: 11 | 12 | 13 | 14 | 15 | 16 | 23 | 24 | 25 | 26 | 27 | 28;
+        x: number;
+        y: number;
+        confidence: number;
+      }
+  )[];
   versions: {
     worker: string;
     model: string;

@@ -1,6 +1,28 @@
-# Dependências e modelos — inventário inicial
+# Dependências e modelos — inventário
 
-Data: 21/10/2026. Escopo: etapas 00–05, execução local Windows x64; 04 concluída e 05 com prova positiva real pendente.
+Atualização: 24/10/2026. Escopo: etapas 00–08 verificadas no alcance revisado da
+demo de bancada D50/D51; execução local Windows x64. Registros anteriores são históricos, com complementos
+por etapa. Full positivo em calibração não constitui avaliação independente.
+
+Sessão física final: RTMO-s CPU experimental, mesmo SHA fixado, webcam 0/DSHOW
+640×480 e piso v3, sem mudança de dependências/modelos. 2799 análises em 600,660 s,
+sem eventos; trecho voluntário no chão <10 s sem alerta permanece possível perda/
+inconclusivo. Uso comercial/redistribuição dos pesos não liberados por este teste.
+[Resultados e limites](SESSAO_WEBCAM_10MIN_ETAPA_08.md).
+
+## Verificação na etapa 08
+
+Nenhuma dependência, família, lock ou bundle novo. Instalações frozen repetidas
+em node_modules/.venv novos, com caches externos declarados. Full foi novamente
+obtido pela URL oficial versionada durante a preparação limpa e seu SHA-256
+`5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1`
+foi conferido antes da inferência real em vídeo sintético sem pessoa. Artefatos
+nativos, modelo e ferramentas não acompanham a candidata local de fontes.
+
+Registro da preparação `.local/etapa08/clean-install.json`; [matriz final](VALIDACAO_MVP.md).
+Ressalvas do Model Card/telemetria, licenças transitivas e redistribuição de codecs
+permanecem. Funcionamento offline ainda não foi comprovado; não se afirma ausência
+de tráfego externo do SDK. Não houve nova auditoria jurídica de licenças.
 Versões diretas fixadas nos manifests; árvores completas e integridades nos arquivos
 `pnpm-lock.yaml` e `services/edge/uv.lock`. Não foi escolhida uma licença para o código autoral.
 
@@ -317,3 +339,77 @@ avisos da distribuição; não é um parecer de conformidade comercial/legal.
 Fontes primárias: [constructor](https://sharp.pixelplumbing.com/api-constructor/)
 e [output/metadata](https://sharp.pixelplumbing.com/api-output/).
 Nenhuma dependência Python/modelo/cv2 foi trocada nesta etapa.
+
+## Complemento da etapa 08 — novos vídeos e procedência recuperada
+
+Atualização de 23/10: ONNX Runtime 1.23.2 (MIT) integrado ao ambiente operacional
+com uv/lock para o adaptador RTMO opcional. MediaPipe/OpenCV/NumPy anteriores
+preservados, importados e usados em inferência real no mesmo ambiente; somente
+opencv-contrib-python fornece cv2. RTMLib continua exclusivamente na pesquisa
+privada, não no produto. Código do adaptador próprio com modelo oficial fixado
+por SHA; nenhuma redistribuição dos pesos. Resultado/termos delimitados em
+[INTEGRACAO_RTMO_ETAPA_08](INTEGRACAO_RTMO_ETAPA_08.md). A descrição abaixo
+registra o estado anterior da pesquisa isolada.
+
+Pesquisa posterior da cadeira, fora do ambiente operacional: projeto uv privado
+com Python 3.12.15, RTMLib 0.0.16, ONNX Runtime 1.23.2, NumPy 2.5.4 e
+opencv-contrib-python 5.0.0.93; lock próprio. RTMLib declara duas distribuições
+de cv2; override explícito da pesquisa exclui opencv-python, e auditoria confirmou
+somente contrib instalado/importado. Não adotar esse ambiente como substituto
+do worker sem revisão de compatibilidade. Código RTMLib e MMPose declara Apache
+2.0; licença específica do artefato/modelo não foi comprovada separadamente.
+RTMO-s ONNX obtido do catálogo oficial OpenMMLab, SHA-256 local
+`d0703d40d19f3921da51ae725402d5fdae4d2478c7442072d3101bd396f370d8`;
+não há full digest publicado verificado. ZIP sem arquivo LICENSE, apenas
+deploy/detail/pipeline JSON e ONNX. Uso restrito à comparação privada, sem
+treinamento ou redistribuição. O fundador confirmou melhora visual na cadeira;
+não há integração operacional nem equivalência entre scores RTMO e os gates
+visibility/presence atuais. [Fontes e resultados](INVESTIGACAO_CADEIRA_ETAPA_08.md).
+
+Complemento de 23/10: RTMO-t body7/416 obtido do catálogo oficial somente para
+pesquisa privada, sem entrar no registro/configuração operacional. ONNX
+27342008 bytes, SHA-256
+`20aad6e2e42359cac1c5b4a0b2da00e29bfe91a72a782fdcf287d273a04c1b24`.
+Mesmo ONNX Runtime/NumPy/cv2 já instalados, sem lock ou dependência nova. Mais
+rápido e com mais perdas de pose no conjunto testado; não adotado. ZIP, URL,
+hashes, limitações de licença e medições em
+[QUADRO_A_QUADRO_ETAPA_08](QUADRO_A_QUADRO_ETAPA_08.md). Novo experimento de
+filtro visual tem implementação própria e não instala pacote externo.
+
+Posteriormente, Heavy float16/v1 foi obtido **somente para comparação privada**,
+sem alteração do modelo ativo ou registro de variantes do produto. Bundle oficial
+30.664.242 bytes, SHA-256 calculado
+`64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b`,
+verificado contra tamanho/MD5 da API oficial de metadados. O Model Card comum
+declara Apache 2.0, com as mesmas limitações de uso/adequação documentadas.
+Fonte, metadados e comparação em [COMPARACAO_POSE_ETAPA_08](COMPARACAO_POSE_ETAPA_08.md).
+Resultado desfavorável; Heavy não adotado. Arquivo .research.task privado,
+nenhuma dependência/lock/threshold ou configuração operacional alterada.
+
+Nenhuma dependência, peso ativo, threshold ou lockfile foi alterado para os novos
+ensaios. O [inventário de materiais 08](MATERIAIS_ETAPA_08.md) associa os 21 curtos
+novos ao caminho completo GMDCSA24 por Git blob SHA-1, registra SHA-256 local e
+revisão da fonte. A raiz do repositório declara MIT, copyright 2024 Ekram Alam.
+Os dois episódios Third Age Yoga with Andy Gilats têm nome/tamanho/SHA-1
+compatíveis com os metadados do Internet Archive, que declaram CC BY 3.0.
+Links primários e hashes individuais estão naquele relatório; arquivos continuam
+privados, sem redistribuição ou treinamento de pesos.
+
+A procedência antes não confirmada de `piso-e-05` e `piso-f-07` foi resolvida
+posteriormente: os hashes históricos correspondem a `Subject 3/Fall/05.mp4` e
+`Subject 3/Fall/07.mp4` do mesmo repositório, revisão
+`5abac7693229900cf80f722e878fbb119211fc1c`. Cópias recuperadas por hash ficam em
+caminhos separados dos novos 05/07 do Subject 1. A descrição anterior reflete
+o que era conhecido naquela etapa; ambos históricos continuam CALIBRATION.
+Não se infere autorização adicional de direitos de imagem ou uso assistencial
+a partir da licença do repositório. Material usado para ajustar/selecionar
+parâmetros/modelos permanece CALIBRATION; a avaliação reservada foi registrada
+antes da inferência e tem anotações provisórias do assistente.
+
+CAUCAFall V4, DOI 10.17632/7w7fccy7ky.4: doze AVIs novos recebidos na etapa 08,
+20 FPS/720×480 verificados, 143800 ms e hashes individuais no
+[relatório CAUCAFall](CAUCAFALL_ETAPA_08.md). Página oficial Mendeley declara
+CC BY 4.0; autores/atribuição preservados. Uso reservado para avaliação local,
+sem treino/publicação; fontes, direitos do vídeo e termos do modelo separados.
+Fundador confirmou novidade, os 12 pisos e as propostas de cenas/intervalos
+antes da primeira inferência. Nenhuma dependência/modelo/lock foi alterado.

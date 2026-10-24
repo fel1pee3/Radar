@@ -11,13 +11,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from radar_edge.config import private_path
+from radar_edge.config import private_path, quality_threshold
 from radar_edge.contracts import validate_contract
 from radar_edge.delivery import Delivery
 from radar_edge.engine import TemporalEngine
 from radar_edge.errors import EdgeError
 from radar_edge.features import QualityGate, extract_features
 from radar_edge.model import get_model_spec
+from radar_edge.observations import point_usable
 from radar_edge.outbox import FileLock, Outbox, encode
 from radar_edge.policy import configured_policy
 
@@ -37,12 +38,17 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
 
     points = []
     if evidence_mode in {"skeleton", "snapshot"}:
+        pose = observation.poses[0]
+        score_field = "confidence" if pose.qualitySource == "RTMO_KEYPOINT_SCORE" else "visibility"
         points = [
-            {"index": p.index, "x": p.x, "y": p.y, "visibility": p.visibility}
-            for p in observation.poses[0].landmarks
-            if 11 <= p.index <= 32
-            and all(v is not None for v in (p.x, p.y, p.visibility))
-            and 0 <= p.visibility <= 1
+            {
+                "index": p.index,
+                "x": p.x,
+                "y": p.y,
+                score_field: p.confidence if score_field == "confidence" else p.visibility,
+            }
+            for p in pose.landmarks
+            if 11 <= p.index <= 32 and point_usable(p, 0, pose.qualitySource)
         ]
     value = {
         "schemaVersion": 1,
@@ -104,9 +110,20 @@ class EventRuntime:
                 "SNAPSHOT_AUTHORIZATION_REQUIRED",
                 "Snapshot exige escolha explícita e autorização local do proprietário.",
             )
-        if config.processing.minLandmarkVisibility != self.policy.minLandmarkVisibility:
+        expected_source = "RTMO_KEYPOINT_SCORE" if config.model.variant == "rtmo-s" else "MEDIAPIPE"
+        if self.policy.qualitySource != expected_source:
             raise EdgeError(
-                "POLICY_QUALITY_CONFLICT", "Visibilidade de processing e policy deve coincidir."
+                "POLICY_MODEL_MISMATCH", "Política de qualidade não corresponde ao modelo."
+            )
+        policy_threshold = (
+            self.policy.minKeypointScore
+            if expected_source == "RTMO_KEYPOINT_SCORE"
+            else self.policy.minLandmarkVisibility
+        )
+        if quality_threshold(config) != policy_threshold:
+            raise EdgeError(
+                "POLICY_QUALITY_CONFLICT",
+                "O limiar de qualidade de processing e policy deve coincidir.",
             )
         self.engine = TemporalEngine(self.policy)
         self.gate = QualityGate(self.policy)
@@ -139,7 +156,13 @@ class EventRuntime:
                     "processing": {
                         k: v
                         for k, v in config.processing.model_dump().items()
-                        if k in {"maxWidth", "targetAnalysisFps", "minLandmarkVisibility"}
+                        if k in {"maxWidth", "targetAnalysisFps"}
+                        or k
+                        == (
+                            "minKeypointScore"
+                            if expected_source == "RTMO_KEYPOINT_SCORE"
+                            else "minLandmarkVisibility"
+                        )
                     },
                     "evidenceMode": self.evidence_mode,
                 }

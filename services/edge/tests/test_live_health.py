@@ -197,7 +197,10 @@ def test_heartbeat_advances_while_event_http_and_inference_are_stalled(tmp_path,
         assert r.store.summary() == {"PENDING": 1}
 
 
-def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(tmp_path, monkeypatch):
+@pytest.mark.parametrize("status_failure", [False, True])
+def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(
+    tmp_path, monkeypatch, status_failure
+):
     from time import monotonic_ns
     from types import SimpleNamespace
 
@@ -297,8 +300,25 @@ def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(tmp_p
             return observation(frame.timestamp_ms).poses, 1.0
 
     monkeypatch.setattr("radar_edge.live.WebcamSource", Source)
-    monkeypatch.setattr("radar_edge.live.MediaPipeEstimator", Estimator)
+    monkeypatch.setattr("radar_edge.estimator.MediaPipeEstimator", Estimator)
+    if status_failure:
+
+        def fail_status(*_):
+            raise RuntimeError("synthetic-private-status-secret")
+
+        monkeypatch.setattr("radar_edge.live.publish_status", fail_status)
     report, code = run_live(c)
+    if status_failure:
+        import json
+
+        assert code == 1 and report["captureState"] == "ERROR"
+        assert report["error"]["code"] == "PROCESSING_ERROR"
+        assert report["error"]["diagnostic"]["exceptionType"] == "RuntimeError"
+        assert "synthetic-private-status-secret" not in json.dumps(report)
+        assert report["heartbeat"]["captureState"] == "ERROR"
+        assert "CAPTURE_ERROR" not in report["heartbeat"]["qualityFlags"]
+        assert report["metrics"]["analyzedFrames"] == 0
+        return
     assert code == 0 and report["error"] is None
     assert actions == ["pause", "resume"] and waits == [0.02, 0.02]
     assert report["metrics"]["analyzedFrames"] == 1  # No analysis during the paused interval.

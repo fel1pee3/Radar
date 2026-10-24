@@ -53,13 +53,13 @@ class WebcamConfig(StrictModel):
 
 
 class ModelConfig(StrictModel):
-    variant: Literal["lite", "full"] = "lite"
+    variant: Literal["lite", "full", "rtmo-s"] = "lite"
     path: str = ".local/models/pose_landmarker_lite.task"
 
     @model_validator(mode="after")
     def full_path_is_explicit(self):
-        if self.variant == "full" and "path" not in self.model_fields_set:
-            raise ValueError("Informe model.path explicitamente ao selecionar o modelo full.")
+        if self.variant != "lite" and "path" not in self.model_fields_set:
+            raise ValueError("Informe model.path explicitamente ao selecionar outro modelo.")
         return self
 
 
@@ -67,9 +67,11 @@ class ProcessingConfig(StrictModel):
     maxWidth: int = Field(default=640, ge=64, le=640)
     targetAnalysisFps: float = Field(default=5.0, gt=0, le=30)
     minLandmarkVisibility: float = Field(default=0.5, ge=0, le=1)
+    minKeypointScore: float = Field(default=0.5, gt=0, le=1)
     replaySpeed: float = Field(default=0.0, ge=0, le=10)
     preview: bool = False
     previewStartPaused: bool = False
+    previewStabilization: bool = False
     maxObservations: int | None = Field(default=None, ge=1, le=1000000)
     maxRunSeconds: float | None = Field(default=None, gt=0, le=86400)
 
@@ -138,9 +140,25 @@ class EdgeConfig(StrictModel):
 
     @model_validator(mode="after")
     def live_model_is_explicit(self):
-        if self.source.kind == "WEBCAM" and self.model.variant != "full":
-            raise ValueError("A webcam da bancada exige seleção explícita do modelo Full.")
+        if self.source.kind == "WEBCAM" and self.model.variant not in {"full", "rtmo-s"}:
+            raise ValueError("A webcam exige Full ou seleção explícita do RTMO experimental.")
+        if self.events.enabled:
+            from radar_edge.policy import configured_policy
+
+            expected = "RTMO_KEYPOINT_SCORE" if self.model.variant == "rtmo-s" else "MEDIAPIPE"
+            if configured_policy(self.events.policy).qualitySource != expected:
+                raise ValueError(
+                    "O modelo exige política explícita com a mesma origem de qualidade."
+                )
         return self
+
+
+def quality_threshold(config: EdgeConfig) -> float:
+    return (
+        config.processing.minKeypointScore
+        if config.model.variant == "rtmo-s"
+        else config.processing.minLandmarkVisibility
+    )
 
 
 def private_path(value: str | Path) -> Path:

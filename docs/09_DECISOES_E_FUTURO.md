@@ -70,6 +70,76 @@ Manter aqui decisões novas com data, problema, alternativas consideradas, escol
 | D42 | JPEG pontual em BLOB SQLite, sem arquivo por frame | Até 100 imagens/20 MiB e teto global da outbox. Evento/checkpoint/imagem atômicos, instante igual ao da emissão; upload após ACK do evento. BLOB removido após ACK de imagem ou 24 h; falha de imagem não apaga evento. Formato SQLite v2 aditivo. |
 | D43 | Redação de todas as cópias e opt-in operacional para dados existentes | Poses/recibos detalhados 7 dias, imagens 24 h, metadados 30 dias só com preferência OWNER, recibos mínimos 90 dias. Agendamento API default false para não purgar dados existentes automaticamente; comando explícito e job habilitado verificados em isolamento. Supera a exceção de D37 para payload confirmado de episódio ativo: pode expirar em 7 dias porque o checkpoint guarda apenas estado, não pose. Pendentes permanecem imutáveis/limitados. |
 
+## Decisões da etapa 08 — 22/10/2026
+
+| ID | Decisão | Motivo e consequência |
+| --- | --- | --- |
+| D44 | Engenharia automatizada separada dos gates manuais e revisão por hash de conteúdo | Código local ainda sem commit deve ser identificado além do HEAD. demo:verify registra comandos/saídas; demo:check retorna 2 para gates manuais pendentes, sem declarar webcam/percepção/offline aprovados. Relatórios da 08 ficam PARCIAL pela indisponibilidade física/coleta informada pelo fundador. |
+| D45 | Restore somente em banco/diretório novos, com revogação e redação antes de HTTP | Evita sobrescrever bancada, servir imagem ausente/vencida ou enviar com bearer restaurado. Dump custom PostgreSQL e SQLite backup com locks; mídia excluída e estado de episódio/pendentes preservado. Nenhuma cópia de segredo/arquivo pessoal automática. Prazo privado de backup sete dias; sem criptografia/forense prometida. |
+| D46 | Adaptador RTMO-s opcional para investigar a cadeira, 23/10/2026 | Melhora visual confirmada motivou integração real FILE/LIVE pela interface existente, ONNX Runtime CPU fixado, sem RTMLib ou segundo cv2. Obtenção explícita e SHA fixado; configurações Full/Lite preservadas. Uso experimental de bancada; licença do código não foi tomada como liberação comercial específica dos pesos. |
+| D47 | Score articular separado de visibilidade/presença, 23/10/2026 | Política floor-rtmo-score-v0.1 identifica qualitySource=RTMO_KEYPOINT_SCORE e minKeypointScore. Preserva geometria/persistência e oito pontos essenciais. Evento v1 ganha variante corporal confidence, restrita ao modelo RTMO fixado e à família de política. Envelopes antigos visibility continuam válidos. Atualizar API/web/contracts/Python juntos; leitores antigos não suportam o novo formato. Não inventar visibility/presence, face, dedos ou profundidade. |
+| D48 | Priorizar acompanhamento corporal, continuidade e fluidez medidos, 23/10/2026 | O fundador reforçou que deseja um MVP bem executado, com corpo bem acompanhado e prévia estável. Investigar erros de pose e desempenho nos vídeos existentes, preservar resultados desfavoráveis e medir custo real antes de adotar mudanças. Não preencher pontos rejeitados nem confundir desenho suave com precisão ou sucesso dos alertas. A preferência orienta a qualidade; não cria promessa de zero erros ou alteração automática dos critérios de conclusão da 08. [Investigação quadro a quadro](RELATORIOS/QUADRO_A_QUADRO_ETAPA_08.md). |
+
+Na avaliação original não houve mudança de política/modelo/gates. A comparação
+posterior RTMO usa qualidade/política distintas, sem reclassificar os resultados
+antigos como aprovação do candidato. Os seis vídeos de
+investigação permanecem CALIBRATION; arquivos/sessões repetidos não viram amostras
+independentes. Novas funcionalidades/expansão não integram esta validação.
+
+## Complemento da etapa 08 — estabilização visual
+
+Complemento de 23/10/2026 — **D49: estabilização somente na prévia, opt-in**.
+Após conferência humana do replay e medição cadenciada, incorporar o filtro visual
+com `processing.previewStabilization` false por padrão. Pontos ciano não entram
+em features, eventos, evidência ou checkpoint. Não alterar frequência de análise
+para igualar a aparência do vídeo pré-processado; medir custo e idade real dos
+quadros. Parâmetros preservam o candidato conferido, sem preenchimento de pontos
+ausentes. [Implementação e provas](RELATORIOS/EXECUCAO_REAL_E_PREVIA_ETAPA_08.md).
+
+## Dispensa da apresentação formal da etapa 08
+
+23/10/2026 — **D50: apresentação cronometrada de 5–7 minutos dispensada pelo
+fundador**. O fundador informou que já opera o sistema durante a construção e
+não quer uma etapa de aprendizado/apresentação formal. O uso e as confirmações
+de login, revisão de incidente e controles durante o desenvolvimento permanecem
+como evidências operacionais. O roteiro preparado é opcional e não bloqueia a
+conclusão da bancada. Registrar **DISPENSADA**, nunca apresentação executada.
+
+Esta decisão supera as referências anteriores à apresentação como pendência
+obrigatória. Não altera o teste contínuo físico de 30 min, os resultados de
+percepção, os requisitos de engenharia/privacidade ou o uso pretendido da demo.
+Naquele registro, o ensaio de 30 min continuava adiado; a duração foi revista
+posteriormente pelo fundador em D51, abaixo.
+
+## Revisão da duração do ensaio físico da etapa 08
+
+23/10/2026 — **D51: sessão nominal de 10 minutos por escolha explícita do
+fundador**. O fundador informou que fará somente 10 minutos. Para esta bancada,
+substituir o gate de duração de 30 min por um ensaio curto com limite de 600 s
+do worker, sem gravar vídeo. Preparação, enquadramento e eventual remarcação do
+piso acontecem antes da sessão medida. Não exige deitar novamente: o percurso
+LIVE positivo e sua revisão já foram comprovados.
+
+O cronômetro atual começa antes de abrir câmera/carregar modelo. Registrar
+separadamente duração total, aquecimento e tempo efetivo com captura/inferência;
+600 s configurados não significam 600 s de imagens úteis. Exigir encerramento
+normal, relatório de recursos/saúde, intervalos inelegíveis, erros, eventos e fila;
+não aprovar só pelo tempo do terminal. Pausa, reinício ou falha não ficam ocultos.
+
+O teste original de 30 min **não foi comprovado**. Sua falha aos 27min45s e a
+causa histórica não estabelecida permanecem registradas; passar 10 min não
+comprova correção de falha tardia ou estabilidade prolongada. Esta é uma redução
+explícita do alcance da evidência por decisão do fundador, não um resultado
+positivo do teste original. Modelo, política, qualidade e demais gates mantidos.
+A etapa 08 permanece PARCIAL até executar e revisar o novo ensaio. Não libera
+piloto assistencial nem avança automaticamente à etapa 09.
+
+Registro de execução de 24/10: D51 atendida em sessão de 600,660 s e encerramento
+confirmado pelo fundador, com durações elegíveis/lacunas e limitações anotadas.
+Etapa encerrada no escopo revisado da bancada. Houve trecho no chão <10 s sem
+alerta, possível perda/inconclusivo; não aprovar eficácia geral por isso.
+[Medições e relato humano](RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md).
+
 ## O que permanece do dossiê
 
 O caso de uso assistivo, o processamento local, o reconhecimento de concorrentes, o fluxo humano, a necessidade de medir falsos alertas e a evolução por evidências. O pacote atual define uma bancada mais acessível para começar; não apaga os requisitos de um futuro serviço real.

@@ -4,6 +4,19 @@
 
 **Estado inicial:** não iniciada. O estado atualizado deve estar em `docs/STATUS.md`.
 
+**Resultado — 24/10/2026:** concluída no escopo revisado da demonstração de
+bancada (D50/D51). Sessão nominal de 10 min executada/revisada; resultados de
+percepção e limitações preservados. [Matriz final](../../docs/RELATORIOS/VALIDACAO_MVP.md)
+e [sessão física](../../docs/RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md).
+
+**Atualização do fundador — 23/10/2026, D50:** apresentação formal cronometrada
+de 5–7 min dispensada. Roteiro preservado como referência opcional; operação
+considera as evidências de uso durante a construção, sem exigir aprendizado.
+Isso não dispensa os critérios técnicos. Posteriormente, em **D51**, o fundador
+limitou o próximo ensaio físico a 10 min nominais (600 s do worker, incluindo
+abertura/modelo; tempos efetivos separados). Não é gravação de vídeo. O teste
+original de 30 min não foi comprovado; falha histórica aos 27min45s preservada.
+
 ## Objetivo
 
 MVP de bancada v0.1 reproduzível, com roteiro de apresentação, resultados medidos e limites explícitos.
@@ -35,22 +48,22 @@ Os caminhos de aplicação são entregas a criar/adaptar, não arquivos já pres
 
 1. Executar matriz de aceite e corrigir falhas concretas de contrato, segurança, perda/duplicação ou estado. Não trocar gates por mocks para obter verde.
 2. Organizar vídeos/manifestos autorizados e separar calibração/avaliação por sessão. Documentar quantidade real disponível e quais condições não foram avaliadas.
-3. Executar benchmark, replay anotado e teste físico ao vivo de pelo menos 30 min. Registrar falsos alertas, perdas, qualidade, CPU/RAM e FPS reais.
+3. Executar benchmark, replay anotado e ensaio físico ao vivo com limite de 600 s do worker (10 min nominais, decisão D51). Separar aquecimento/tempo efetivo e registrar falsos alertas, perdas, qualidade, CPU/RAM, FPS reais e encerramento. Não registrar como aprovação do teste original de 30 min ou correção de sua falha tardia.
 4. Reproduzir preparação em ambiente limpo separado quando possível: instalar pelos locks, iniciar banco, migrar, seed, API/web e worker. Não resetar o banco original para fazer esse teste.
 5. Criar procedimento de backup/restore local com processos parados para consistência. Testar restauração em banco separado; excluir vídeo/snapshot do backup padrão e definir retenção do backup. Reaplicar expiração de pose/evidência após restore antes de liberar acesso.
-6. Criar pnpm demo:check, roteiro de 5–7 min e troubleshooting com comandos efetivamente testados. Verificar execução sem internet após preparo.
+6. Criar pnpm demo:check, roteiro opcional de 5–7 min e troubleshooting com comandos efetivamente testados. Verificar execução sem internet após preparo. Apresentação formal não é gate (D50).
 7. Concluir docs/RELATORIOS/VALIDACAO_MVP.md e inventário de dependências/modelos. Atualizar README para distinguir o implementado do planejado e STATUS com evidência.
 8. Preparar release local v0.1 sem publicar, fazer push, contatar parceiros ou vender automaticamente. Definir backlog após demo e pendências para futuro piloto.
 
 ## Critérios de conclusão
 
-- [ ] Todos os gates da seção “Critérios da release local v0.1” estão atendidos ou a entrega fica explicitamente parcial.
-- [ ] O fluxo via visão foi testado em arquivo e fonte ao vivo; simulador não é usado como evidência de percepção.
-- [ ] Relatório tem denominadores, cenários, tempo não observável, falhas e limitações, sem números inventados.
-- [ ] Execução limpa, recuperação e restore foram verificados com escopo real relatado.
-- [ ] Fundador consegue apresentar a demo seguindo roteiro e sabe parar/retomar os processos.
-- [ ] Nenhum requisito de parceiro, câmera IP específica ou serviço pago foi adicionado ao gate da bancada.
-- [ ] `docs/STATUS.md` e `docs/RELATORIOS/ETAPA_08.md` refletem a situação real.
+- [x] Gates atendidos no escopo revisado D50/D51: apresentação dispensada e sessão nominal de 10 min; teste original de 30 min não comprovado, sem aprovação de eficácia geral.
+- [x] O fluxo via visão foi testado em arquivo e fonte ao vivo; simulador não é usado como evidência de percepção.
+- [x] Relatório tem denominadores, cenários, tempo não observável, falhas e limitações, sem números inventados.
+- [x] Execução limpa, recuperação e restore foram verificados com escopo real relatado.
+- [x] Operação, inclusive parar/retomar, tem evidências reais de uso; apresentação formal dispensada pelo fundador (D50), sem registrá-la como executada.
+- [x] Nenhum requisito de parceiro, câmera IP específica ou serviço pago foi adicionado ao gate da bancada.
+- [x] `docs/STATUS.md` e `docs/RELATORIOS/ETAPA_08.md` refletem a situação real.
 
 ## Limites desta etapa
 

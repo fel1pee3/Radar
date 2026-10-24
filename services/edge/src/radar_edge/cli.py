@@ -20,6 +20,7 @@ def inspect_environment() -> dict[str, object]:
 
     import cv2
     import mediapipe
+    import onnxruntime
     from mediapipe.tasks.python import vision
 
     if not hasattr(vision, "PoseLandmarker"):
@@ -39,10 +40,11 @@ def inspect_environment() -> dict[str, object]:
         "python": platform.python_version(),
         "packages": {
             name: version(name)
-            for name in ("mediapipe", "opencv-contrib-python", "pydantic", "httpx")
+            for name in ("mediapipe", "opencv-contrib-python", "pydantic", "httpx", "onnxruntime")
         },
         "mediapipe_import": mediapipe.__version__,
         "opencv_import": cv2.__version__,
+        "onnxruntime_import": onnxruntime.__version__,
         "opencv_providers": providers,
         "opencv_build": backends,
         "pose_landmarker_import": "ok",
@@ -61,6 +63,14 @@ def main() -> None:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("env", help="Importa bibliotecas sem abrir arquivo/modelo.")
+    backup = commands.add_parser("backup-outbox", help="Copia fila parada, excluindo JPEG.")
+    backup.add_argument("--config", required=True)
+    backup.add_argument("--output", required=True)
+    restore = commands.add_parser(
+        "restore-outbox", help="Restaura fila em destino novo, sem envio."
+    )
+    restore.add_argument("--input", required=True)
+    restore.add_argument("--output", required=True)
     probe = commands.add_parser("probe", help="Abre somente a webcam explicitamente configurada.")
     probe.add_argument("--config", required=True)
     probe.add_argument("--seconds", type=float, default=5.0)
@@ -77,7 +87,7 @@ def main() -> None:
     fetch = commands.add_parser(
         "model-fetch", help="Obtém explicitamente o bundle oficial com hash fixado."
     )
-    fetch.add_argument("--variant", choices=("lite", "full"), default="lite")
+    fetch.add_argument("--variant", choices=("lite", "full", "rtmo-s"), default="lite")
     fetch.add_argument(
         "--output", help="Arquivo privado de destino; padrão específico da variante."
     )
@@ -122,6 +132,15 @@ def main() -> None:
     try:
         if args.command == "env":
             result = inspect_environment()
+        elif args.command == "restore-outbox":
+            from radar_edge.backup import copy_outbox
+
+            result = copy_outbox(args.input, args.output)
+        elif args.command == "backup-outbox":
+            from radar_edge.backup import backup_outbox
+            from radar_edge.config import load_config
+
+            result = backup_outbox(load_config(args.config), args.output)
         elif args.command == "model-fetch":
             from radar_edge.model import fetch_model
 

@@ -15,6 +15,7 @@ from radar_edge.pipeline import run_pipeline
 class Interval(StrictModel):
     startMs: int = Field(ge=0)
     endMs: int = Field(gt=0)
+    reason: str | None = Field(default=None, min_length=1, max_length=120)
 
     @model_validator(mode="after")
     def ordered(self):
@@ -51,10 +52,13 @@ class VideoEntry(StrictModel):
     annotationsComplete: bool = False
     targets: list[Target] = Field(default_factory=list, max_length=1000)
     excluded: list[Interval] = Field(default_factory=list, max_length=1000)
+    origin: str | None = Field(default=None, max_length=1000)
+    authorizationNote: str | None = Field(default=None, max_length=1000)
+    confounders: list[Interval] = Field(default_factory=list, max_length=1000)
 
     @model_validator(mode="after")
     def check_ranges(self):
-        for group in (self.targets, self.excluded):
+        for group in (self.targets, self.excluded, self.confounders):
             ordered = sorted(group, key=lambda x: x.startMs)
             for index, item in enumerate(ordered):
                 if item.endMs > self.durationMs or (
@@ -68,6 +72,19 @@ class Manifest(StrictModel):
     schemaVersion: int = Field(default=1, ge=1, le=1)
     matchingToleranceMs: int = Field(default=2000, ge=2000, le=2000)
     videos: list[VideoEntry] = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def no_repeated_or_leaked_sessions(self):
+        if len({v.videoId for v in self.videos}) != len(self.videos) or len(
+            {v.sha256 for v in self.videos}
+        ) != len(self.videos):
+            raise ValueError("Repeated file or identifier is not an independent sample")
+        sessions = {}
+        for video in self.videos:
+            sessions.setdefault(video.sessionId, set()).add(video.role)
+        if any(len(roles) > 1 for roles in sessions.values()):
+            raise ValueError("Calibration and evaluation cannot share a session")
+        return self
 
 
 def excluded_at(t, excluded):
@@ -121,6 +138,7 @@ def match_episodes(events, targets, excluded, eligible_ms, annotations_complete=
             "targets": len(expected),
             "alerts": len(alerts),
             "matched": len(matched),
+            "missed": len(expected) - len(matched) if annotations_complete else None,
             "duplicates": duplicate,
             "unmatchedAlerts": false_positive,
             "inconclusiveAlerts": inconclusive,
@@ -196,6 +214,13 @@ def evaluate_manifest(filename, replay_speed=0.0):
                 "environmentId": entry.environmentId,
                 "role": entry.role,
                 "annotationsComplete": entry.annotationsComplete,
+                "origin": entry.origin,
+                "authorizationNote": entry.authorizationNote,
+                "confounders": [i.model_dump() for i in entry.confounders],
+                "excluded": [i.model_dump() for i in entry.excluded],
+                "configuration": entry.config,
+                "model": report.get("model"),
+                "calibration": report.get("calibration"),
                 "targets": [t.model_dump() for t in entry.targets],
                 "assistanceNeedEvaluation": (
                     "not estimated; posture targets and assistanceNeeded annotations are separate"

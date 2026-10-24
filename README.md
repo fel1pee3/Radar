@@ -6,7 +6,48 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–07 verificadas no escopo da bancada. Evidência mínima, JPEG pontual opcional, acesso/exclusão auditados e retenção foram testados com imagem sintética sem pessoas. O padrão continua skeleton; snapshot real e purga dos dados existentes não foram habilitados. Migração preservou cadastros/incidentes/volume. Veja [status](docs/STATUS.md), [relatório 07](docs/RELATORIOS/ETAPA_07.md) e [roteiro 07](docs/VALIDACAO_MANUAL_ETAPA_07.md). A validação final do MVP ainda depende da etapa 08, não iniciada; pose falsa na estante, fluidez e evento LIVE positivo continuam limitações de percepção. Commit e push autorizados pelo fundador em 22/10/2026; sem deploy.
+> **Estado atual:** etapas 00–08 concluídas **no escopo revisado da demonstração experimental de bancada** (D50/D51). Engenharia, instalação/restore isolados, FILE/LIVE→incidente→revisão e replay/API/painel offline verificados. Sessão LIVE nominal de 10 min: 600,660 s totais, 576,986 s elegíveis, 2799 análises, encerramento automático confirmado e zero eventos. Houve trecho no chão <10 s sem alerta: possível perda/inconclusivo, sem tempo exato/ROI confirmados. CAUCAFall: três de quatro alvos detectados, uma perda e zero alertas nos oito ADL, com cobertura limitada. Não aprova eficácia geral, piloto assistencial ou estabilidade prolongada; o teste original de 30 min não foi comprovado e a falha aos 27min45s permanece. Apresentação formal dispensada D50. Veja a [sessão física](docs/RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md), a [matriz final](docs/RELATORIOS/VALIDACAO_MVP.md) e o [relatório 08](docs/RELATORIOS/ETAPA_08.md). Aceite documental/manual: o checker ainda imprime gates originais fixos e não certifica esse aceite. Etapa 09 opcional, não iniciada. Snapshot real/purga pessoal desabilitados; dados e volumes preservados. Versionamento por commit/push solicitado pelo fundador; sem deploy.
+
+Investigação de fluidez em 20 clipes: candidatos de acompanhamento visual deram
+mais quadros intermediários em replay, mas ainda perderam segmentos e não foram
+ativados no worker. A comparação não comprova maior precisão da pose nem FPS
+ao vivo. [Métodos, testes e resultado](docs/RELATORIOS/FLUIDEZ_E_ALINHAMENTO_ETAPA_08.md).
+
+Verificações e operação reproduzíveis:
+
+Investigação quadro a quadro: fundador confirmou melhor acompanhamento na
+cadeira; ainda há tremor. Comparados custo de CPU e modelo menor, com perdas
+preservadas. Estabilização visual é opção da prévia, desligada por padrão, sem
+alterar alertas ou comprovar fluidez LIVE. Medição real em arquivo atingiu cerca
+de 5–7 desenhos/s no ensaio, sem 30 FPS. [Integração e reprodução](docs/RELATORIOS/EXECUCAO_REAL_E_PREVIA_ETAPA_08.md).
+
+Complemento de 23/10: RTMO-s integrado como opção **experimental**, com score
+articular explícito, sem trocar Full/Lite nas configurações existentes. Comparação
+com motor e SQLite em 20 clipes: 8/12 eventos Full/RTMO, três perdas preservadas;
+não é avaliação independente ou aprovação de eficácia. A melhora visual da cadeira
+foi mantida no adaptador. [Integração, resultados e limites](docs/RELATORIOS/INTEGRACAO_RTMO_ETAPA_08.md).
+
+Complemento da 08: recebidos 21 vídeos curtos do GMDCSA24 e dois de yoga, com
+procedência e hashes conferidos. Foram processados com Full, mantendo modelo e
+gates. Há detecções e perdas: nenhum aumento de precisão foi comprovado. A análise
+dos dois longos soma cerca de 56 minutos de conteúdo em replay, não webcam contínua.
+Veja [materiais, associação de arquivos e resultados](docs/RELATORIOS/MATERIAIS_ETAPA_08.md).
+Os novos 05.mp4 e 07.mp4 substituíram arquivos antigos; as cópias históricas foram
+recuperadas por SHA em caminhos separados. Não executar as configurações antigas
+nesses novos arquivos apenas porque o nome coincide.
+
+```powershell
+. ./scripts/activate.ps1
+pnpm.cmd demo:verify
+pnpm.cmd demo:check --engineering
+pnpm.cmd demo:check
+```
+
+O último comando ainda retorna 2 por uma lista manual fixa do plano original;
+não lê o aceite documental D50/D51 nem certifica a percepção. O modo
+--engineering verifica a engenharia da fonte atual. [Operação e backup](docs/OPERACAO_E_BACKUP.md) e
+[apresentação de 5–7 minutos](docs/ROTEIRO_APRESENTACAO.md) descrevem comandos,
+efeitos e limitações. Nenhum parceiro, serviço pago ou câmera IP é necessário.
 
 Para iniciar, ative `. ./scripts/activate.ps1` em cada terminal e execute
 `pnpm.cmd dev:api` e `pnpm.cmd dev:web` separadamente. Abra

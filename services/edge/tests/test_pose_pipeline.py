@@ -240,7 +240,7 @@ def test_model_failure_releases_resources_and_cannot_become_no_pose(configured, 
         def __exit__(self, *_):
             closed.append(True)
 
-    monkeypatch.setattr("radar_edge.pipeline.MediaPipeEstimator", FailedEstimator)
+    monkeypatch.setattr("radar_edge.estimator.MediaPipeEstimator", FailedEstimator)
     result, code = run_pipeline(config)
     assert code == 1
     assert result["captureState"] == "ERROR"
@@ -301,7 +301,7 @@ def test_requested_stop_or_keyboard_interrupt_closes_source_model_preview(
             closed.append("preview")
 
     monkeypatch.setattr(FileSource, "close", close_source)
-    monkeypatch.setattr("radar_edge.pipeline.MediaPipeEstimator", TestEstimator)
+    monkeypatch.setattr("radar_edge.estimator.MediaPipeEstimator", TestEstimator)
     monkeypatch.setattr("radar_edge.pipeline.LocalPreview", TestPreview)
     result, code = run_pipeline(config)
     assert code == (130 if interrupted else 0)

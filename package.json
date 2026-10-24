@@ -36,6 +36,13 @@
     "test:e2e": "pnpm --filter @radar/api build && node tests/e2e/run.mjs",
     "test:e2e:install": "playwright install chromium",
     "demo:evidence": "pnpm test:e2e --grep \"evidência JPEG sintética\" --project desktop",
+    "demo:check": "node scripts/validation/check.mjs",
+    "demo:verify": "node scripts/validation/verify.mjs",
+    "demo:install-check": "node scripts/validation/clean-install.mjs",
+    "demo:package": "node scripts/validation/package.mjs",
+    "test:backup": "pnpm --filter @radar/api build && node scripts/validation/test-backup.mjs",
+    "backup:create": "node scripts/backup.mjs create",
+    "backup:restore": "node scripts/backup.mjs restore",
     "retention:run": "pnpm --filter @radar/api retention:run"
   },
   "devDependencies": {
