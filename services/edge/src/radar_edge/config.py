@@ -81,6 +81,11 @@ class DiagnosticsConfig(StrictModel):
     exportObservations: bool = False
     maxExportObservations: int = Field(default=1000, ge=1, le=10000)
     maxExportBytes: int = Field(default=10 * 1024 * 1024, ge=1024, le=50 * 1024 * 1024)
+    exportDecisions: bool = False
+    maxDecisionRecords: int = Field(default=10000, ge=1, le=10000)
+    maxDecisionBytes: int = Field(default=10 * 1024 * 1024, ge=1024, le=50 * 1024 * 1024)
+    maxDecisionDirectoryBytes: int = Field(default=50 * 1024 * 1024, ge=1024, le=100 * 1024 * 1024)
+    decisionRetentionDays: int = Field(default=7, ge=1, le=7)
 
 
 class DeliveryConfig(StrictModel):
@@ -114,6 +119,50 @@ class EventsConfig(StrictModel):
         return value
 
 
+class SupportRegion(StrictModel):
+    kind: Literal["CHAIR", "BED", "HAMMOCK", "AMBIGUOUS"]
+    polygon: list[tuple[float, float]]
+
+    @field_validator("polygon", mode="before")
+    @classmethod
+    def valid_polygon(cls, value):
+        from radar_edge.calibration import validate_polygon
+
+        return validate_polygon(value)
+
+
+class PostureConfig(StrictModel):
+    method: Literal["BASELINE", "LINEAR_CONTEXT_V1", "LINEAR_BODY_V2"] = "BASELINE"
+    artifactPath: str | None = None
+    artifactSha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    installationId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]{1,80}$")
+    calibrationSha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    operatorConfirmed: bool = False
+    excludedRegions: list[list[tuple[float, float]]] = Field(default_factory=list, max_length=16)
+    supportRegions: list[SupportRegion] = Field(default_factory=list, max_length=16)
+
+    @field_validator("excludedRegions", mode="before")
+    @classmethod
+    def valid_regions(cls, value):
+        from radar_edge.calibration import validate_polygon
+
+        return [validate_polygon(region) for region in value]
+
+    @model_validator(mode="after")
+    def explicit_context(self):
+        if self.method != "BASELINE" and not (
+            self.artifactPath
+            and self.artifactSha256
+            and self.installationId
+            and self.calibrationSha256
+            and self.operatorConfirmed
+        ):
+            raise ValueError("Classifier requires a pinned artifact and confirmed installation.")
+        if self.method == "BASELINE" and self != PostureConfig.model_construct():
+            raise ValueError("Context/exclusions require the explicit new classifier method.")
+        return self
+
+
 class EdgeConfig(StrictModel):
     schemaVersion: Literal[1] = 1
     purpose: Literal["RADAR_FILE_POSE", "RADAR_LIVE_POSE"] = "RADAR_FILE_POSE"
@@ -121,6 +170,7 @@ class EdgeConfig(StrictModel):
     source: SourceConfig | WebcamConfig = Field(discriminator="kind")
     model: ModelConfig = Field(default_factory=ModelConfig)
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
+    posture: PostureConfig = Field(default_factory=PostureConfig)
     calibrationPath: str = ".local/calibration.json"
     diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig)
     events: EventsConfig = Field(default_factory=EventsConfig)
@@ -183,6 +233,8 @@ def load_config(filename: str | Path) -> EdgeConfig:
             private_path(value)
         if config.events.delivery.credentialFile is not None:
             private_path(config.events.delivery.credentialFile)
+        if config.posture.artifactPath is not None:
+            private_path(config.posture.artifactPath)
         if not config.source.authorized:
             raise EdgeError(
                 "CAMERA_AUTHORIZATION_REQUIRED"

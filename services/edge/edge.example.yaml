@@ -30,6 +30,12 @@ diagnostics:
   exportObservations: false
   maxExportObservations: 1000
   maxExportBytes: 10485760
+  # Diagnóstico de decisões, compartilhado com LIVE, sem imagens/vídeo.
+  exportDecisions: false
+  maxDecisionRecords: 10000
+  maxDecisionBytes: 10485760
+  maxDecisionDirectoryBytes: 52428800
+  decisionRetentionDays: 7
 # Etapa 05: habilite explicitamente em uma cópia privada. Configurações da 04
 # continuam extraindo somente poses. SQLite dedicado a esta câmera.
 events:

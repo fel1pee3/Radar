@@ -26,6 +26,9 @@ class Policy:
     lowLightThreshold: float = 25.0
     lowLightHoldMs: int = 2000
     frozenHoldMs: int = 10000
+    temporalMode: str = "LEGACY"
+    negativeResetMs: int = 600
+    transitionUprightHoldMs: int = 400
 
     def __post_init__(self):
         if self.qualitySource not in {"MEDIAPIPE", "RTMO_KEYPOINT_SCORE"}:
@@ -34,8 +37,10 @@ class Policy:
             r"[A-Za-z0-9][A-Za-z0-9._+-]{0,119}", self.version
         ):
             raise ValueError("Invalid policy version")
+        if self.temporalMode not in {"LEGACY", "EVIDENCE_V2"}:
+            raise ValueError("Invalid temporal mode")
         for field in fields(self):
-            if field.name in {"version", "qualitySource"}:
+            if field.name in {"version", "qualitySource", "temporalMode"}:
                 continue
             value = getattr(self, field.name)
             if (
@@ -59,6 +64,9 @@ class Policy:
 
     def to_dict(self):
         value = asdict(self)
+        if self.temporalMode == "LEGACY":
+            for name in ("temporalMode", "negativeResetMs", "transitionUprightHoldMs"):
+                value.pop(name)
         if self.qualitySource == "MEDIAPIPE":
             # Preserve existing Full/Lite execution fingerprints and checkpoints.
             value.pop("qualitySource")
@@ -76,4 +84,8 @@ def configured_policy(overrides):
         raise ValueError("RTMO score quality requires its explicit policy family")
     if policy.version == DEFAULT_POLICY.version and policy != DEFAULT_POLICY:
         raise ValueError("Parameter changes require another policy version")
+    if (policy.temporalMode == "EVIDENCE_V2") != policy.version.startswith(
+        "floor-rtmo-score-posture-"
+    ):
+        raise ValueError("Evidence engine requires its explicit versioned policy family")
     return policy

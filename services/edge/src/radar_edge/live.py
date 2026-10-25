@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import sqlite3
 from contextlib import ExitStack
 from dataclasses import replace
@@ -13,14 +14,17 @@ import cv2
 
 from radar_edge.calibration import check_compatibility, load_calibration
 from radar_edge.config import private_path, quality_threshold
+from radar_edge.decision_trace import DecisionTrace
 from radar_edge.errors import EdgeError
 from radar_edge.estimator import create_estimator
 from radar_edge.event_runtime import EventRuntime
+from radar_edge.features import QualityGate, extract_features
 from radar_edge.health import LiveHealth, NetworkWorker
 from radar_edge.local_status import publish_status, safe_diagnostic
 from radar_edge.metrics import Metrics
 from radar_edge.model import get_model_spec, model_metadata
 from radar_edge.observations import Observation, pose_quality
+from radar_edge.policy import configured_policy
 from radar_edge.preview import LocalPreview
 from radar_edge.webcam import WebcamSource
 
@@ -96,10 +100,18 @@ def run_live(config):
     previous_command = _control(config)
     started = monotonic()
     preview = None
+    trace = None
     try:
+        trace = DecisionTrace(
+            directory,
+            config.diagnostics,
+            os.environ.get("EVIDENCE_MODE", config.events.evidenceMode),
+        )
+        trace.status("OPENING", "SOURCE_OPEN_REQUEST")
         with ExitStack() as resources:
             resources.enter_context(source)
             first = source.read()
+            trace.status("RUNNING", "SOURCE_FRAME_AVAILABLE")
             try:
                 calibration = load_calibration(config.calibrationPath)
                 check_compatibility(calibration, first.geometry, config.cameraId)
@@ -118,9 +130,21 @@ def run_live(config):
                 raise
             if config.events.enabled:
                 runtime = resources.enter_context(
-                    EventRuntime(config, calibration, "WEBCAM", first.geometry, async_delivery=True)
+                    EventRuntime(
+                        config,
+                        calibration,
+                        "WEBCAM",
+                        first.geometry,
+                        async_delivery=True,
+                        decision_trace=trace,
+                    )
                 )
                 resources.callback(lambda: temporal.update(runtime.summary()))
+            diagnostic_gate = (
+                QualityGate(configured_policy(config.events.policy))
+                if trace.enabled and runtime is None
+                else None
+            )
             capture_run = runtime.capture_run_id if runtime else str(uuid4())
             health = LiveHealth(config, capture_run, calibration)
             health.source = source
@@ -145,10 +169,15 @@ def run_live(config):
             else:
                 offset, frame_offset = 0, 0
             paused = False
+            capture_unavailable = False
+            reconnect_count = getattr(source, "reconnects", 0)
 
             def pause(value):
                 nonlocal paused
                 paused = value
+                if runtime:
+                    runtime.break_observation()
+                trace.status("PAUSED" if value else "RUNNING", "OPERATOR_PREVIEW_CONTROL")
                 if value:
                     source.pause()
                     health.update(capture="PAUSED", flags=set())
@@ -173,6 +202,9 @@ def run_live(config):
                     if command["action"] == "resume" and paused:
                         preview.set_paused(False)
                     if command["action"] == "reconnect":
+                        if runtime:
+                            runtime.break_observation()
+                        trace.status("RECONNECTING", "OPERATOR_RECONNECT")
                         source.pause()
                         source.resume()
                         paused = False
@@ -205,7 +237,20 @@ def run_live(config):
                         "STORAGE_ERROR", "Falha no envio persistente; confira SQLite local."
                     )
                 frame = source.snapshot()
+                current_reconnects = getattr(source, "reconnects", 0)
+                if current_reconnects != reconnect_count:
+                    reconnect_count = current_reconnects
+                    if runtime:
+                        runtime.break_observation()
+                    trace.status("RECONNECTING", "SOURCE_RECONNECT")
                 if frame is None:
+                    if not capture_unavailable and (
+                        getattr(source, "error_code", None) or source.exhausted
+                    ):
+                        capture_unavailable = True
+                        if runtime:
+                            runtime.break_observation()
+                        trace.status("UNAVAILABLE", "WAITING_FOR_FRESH_FRAME")
                     if source.exhausted:
                         raise EdgeError(
                             source.error_code or "CAPTURE_ERROR",
@@ -213,6 +258,9 @@ def run_live(config):
                         )
                     sleep(0.01)
                     continue
+                if capture_unavailable:
+                    capture_unavailable = False
+                    trace.status("RUNNING", "FRESH_FRAME_AFTER_UNAVAILABLE")
                 if runtime:
                     runtime.store.check_capacity(
                         config.events.delivery.maxItems,
@@ -259,6 +307,11 @@ def run_live(config):
                     ),
                 )
                 features = runtime.process(o, frame) if runtime else None
+                if diagnostic_gate is not None:
+                    features = diagnostic_gate.apply(
+                        o, extract_features(o, calibration["floorPolygon"], diagnostic_gate.policy)
+                    )
+                    trace.observation(o, features, diagnostic_gate.policy, None, None)
                 metrics.add(o)
                 health.observation(o, features)
                 health.update(capture="RUNNING")
@@ -308,6 +361,21 @@ def run_live(config):
             health.update(capture="ERROR", flags={flag} if flag else set())
         if network:
             network.close()
+        if trace is not None:
+            try:
+                trace.status(state, error["code"] if error else state)
+            except EdgeError as failure:
+                if error is None:
+                    state, code = "ERROR", 1
+                    error = {"code": failure.code, "message": failure.message}
+            finally:
+                trace.close()
+            if trace.write_failed and error is None:
+                state, code = "ERROR", 1
+                error = {
+                    "code": "DECISION_TRACE_WRITE_ERROR",
+                    "message": "Falha ao concluir diagnóstico privado; confira acesso e espaço.",
+                }
     report = {
         "schemaVersion": 1,
         "command": "run",
@@ -323,6 +391,8 @@ def run_live(config):
             **model_metadata(spec),
         },
         "metrics": metrics.summary(),
+        "decisionExport": trace.summary() if trace else {"enabled": False},
+        "preview": preview.summary() if preview and hasattr(preview, "summary") else None,
         "temporal": temporal,
         "framesSaved": temporal.get("snapshotCaptures", 0) > 0,
         "network": health.network if health else {},

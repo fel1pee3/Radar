@@ -56,3 +56,32 @@ entre metadados de captura e arquivos recebidos no
 [relatório CAUCAFall](RELATORIOS/CAUCAFALL_ETAPA_08.md). V5 é revisão distinta;
 não atribuir os bytes V4 a ela. A licença do dataset não resolve os termos
 específicos dos pesos RTMO nem comprova eficácia assistencial.
+
+## Complemento da evolução — 24/10/2026
+
+O treino leve explicitamente autorizado nesta evolução usou somente dados
+antigos CAUCAFall V4, com atribuição acima e permissão CC BY 4.0 registrada no
+manifesto. O uso histórico apenas para avaliação não descreve esse novo treino.
+Nenhum dos 16 arquivos novos entrou no ajuste ou na seleção do candidato.
+
+IndoorActionDataset v1, Daniel Deniz e Francisco Barranco, Universidad de
+Granada: [registro Zenodo 14551902](https://zenodo.org/records/14551902),
+[API de metadados](https://zenodo.org/api/records/14551902) e
+[repositório dos autores](https://github.com/DaniDeniz/IndoorActionDataset).
+Quatorze arquivos recebidos foram associados ao caminho completo dentro do ZIP
+publicado e comparados por SHA-256/CRC32 aos bytes desses membros. Não foi
+recalculado o MD5 do ZIP inteiro. A [licença do repositório](https://github.com/DaniDeniz/IndoorActionDataset/blob/main/LICENSE)
+é BSD 3-Clause; os metadados Zenodo declaram CC BY 4.0. Registrar as duas
+declarações, sem presumir resolvida sua diferença de escopo. Publicação de
+referência: Deniz, Ros, Ortigosa e Barranco, Electronics 13(23), 4786 (2024).
+
+Os outros dois arquivos correspondem a GMDCSA24 Subject 4/ADL/13.mp4 e 17.mp4,
+verificados byte a byte na revisão
+[5abac7693229900cf80f722e878fbb119211fc1c](https://github.com/ekramalam/GMDCSA24-A-Dataset-for-Human-Fall-Detection-in-Videos/tree/5abac7693229900cf80f722e878fbb119211fc1c).
+Repositório declara MIT e [API Zenodo 12921216](https://zenodo.org/api/records/12921216)
+declara CC BY 4.0 para o registro. Isso complementa consultas anteriores que
+não tinham confirmado o campo da licença na página. Não houve treino com GMD
+nesta rodada. Fontes, caminhos, hashes e respostas públicas das APIs preservados
+no inventário privado; nenhum vídeo ou peso incluído no Git. Esses direitos não
+resolvem as limitações registradas para os pesos RTMO ou autorizam publicar mídia
+pessoal. [Auditoria do lote e limites](RELATORIOS/EVOLUCAO_DETECTOR_03.md).

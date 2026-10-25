@@ -9,21 +9,30 @@ from collections import Counter
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from pathlib import Path
+from time import perf_counter
 from uuid import uuid4
 
 from radar_edge.config import private_path, quality_threshold
 from radar_edge.contracts import validate_contract
+from radar_edge.decision_trace import temporal_state
 from radar_edge.delivery import Delivery
-from radar_edge.engine import TemporalEngine
 from radar_edge.errors import EdgeError
+from radar_edge.evidence_engine import create_engine
 from radar_edge.features import QualityGate, extract_features
 from radar_edge.model import get_model_spec
 from radar_edge.observations import point_usable
 from radar_edge.outbox import FileLock, Outbox, encode
 from radar_edge.policy import configured_policy
+from radar_edge.posture import PostureClassifier
 
 WORKER_VERSION = "edge-temporal-v1"
 SCHEMAS = Path(__file__).resolve().parents[4] / "packages/contracts/src/schemas"
+
+
+def worker_version(policy):
+    if policy.version.startswith("floor-rtmo-score-posture-body-v2"):
+        return "edge-posture-v2"
+    return "edge-posture-v1" if policy.temporalMode == "EVIDENCE_V2" else WORKER_VERSION
 
 
 def event_payload(observation, features, emission, run, policy, evidence_mode):
@@ -73,7 +82,7 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
         },
         "pose": points,
         "versions": {
-            "worker": WORKER_VERSION,
+            "worker": worker_version(policy),
             "model": observation.modelId,
             "policy": policy.version,
             "calibration": f"{observation.calibrationId}-v{observation.calibrationVersion}",
@@ -93,10 +102,18 @@ def event_payload(observation, features, emission, run, policy, evidence_mode):
 
 class EventRuntime:
     def __init__(
-        self, config, calibration, video_hash, geometry, excluded=None, async_delivery=False
+        self,
+        config,
+        calibration,
+        video_hash,
+        geometry,
+        excluded=None,
+        async_delivery=False,
+        decision_trace=None,
     ):
         self.config, self.calibration = config, calibration
         self.async_delivery = async_delivery
+        self.decision_trace = decision_trace
         self.model_spec = get_model_spec(config.model.variant)
         self.policy = configured_policy(config.events.policy)
         self.evidence_mode = os.environ.get("EVIDENCE_MODE", config.events.evidenceMode)
@@ -125,15 +142,28 @@ class EventRuntime:
                 "POLICY_QUALITY_CONFLICT",
                 "O limiar de qualidade de processing e policy deve coincidir.",
             )
-        self.engine = TemporalEngine(self.policy)
+        new_posture = config.posture.method != "BASELINE"
+        if new_posture != (self.policy.temporalMode == "EVIDENCE_V2"):
+            raise EdgeError(
+                "POSTURE_POLICY_CONFLICT", "O candidato exige sua política temporal versionada."
+            )
+        self.classifier = (
+            PostureClassifier(config.posture, calibration, self.model_spec, self.policy)
+            if new_posture
+            else None
+        )
+        self.engine = create_engine(self.policy)
         self.gate = QualityGate(self.policy)
         self.resources = ExitStack()
         self.delivery = None
         self.generated = self.processed = 0
+        self.classification_seconds = self.classification_max = 0.0
         self.reasons = Counter()
         self.posture_exclusions = Counter()
         self.candidate_observations = 0
         self.eligible_ms = self.total_ms = 0
+        self.capture_eligible_ms = 0
+        self.previous_capture_eligible = False
         self.previous_features = None
         self.excluded = excluded or []
         self.fingerprint = hashlib.sha256(
@@ -152,7 +182,7 @@ class EventRuntime:
                     if hasattr(geometry, "to_dict")
                     else vars(geometry),
                     "model": self.model_spec.sha256,
-                    "worker": WORKER_VERSION,
+                    "worker": worker_version(self.policy),
                     "processing": {
                         k: v
                         for k, v in config.processing.model_dump().items()
@@ -165,9 +195,20 @@ class EventRuntime:
                         )
                     },
                     "evidenceMode": self.evidence_mode,
+                    **({"posture": config.posture.model_dump()} if new_posture else {}),
                 }
             ).encode()
         ).hexdigest()
+
+    def break_observation(self):
+        """Pause/reconnect breaks timing even when FILE media time barely advances."""
+        if self.policy.temporalMode == "EVIDENCE_V2":
+            self.engine = create_engine(
+                self.policy, active=self.engine.state in {"ACTIVE", "REARMING"}
+            )
+            self.gate = QualityGate(self.policy)
+            self.previous_features = None
+            self.previous_capture_eligible = False
 
     def __enter__(self):
         try:
@@ -204,6 +245,20 @@ class EventRuntime:
             observation,
             extract_features(observation, self.calibration["floorPolygon"], self.policy),
         )
+        capture_eligible = not set(f.reasons) & {
+            "FRAME_TIMEOUT",
+            "LOW_FPS",
+            "LOW_LIGHT",
+            "POSSIBLE_FROZEN",
+        }
+        if self.classifier:
+            started = perf_counter()
+            f = self.classifier.classify(observation, f)
+            elapsed = perf_counter() - started
+            self.classification_seconds += elapsed
+            self.classification_max = max(self.classification_max, elapsed)
+        tracing = self.decision_trace is not None and self.decision_trace.enabled
+        before = temporal_state(self.engine, observation.timestampMs) if tracing else None
         emission = self.engine.step(f)
         value = (
             event_payload(
@@ -245,7 +300,9 @@ class EventRuntime:
         self.processed += 1
         self.reasons.update(f.reasons)
         self.candidate_observations += bool(f.candidate)
-        if f.eligible and not f.candidate:
+        if self.classifier:
+            self.posture_exclusions.update(f.reasons)
+        elif f.eligible and not f.candidate:
             if not f.hipInFloorZone:
                 self.posture_exclusions["HIP_OUTSIDE_FLOOR"] += 1
             if f.torsoAngleDeg < self.policy.minTorsoAngleDeg:
@@ -255,6 +312,12 @@ class EventRuntime:
         if self.previous_features is not None:
             dt = f.timestampMs - self.previous_features.timestampMs
             self.total_ms += dt
+            if (
+                capture_eligible
+                and self.previous_capture_eligible
+                and dt <= self.policy.maxObservationGapMs
+            ):
+                self.capture_eligible_ms += dt
             if (
                 f.eligible
                 and self.previous_features.eligible
@@ -266,6 +329,16 @@ class EventRuntime:
                 )
                 self.eligible_ms += dt - excluded_ms
         self.previous_features = f
+        self.previous_capture_eligible = capture_eligible
+        if tracing:
+            self.decision_trace.observation(
+                observation,
+                f,
+                self.policy,
+                before,
+                temporal_state(self.engine, observation.timestampMs),
+                emission,
+            )
         if self.delivery:
             self.delivery.flush()
         return f
@@ -292,12 +365,42 @@ class EventRuntime:
             "state": self.engine.state,
             "generatedEvents": self.generated,
             "processedObservations": self.processed,
+            **(
+                {
+                    "postureClassificationMs": {
+                        "mean": self.classification_seconds * 1000 / self.processed
+                        if self.processed
+                        else None,
+                        "max": self.classification_max * 1000 if self.processed else None,
+                        "scope": "classification only; excludes pose inference, trace and storage",
+                    }
+                }
+                if self.classifier
+                else {}
+            ),
             "ineligibleReasons": dict(self.reasons),
             "postureExclusions": dict(self.posture_exclusions),
             "candidateObservations": self.candidate_observations,
             "eligibleMediaMs": self.eligible_ms,
             "observedMediaMs": self.total_ms,
+            "captureEligibleMs": self.capture_eligible_ms,
             "policy": self.policy.to_dict(),
+            **(
+                {
+                    "postureClassifier": {
+                        "version": self.classifier.artifact.version,
+                        "sha256": self.config.posture.artifactSha256,
+                        "installationId": self.config.posture.installationId,
+                        "scope": "EXPERIMENTAL_UNSEEN_INSTALLATION_EVALUATION"
+                        if self.config.posture.method == "LINEAR_BODY_V2"
+                        else "EXPERIMENTAL_INSTALLATION_SPECIFIC",
+                        "descriptor": self.classifier.artifact.descriptor,
+                        "contextMode": self.classifier.artifact.contextMode,
+                    }
+                }
+                if self.classifier
+                else {}
+            ),
             "outbox": self.store.summary(),
             "deliveryErrors": self.store.delivery_errors(),
             "snapshots": self.store.snapshot_summary(),

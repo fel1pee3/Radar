@@ -20,6 +20,10 @@ export interface HeartbeatV1 {
     | 'STORAGE_FULL'
     | 'CAPTURE_ERROR'
     | 'MODEL_ERROR'
+    | 'NO_POSE_DETECTED'
+    | 'POSE_UNOBSERVABLE'
+    | 'POSTURE_UNCERTAIN'
+    | 'CONTEXT_UNSUPPORTED'
   )[];
   analysisFps: number;
   outboxPending: number;

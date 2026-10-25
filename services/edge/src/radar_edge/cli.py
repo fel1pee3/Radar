@@ -63,6 +63,15 @@ def main() -> None:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("env", help="Importa bibliotecas sem abrir arquivo/modelo.")
+    posture_train = commands.add_parser(
+        "posture-train", help="Treina explicitamente classificador leve com manifesto privado."
+    )
+    posture_train.add_argument("--manifest", required=True)
+    posture_train.add_argument("--output", required=True)
+    posture_check = commands.add_parser(
+        "posture-check", help="Confere candidato e contexto sem abrir fonte ou banco."
+    )
+    posture_check.add_argument("--config", required=True)
     backup = commands.add_parser("backup-outbox", help="Copia fila parada, excluindo JPEG.")
     backup.add_argument("--config", required=True)
     backup.add_argument("--output", required=True)
@@ -132,6 +141,15 @@ def main() -> None:
     try:
         if args.command == "env":
             result = inspect_environment()
+        elif args.command == "posture-train":
+            from radar_edge.posture_training import train_posture
+
+            result = train_posture(args.manifest, args.output)
+        elif args.command == "posture-check":
+            from radar_edge.config import load_config
+            from radar_edge.posture import check_posture
+
+            result = check_posture(load_config(args.config))
         elif args.command == "restore-outbox":
             from radar_edge.backup import copy_outbox
 

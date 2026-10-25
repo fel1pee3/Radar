@@ -172,6 +172,22 @@ class LocalPreview:
         self._last_view = None
         self._smoother = None
         self._visual_points = None
+        self.observation_updates = 0
+        self.first_update = self.last_update = None
+
+    def summary(self):
+        span = (
+            self.last_update - self.first_update
+            if self.first_update is not None and self.last_update is not None
+            else 0
+        )
+        return {
+            "enabled": self.enabled,
+            "observationUpdates": self.observation_updates,
+            "updatesPerWallSecond": (self.observation_updates - 1) / span if span > 0 else None,
+            "scope": "new observation presentations; not monitor FPS or camera acquisition rate",
+            "pausedSeconds": self.paused_seconds,
+        }
 
     def enable_stabilization(self):
         from radar_edge.visual_smoothing import VisualSmoother
@@ -260,6 +276,10 @@ class LocalPreview:
     def show(self, frame: Frame, observation: Observation, floor, visibility: float) -> bool:
         if not self.enabled:
             return True
+        self.observation_updates += 1
+        self.last_update = perf_counter()
+        if self.first_update is None:
+            self.first_update = self.last_update
         if self._smoother is not None:
             if (
                 observation.frameIndex != frame.index

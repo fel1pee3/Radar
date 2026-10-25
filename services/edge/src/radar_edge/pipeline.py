@@ -13,11 +13,14 @@ import cv2
 
 from radar_edge.calibration import check_compatibility, load_calibration
 from radar_edge.config import EdgeConfig, private_path, quality_threshold
+from radar_edge.decision_trace import DecisionTrace
 from radar_edge.errors import EdgeError
 from radar_edge.estimator import create_estimator
+from radar_edge.features import QualityGate, extract_features
 from radar_edge.metrics import Metrics
 from radar_edge.model import file_hash, get_model_spec, model_metadata
 from radar_edge.observations import Observation, pose_quality
+from radar_edge.policy import configured_policy
 from radar_edge.preview import LocalPreview
 from radar_edge.source import FileSource, MediaSampler
 
@@ -80,14 +83,28 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     health = network = None
     temporal_summary = {"enabled": False}
     warmup_observations = 0
+    preview = None
     preview_paused_seconds = 0.0
+    trace = None
     try:
+        trace = DecisionTrace(
+            directory,
+            config.diagnostics,
+            os.environ.get("EVIDENCE_MODE", config.events.evidenceMode),
+        )
+        trace.status("OPENING", "SOURCE_OPEN_REQUEST")
         with ExitStack() as resources:
             resources.callback(exporter.close)
             resources.enter_context(source)
             frame = source.read()
             calibration = load_calibration(config.calibrationPath)
             check_compatibility(calibration, frame.geometry, config.cameraId)
+            trace.status("RUNNING", "SOURCE_FRAME_AVAILABLE")
+            diagnostic_gate = (
+                QualityGate(configured_policy(config.events.policy))
+                if trace.enabled and not config.events.enabled
+                else None
+            )
             video_hash = file_hash(Path(config.source.path))
             if config.events.enabled:
                 from radar_edge.event_runtime import EventRuntime
@@ -100,6 +117,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         frame.geometry,
                         evaluation_excluded,
                         async_delivery=True,
+                        decision_trace=trace,
                     )
                 )
                 resources.callback(lambda: temporal_summary.update(runtime.summary()))
@@ -121,9 +139,13 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
             if config.processing.previewStabilization:
                 preview.enable_stabilization()
             if health is not None:
-                preview.on_pause = lambda paused: health.update(
-                    capture="PAUSED" if paused else "RUNNING", flags=set()
-                )
+
+                def on_pause(paused):
+                    runtime.break_observation()
+                    health.update(capture="PAUSED" if paused else "RUNNING", flags=set())
+                    trace.status("PAUSED" if paused else "RUNNING", "OPERATOR_PREVIEW_CONTROL")
+
+                preview.on_pause = on_pause
             sampler = MediaSampler(config.processing.targetAnalysisFps)
             playback_start = perf_counter()
             last_frame_digest = None
@@ -184,6 +206,14 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         continue
                     if runtime is not None:
                         runtime.process(observation, frame)
+                    elif diagnostic_gate is not None:
+                        features = diagnostic_gate.apply(
+                            observation,
+                            extract_features(
+                                observation, calibration["floorPolygon"], diagnostic_gate.policy
+                            ),
+                        )
+                        trace.observation(observation, features, diagnostic_gate.policy, None, None)
                     if health is not None:
                         health.observation(observation, runtime.previous_features)
                     metrics.add(observation)
@@ -229,6 +259,21 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         }
     finally:
         exporter.close()
+        if trace is not None:
+            try:
+                trace.status(state, error["code"] if error else state)
+            except EdgeError as failure:
+                if error is None:
+                    state, code = "ERROR", 1
+                    error = {"code": failure.code, "message": failure.message}
+            finally:
+                trace.close()
+            if trace.write_failed and error is None:
+                state, code = "ERROR", 1
+                error = {
+                    "code": "DECISION_TRACE_WRITE_ERROR",
+                    "message": "Falha ao concluir diagnóstico privado; confira acesso e espaço.",
+                }
     report = {
         "schemaVersion": 1,
         "command": "run",
@@ -241,7 +286,15 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "mode": "REPLAY",
         "captureState": state,
         "error": error,
-        "workerVersion": "edge-temporal-v1" if config.events.enabled else "edge-pose-v1",
+        "workerVersion": (
+            "edge-posture-v2"
+            if config.posture.method == "LINEAR_BODY_V2"
+            else "edge-posture-v1"
+            if config.posture.method == "LINEAR_CONTEXT_V1"
+            else "edge-temporal-v1"
+            if config.events.enabled
+            else "edge-pose-v1"
+        ),
         "source": {**source.metadata(), "sha256": video_hash},
         "model": {
             **model_metadata(model_spec),
@@ -260,6 +313,8 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
             "bytes": exporter.bytes,
             "truncated": exporter.truncated,
         },
+        "decisionExport": trace.summary() if trace else {"enabled": False},
+        "preview": preview.summary() if preview and hasattr(preview, "summary") else None,
         "framesSaved": temporal_summary.get("snapshotCaptures", 0) > 0,
         "incidentsEmitted": temporal_summary.get("generatedEvents", 0) > 0,
         "temporal": temporal_summary,

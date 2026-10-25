@@ -213,6 +213,7 @@ def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(
     Path(".local").mkdir()
     c = live_config()
     c.processing.preview = False
+    c.diagnostics.exportDecisions = True
     floor = {
         **calibration(),
         "cameraId": c.cameraId,
@@ -308,9 +309,15 @@ def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(
 
         monkeypatch.setattr("radar_edge.live.publish_status", fail_status)
     report, code = run_live(c)
-    if status_failure:
-        import json
+    import json
 
+    trace = [
+        json.loads(line) for line in Path(report["decisionExport"]["path"]).read_text().splitlines()
+    ]
+    assert trace[0]["capture"] == "OPENING"
+    assert trace[-1]["capture"] == report["captureState"]
+    assert "synthetic-private-status-secret" not in json.dumps(trace)
+    if status_failure:
         assert code == 1 and report["captureState"] == "ERROR"
         assert report["error"]["code"] == "PROCESSING_ERROR"
         assert report["error"]["diagnostic"]["exceptionType"] == "RuntimeError"
@@ -321,4 +328,6 @@ def test_live_terminal_pause_resume_stop_does_not_wait_on_released_capture(
         return
     assert code == 0 and report["error"] is None
     assert actions == ["pause", "resume"] and waits == [0.02, 0.02]
+    assert any(row.get("capture") == "PAUSED" for row in trace)
+    assert len([row for row in trace if row["recordType"] == "DECISION"]) == 1
     assert report["metrics"]["analyzedFrames"] == 1  # No analysis during the paused interval.

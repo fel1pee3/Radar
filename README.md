@@ -2,6 +2,21 @@
 
 **Base de construção do MVP v0.1 · Felipe Maia · 21/10/2026**
 
+**Núcleo funcional em desenvolvimento, ainda não aprovado.** O fechamento da 08
+abaixo é histórico e experimental. A evolução atual tem critérios de detecção
+para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
+[Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
+[Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
+Novo lote de 16 vídeos recebido e conferido por hash/procedência, reservado
+antes das previsões. Candidato corporal V2 preparado apenas com dados antigos;
+cenas e 16 contornos corrigidos/conferidos pelo fundador antes das previsões.
+Avaliação executada: **2/6 alvos detectados em cada versão**, quatro perdas;
+V2 sem alertas nos dez negativos, mas seis inconclusivos por observação ou
+classificação insuficiente. Não houve melhora global nesse lote; V2 continua
+experimental, sem promoção a candidato final.
+[Preparação](docs/RELATORIOS/EVOLUCAO_DETECTOR_03.md) ·
+[Resultados e diagnóstico](docs/RELATORIOS/EVOLUCAO_DETECTOR_04.md).
+
 Um software de percepção assistiva que analisa vídeo no computador local, identifica uma **possível pessoa no chão / possível queda**, cria um incidente e permite que uma pessoa revise e registre a resposta.
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.

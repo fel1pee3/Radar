@@ -124,3 +124,64 @@ versão explícita e avaliação independente antes de prometer correção geral
 Novos alertas em ADL podem corresponder a postura voluntária no piso; não
 presumir necessidade de ajuda ou classificar automaticamente como falso/verdadeiro
 sem anotação de cena. [Resultados](RELATORIOS/INTEGRACAO_RTMO_ETAPA_08.md).
+# Evolução opt-in do motor — 24/10/2026
+
+As seções anteriores documentam a baseline. O candidato LINEAR_CONTEXT_V1 é
+experimental e exige artefato privado com SHA-256, instalação declarada,
+calibração confirmada com hash e modelo RTMO-s correspondente. Não é ativado
+por atualizar o repositório. [Escopo, resultados e aceite](EVOLUCAO_DO_DETECTOR.md).
+
+Em vez de exigir horizontalidade projetada, o candidato usa 35 atributos de
+articulações/relações corporais em pixels e contexto da imagem. Um classificador
+linear ajustado localmente separa postura deitada de outras posturas: score
+≥0,8 indica deitado; ≤0,2 indica outra postura; o intervalo é desconhecido.
+Esses scores não são probabilidades calibradas. Todos os oito pontos essenciais
+continuam exigindo qualidade nativa ≥0,5; desenho estabilizado não entra no motor.
+
+O classificador principal é binário. Subtipos descritivos conservadores usam
+geometria para em pé/caminhando e ajoelhado/abaixado; sentado exige contexto de
+cadeira confirmado. Ambiguidade entre agachamento e cadeira permanece outra
+postura/desconhecido. Não há acurácia multiclasse medida nem identificação de
+apoio pela imagem. Áreas de cadeira/cama/rede configuradas são exclusões da
+decisão de chão; sobreposição que torne contato inobservável deve ser excluída,
+sem alegar medição física de altura pelo polígono.
+
+EVIDENCE_V2 mantém janela de 2000 ms, cobertura positiva ≥80%, cinco observações
+e lacuna máxima de 500 ms. Tempo positivo só é somado entre duas observações
+positivas reais consecutivas. Uma oscilação curta não apaga imediatamente a
+suspeita; desconhecido nunca acrescenta tempo positivo. Outra postura persistente
+reinicia suspeita (600 ms); a tolerância de lacuna continua limitada a 500 ms.
+Recuperação exige 3000 ms contínuos de outra postura reconhecida. Incerteza não
+encerra o episódio persistido nem produz outro alerta. Pausa, reconexão e retomada
+recriam janelas sem reutilizar tempo; episódio ativo continua preservado.
+
+POSSIBLE_FALL requer, antes da postura deitada, pelo menos duas observações em
+pé cobrindo 400 ms dentro da janela de 1000 ms, sem quebra de observação, e
+descida observada do quadril ≥0,18 da altura da imagem. Sem essa evidência, a
+persistência pode emitir PERSON_ON_FLOOR. Essa transição tem testes sintéticos;
+seu desempenho em transições reais ainda precisa de validação específica.
+
+Treinamento só por comando explícito posture-train. Manifesto registra licença,
+hashes, anotações e divisões; seleção/reserva não são abertas para ajuste. Divisão
+por participante ou por sessões conhecidas inteiras; reutilizar o fundador em
+sessões novas não estabelece generalização entre participantes. A avaliação do
+candidato acrescenta primaryFloorAcceptance: todos os alvos contam, inclusive
+inelegíveis/excluídos, latência desde início anotado e limite de 5000 ms. O
+matching histórico por tipo permanece secundário e inalterado.
+
+Complemento experimental LINEAR_BODY_V2: descritor symmetric-body-shape-29-v1
+remove seis atributos absolutos de posição/escala da imagem. Ajustado apenas
+nos dados antigos; não demonstra generalização por ter menos atributos.
+Artefato exige contextMode=OPERATOR_CONFIRMED_FIXED_CAMERA, SHA, calibração
+confirmada e família floor-rtmo-score-posture-body-v2. A família anterior de
+35 atributos mantém vinculação à instalação aprendida e comportamento congelado.
+Na V2, outra postura reconhecida em uma exclusão de apoio continua evidência
+negativa; postura deitada ou incerta ali permanece inelegível para confirmar
+chão. Isso não transforma exclusão em prova de contato ou altura. Limiares de
+qualidade 0,5, scores 0,8/0,2 e persistência não foram reduzidos.
+
+Anotação local opcional transitionObserved=false declara que a cena não mostra
+transição para o chão. POSSIBLE_FALL nessa faixa conta como alerta de postura
+no resultado principal, mas também como unjustifiedTransitionAlerts e impede
+approved. Não modificar a anotação após ver a previsão. Anotação ausente não
+certifica transição e preserva a leitura histórica dos manifestos.

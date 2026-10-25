@@ -56,6 +56,16 @@ Guardar URI e credenciais em `.local/edge.env` ou arquivo privado referenciado p
 
 Um arquivo de calibração contém ID/versão, dimensão, orientação, ROI e parâmetros. Se a imagem mudar de relação de aspecto, invalidar e pedir recalibração. Mudança apenas de escala com mesma proporção pode reutilizar ROI normalizada, desde que o enquadramento não tenha mudado.
 
+Na evolução opt-in, exclusões manuais de apoio/oclusão podem retirar partes da
+região observada. Amarelo delimita a região proposta; a revisão pode sombrear
+em verde a área restante depois das exclusões vermelhas. As cores não são
+reconhecimento automático do chão, de móveis ou de contato corporal. Conferir
+os contornos nos pixels do vídeo original e em momentos distintos; miniaturas
+com bordas/adaptação de proporção não servem como coordenadas diretas do vídeo.
+Não reaproveitar uma máscara de cadeira num arquivo em que ela não está lá.
+Móvel que muda de posição exige revisão do contexto; contorno fixo não o acompanha.
+Uma proposta geométrica válida ainda precisa de confirmação visual do operador.
+
 ## Critérios de aceitação da fonte
 
 Decodifica sem travar o processo, entrega timestamps utilizáveis, sustenta o teste de bancada, falha de forma visível, reconecta dentro da política e respeita o enquadramento. Compatibilidade de vídeo não significa que o detector de posturas funcione bem naquele ângulo. São duas validações diferentes.

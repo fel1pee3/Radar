@@ -27,6 +27,7 @@ class Interval(StrictModel):
 class Target(Interval):
     kind: str = Field(pattern=r"^(PERSON_ON_FLOOR|POSSIBLE_FALL)$")
     assistanceNeeded: bool | None = None
+    transitionObserved: bool | None = None
     confounder: str | None = Field(default=None, max_length=120)
 
     @model_validator(mode="after")
@@ -50,6 +51,7 @@ class VideoEntry(StrictModel):
     durationMs: int = Field(gt=0)
     fps: float = Field(gt=0, le=1000)
     annotationsComplete: bool = False
+    expectedPerson: bool = True
     targets: list[Target] = Field(default_factory=list, max_length=1000)
     excluded: list[Interval] = Field(default_factory=list, max_length=1000)
     origin: str | None = Field(default=None, max_length=1000)
@@ -58,6 +60,8 @@ class VideoEntry(StrictModel):
 
     @model_validator(mode="after")
     def check_ranges(self):
+        if self.targets and not self.expectedPerson:
+            raise ValueError("A target episode requires expected person presence")
         for group in (self.targets, self.excluded, self.confounders):
             ordered = sorted(group, key=lambda x: x.startMs)
             for index, item in enumerate(ordered):
@@ -152,6 +156,155 @@ def match_episodes(events, targets, excluded, eligible_ms, annotations_complete=
     return results
 
 
+def match_floor_acceptance(
+    events,
+    targets,
+    excluded,
+    eligible_ms,
+    observed_ms,
+    annotations_complete=True,
+    max_latency_ms=5000,
+    negative_expected_person=True,
+    capture_eligible_ms=None,
+):
+    """New primary result: no target is removed for lack of pose or exclusions.
+
+    Both event kinds can support persistent floor posture. Transition accuracy
+    remains a separate question; this score never relabels an event as a fall.
+    """
+    matched = {}
+    duplicates = unexpected = 0
+    for event in sorted(events, key=lambda item: item["sourceOffsetMs"]):
+        t = event["sourceOffsetMs"]
+        candidates = [i for i, target in enumerate(targets) if target.startMs <= t <= target.endMs]
+        available = [i for i in candidates if i not in matched]
+        if available:
+            index = available[0]
+            matched[index] = t - targets[index].startMs
+        elif candidates:
+            duplicates += 1
+        else:
+            unexpected += 1
+    coverage = ratio(eligible_ms, observed_ms)
+    negative_coverage = (
+        coverage
+        if negative_expected_person
+        else (ratio(capture_eligible_ms, observed_ms) if capture_eligible_ms is not None else None)
+    )
+    approval_coverage = coverage if targets else negative_coverage
+    latencies = [matched[i] for i in sorted(matched)]
+    unjustified_transitions = sum(
+        event["kind"] == "POSSIBLE_FALL"
+        and any(
+            target.transitionObserved is False
+            and target.startMs <= event["sourceOffsetMs"] <= target.endMs
+            for target in targets
+        )
+        for event in events
+    )
+    return {
+        "targets": len(targets),
+        "matched": len(matched),
+        "missed": len(targets) - len(matched),
+        "withinDeadline": sum(latency <= max_latency_ms for latency in latencies),
+        "late": sum(latency > max_latency_ms for latency in latencies),
+        "maxLatencyMs": max_latency_ms,
+        "latenciesMs": latencies,
+        "duplicates": duplicates,
+        "unmatchedAlerts": unexpected if annotations_complete else None,
+        "unadjudicatedAlerts": unexpected if not annotations_complete else 0,
+        "targetsOverlappingExclusions": sum(
+            any(i.startMs < target.endMs and i.endMs > target.startMs for i in excluded)
+            for target in targets
+        ),
+        "eligibleMs": eligible_ms,
+        "observedMs": observed_ms,
+        "eligibleFraction": coverage,
+        "negativeResult": None
+        if targets
+        else (
+            "FAIL"
+            if events
+            else "PASS"
+            if annotations_complete
+            and negative_coverage is not None
+            and negative_coverage >= 0.8
+            and observed_ms > 0
+            else "INCONCLUSIVE"
+        ),
+        "approved": bool(
+            annotations_complete
+            and approval_coverage is not None
+            and approval_coverage >= 0.8
+            and len(matched) == len(targets)
+            and not duplicates
+            and not unexpected
+            and not unjustified_transitions
+            and all(latency <= max_latency_ms for latency in latencies)
+        ),
+        "eventKinds": [event["kind"] for event in events],
+        "negativeExpectedPerson": negative_expected_person,
+        "negativeObservationCoverage": negative_coverage if not targets else None,
+        "unjustifiedTransitionAlerts": unjustified_transitions,
+        "transitionAccuracyEvaluated": any(
+            target.transitionObserved is not None for target in targets
+        ),
+    }
+
+
+def guard_candidate_evaluation(entries):
+    """Preflight every reserved clip before predictions; keep historical evaluations."""
+    from radar_edge.calibration import load_calibration
+    from radar_edge.model import get_model_spec
+    from radar_edge.policy import configured_policy
+    from radar_edge.posture import PostureClassifier
+
+    final = []
+    for entry in entries:
+        config = load_config(entry.config)
+        if config.posture.method == "BASELINE" or entry.role != "EVALUATION":
+            continue
+        classifier = PostureClassifier(
+            config.posture,
+            load_calibration(config.calibrationPath),
+            get_model_spec(config.model.variant),
+            configured_policy(config.events.policy),
+        )
+        protocol = classifier.artifact.training.get("protocol", {})
+        consulted = [
+            clip for clip in protocol.get("clips", []) if clip["partition"] != "FINAL_RESERVED"
+        ]
+        if not consulted:
+            raise EdgeError("EVALUATION_PROVENANCE_REQUIRED", "Falta procedência do classificador.")
+        session_split = protocol.get("splitStrategy", "PARTICIPANT") == "SESSION"
+        if session_split and (
+            not protocol.get("sessionIndependenceEstablished")
+            or "unknown" in entry.sessionId.lower()
+        ):
+            raise EdgeError("EVALUATION_SESSION_REQUIRED", "Identifique a nova sessão de gravação.")
+        if any(
+            entry.sha256 == clip["sourceSha256"]
+            or not session_split
+            and entry.personPseudonym == clip["participantId"]
+            or clip["sessionId"] is not None
+            and entry.sessionId == clip["sessionId"]
+            for clip in consulted
+        ):
+            raise EdgeError(
+                "FINAL_EVALUATION_LEAKAGE",
+                "Material/participante/sessão já consultado; use CALIBRATION para desenvolvimento.",
+            )
+        final.append(entry)
+    if final and (
+        sum(len(entry.targets) for entry in final) < 4
+        or sum(not entry.targets for entry in final) < 8
+    ):
+        raise EdgeError(
+            "FINAL_EVALUATION_INCOMPLETE",
+            "Reserve pelo menos quatro episódios-alvo e oito vídeos negativos novos.",
+        )
+
+
 def evaluate_manifest(filename, replay_speed=0.0):
     ProcessingConfig(replaySpeed=replay_speed)
     try:
@@ -163,6 +316,7 @@ def evaluate_manifest(filename, replay_speed=0.0):
         raise EdgeError(
             "INVALID_MANIFEST", "Confira o manifesto privado e os intervalos anotados."
         ) from None
+    guard_candidate_evaluation(manifest.videos)
     output = private_path(".local/evaluation") / str(uuid4())
     output.mkdir(parents=True)
     results, code = [], 0
@@ -238,7 +392,26 @@ def evaluate_manifest(filename, replay_speed=0.0):
                     eligible_ms,
                     entry.annotationsComplete and not result_code,
                 ),
+                "matchingScope": "SECONDARY_LEGACY"
+                if config.posture.method != "BASELINE"
+                else "HISTORICAL_BASELINE",
                 "pipelineReport": report["reportPath"],
+                **(
+                    {
+                        "primaryFloorAcceptance": match_floor_acceptance(
+                            temporal.get("events", []),
+                            entry.targets,
+                            entry.excluded,
+                            eligible_ms,
+                            temporal.get("observedMediaMs", 0),
+                            entry.annotationsComplete and not result_code,
+                            negative_expected_person=entry.expectedPerson,
+                            capture_eligible_ms=temporal.get("captureEligibleMs"),
+                        )
+                    }
+                    if config.posture.method != "BASELINE"
+                    else {}
+                ),
                 "policy": temporal.get("policy"),
                 "events": temporal.get("events", []),
                 "ineligibleReasons": temporal.get("ineligibleReasons", {}),

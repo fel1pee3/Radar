@@ -2658,5 +2658,105 @@
         "calibration": "synthetic-v1"
       }
     }
+  },
+  {
+    "name": "heartbeat-v1-no_pose_detected",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "REPLAY",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["NO_POSE_DETECTED"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-pose_unobservable",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "REPLAY",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["POSE_UNOBSERVABLE"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-posture_uncertain",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "REPLAY",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["POSTURE_UNCERTAIN"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
+  },
+  {
+    "name": "heartbeat-v1-context_unsupported",
+    "schema": "heartbeat-v1",
+    "valid": true,
+    "value": {
+      "schemaVersion": 1,
+      "cameraId": "33333333-3333-4333-8333-333333333333",
+      "runId": "44444444-4444-4444-8444-444444444444",
+      "mode": "REPLAY",
+      "sequence": 0,
+      "sentAt": "2026-10-21T12:00:02.000Z",
+      "captureState": "RUNNING",
+      "qualityFlags": ["CONTEXT_UNSUPPORTED"],
+      "analysisFps": 5,
+      "outboxPending": 0,
+      "lastFrameAgeMs": null,
+      "inferenceState": "WARMING_UP",
+      "versions": {
+        "worker": "fixture-v1",
+        "model": "none-simulator",
+        "policy": "floor-v0.1",
+        "calibration": "synthetic-v1"
+      }
+    }
   }
 ]

@@ -32,6 +32,12 @@ class Features:
     bboxAspectRatio: float | None = None
     hipInFloorZone: bool | None = None
     hipY: float | None = None
+    posture: str | None = None
+    postureScore: float | None = None
+    postureModel: str | None = None
+    postureMethod: str | None = None
+    postureAttributes: tuple[float, ...] = ()
+    regionState: str | None = None
 
 
 def extract_features(o: Observation, polygon, policy: Policy = DEFAULT_POLICY) -> Features:

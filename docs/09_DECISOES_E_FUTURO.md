@@ -140,6 +140,35 @@ Etapa encerrada no escopo revisado da bancada. Houve trecho no chão <10 s sem
 alerta, possível perda/inconclusivo; não aprovar eficácia geral por isso.
 [Medições e relato humano](RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md).
 
+## D52 — evolução funcional do detector, separada da etapa 08
+
+24/10/2026, instrução atual do fundador: desenvolver/investigar núcleo funcional
+para um cômodo em incrementos verificáveis, além do diagnóstico enquanto houver
+recursos/dados. Preservar 08/D50/D51 e baseline; manter RTMO-s inicialmente.
+Treinamento local leve autorizado somente se justificado e com permissão dos
+materiais verificada, sem usar avaliação reservada ou dividir quadros do mesmo
+vídeo como amostras independentes. Diagnóstico explícito, limitado e com retenção,
+sem gravação automática de imagens/vídeo. Persistência de postura, histerese,
+incerteza e transição serão comparadas; nova versão de política quando houver
+mudança de comportamento. Webcam só pelo fundador após arquivos. Sem commit,
+push, deploy, serviço pago ou mensagens externas. Estado próprio em
+[evolução do detector](EVOLUCAO_DO_DETECTOR.md); não iniciar a etapa 09.
+
+Complemento de 24/10: fundador forneceu Radar_16_Videos_Novos e confirmou não
+ter usado seus 16 arquivos em ajustes/treino/seleção do Radar. Preservar como
+reserva, com agrupamentos reais das fontes e anotações antes das previsões.
+Candidato corporal LINEAR_BODY_V2 preparado somente com o desenvolvimento
+antigo para investigar outros enquadramentos; não transportar o modelo de
+35 atributos restrito ao CAUCAFall nem alegar validação do cômodo do fundador.
+Após corrigir os contornos e obter confirmação humana dos 16 arquivos,
+primeira avaliação congelada: baseline/V2 2/6 alvos, quatro perdas; V2 com
+seis negativos inconclusivos e sem melhora global. **Não promover V2 como
+candidato final.** Manter resultado adverso e fonte/anotações; não modificar
+limiares/pisos para aprovar esse lote. Caso ele oriente um sucessor, passa a
+desenvolvimento para esse sucessor, com outra reserva para aceite.
+[Preparação](RELATORIOS/EVOLUCAO_DETECTOR_03.md) e
+[resultado](RELATORIOS/EVOLUCAO_DETECTOR_04.md).
+
 ## O que permanece do dossiê
 
 O caso de uso assistivo, o processamento local, o reconhecimento de concorrentes, o fluxo humano, a necessidade de medir falsos alertas e a evolução por evidências. O pacote atual define uma bancada mais acessível para começar; não apaga os requisitos de um futuro serviço real.

@@ -278,3 +278,31 @@ outra chave do episódio também não o recria durante os 90 dias retidos.
 
 Prazos/ativação e cópias: [segurança](06_SEGURANCA_E_DADOS.md). Comandos e exemplos:
 [roteiro 07](VALIDACAO_MANUAL_ETAPA_07.md).
+
+## Evolução experimental do detector — 24/10/2026
+
+Ampliação aditiva do enum qualityFlags do heartbeat-v1: NO_POSE_DETECTED
+(nenhuma pose detectada, sem provar ambiente vazio), POSE_UNOBSERVABLE (pontos
+insuficientes), POSTURE_UNCERTAIN e CONTEXT_UNSUPPORTED (região excluída,
+postura deitada fora da região ou geometria incompatível). A API trata uma
+execução RUNNING com esses flags como DEGRADED; o painel apresenta os motivos
+em português. Atualizar contratos/API/web juntos antes de usar o novo worker.
+
+O candidato usa worker edge-posture-v1 e a família de política
+floor-rtmo-score-posture-*. Os envelopes event-v1, qualidade nativa RTMO,
+deduplicação e revisão humana permanecem. O score do classificador local não é
+visibilidade articular nem probabilidade médica. Não foi acrescentado ao evento
+como se tivesse essas semânticas; versão/hash/atributos ficam no diagnóstico
+privado e no fingerprint da execução. Políticas anteriores mantêm a identidade
+original. Resultados da evolução não substituem as validações históricas.
+
+LINEAR_BODY_V2 usa worker edge-posture-v2 e família
+floor-rtmo-score-posture-body-v2, mantendo o mesmo envelope event-v1. A escolha
+de descritor corporal de 29 atributos/contextMode consta do artefato local e
+do diagnóstico. Não há migração ou campo novo no evento HTTP por essa escolha.
+Manifestos locais de avaliação aceitam Target.transitionObserved opcional:
+false declara ausência de transição na faixa, true registra transição
+observada, null/ausente significa não anotada. Não se confunde com
+assistanceNeeded nem com confirmação de acidente. O resultado principal expõe
+unjustifiedTransitionAlerts; uma possível queda emitida em alvo explicitamente
+sem transição impede aprovação, sem remover esse alvo do denominador de postura.

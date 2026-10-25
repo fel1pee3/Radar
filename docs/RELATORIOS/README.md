@@ -25,6 +25,14 @@ percepção da 06 continuam para a validação final da 08.
 
 ## Modelo de relatório de etapa
 
+A evolução solicitada após a 08 tem estado próprio: [diagnóstico](EVOLUCAO_DETECTOR_01.md)
+e [classificador/motor/comparação](EVOLUCAO_DETECTOR_02.md). Candidato experimental
+parcial, sem substituir o fechamento histórico ou iniciar a etapa 09.
+[Recebimento dos 16 vídeos e candidato corporal V2](EVOLUCAO_DETECTOR_03.md)
+registra procedência, independência limitada e correção dos contornos.
+[Primeira avaliação dos 16 arquivos](EVOLUCAO_DETECTOR_04.md): baseline/V2
+2/6 alvos; V2 sem melhora global e não aprovado, seis negativos inconclusivos.
+
 A [etapa 08](ETAPA_08.md) registra validação de engenharia, instalação limpa,
 backup/restore e candidata local, com [matriz final](VALIDACAO_MVP.md).
 **Concluída no escopo revisado da bancada (D50/D51), 24/10:** sessão física de

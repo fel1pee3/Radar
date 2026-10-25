@@ -12,7 +12,7 @@ import httpx
 from radar_edge.contracts import validate_contract
 from radar_edge.delivery import Delivery, credentials
 from radar_edge.errors import EdgeError
-from radar_edge.event_runtime import SCHEMAS, WORKER_VERSION
+from radar_edge.event_runtime import SCHEMAS, WORKER_VERSION, worker_version
 from radar_edge.outbox import Outbox, utc_now
 
 
@@ -41,7 +41,9 @@ class LiveHealth:
         self.versions["model"] = get_model_spec(config.model.variant).model_id
         from radar_edge.policy import configured_policy
 
-        self.versions["policy"] = configured_policy(config.events.policy).version
+        policy = configured_policy(config.events.policy)
+        self.versions["policy"] = policy.version
+        self.versions["worker"] = worker_version(policy)
         if calibration:
             self.versions["calibration"] = (
                 f"{calibration['calibrationId']}-v{calibration['version']}"
@@ -76,6 +78,18 @@ class LiveHealth:
                 "LOW_LIGHT",
                 "POSSIBLE_FROZEN",
             }
+            if features and features.postureModel and not features.eligible:
+                if features.posture == "NO_PERSON_DETECTED":
+                    flags.add("NO_POSE_DETECTED")
+                elif features.posture == "PERSON_POSE_INSUFFICIENT":
+                    flags.add("POSE_UNOBSERVABLE")
+                elif any(
+                    reason.startswith(("CONTEXT_", "LYING_OUTSIDE_", "POSTURE_GEOMETRY_"))
+                    for reason in features.reasons
+                ):
+                    flags.add("CONTEXT_UNSUPPORTED")
+                else:
+                    flags.add("POSTURE_UNCERTAIN")
             self.update(flags=flags, inference=o.inferenceState)
 
     def snapshot(self):

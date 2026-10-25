@@ -22,6 +22,18 @@ export const labels: Record<string, string> = {
   OFFLINE: 'Sem comunicação',
   PAUSED: 'Pausada',
   SOURCE_ENDED: 'Fonte encerrada',
+  NO_POSE_DETECTED: 'Nenhuma pose detectada; não confirma ambiente vazio',
+  POSE_UNOBSERVABLE: 'Corpo sem pontos suficientes para decidir a postura',
+  POSTURE_UNCERTAIN: 'Postura incerta; sem evidência positiva',
+  CONTEXT_UNSUPPORTED: 'Pessoa fora da região observável ou em área excluída',
+  LOW_LIGHT: 'Iluminação insuficiente',
+  POSSIBLE_FROZEN: 'Possível imagem congelada',
+  LOW_FPS: 'Frequência de análise insuficiente',
+  FRAME_TIMEOUT: 'Sem imagem recente',
+  CALIBRATION_REQUIRED: 'Configuração da região precisa ser conferida',
+  CAPTURE_ERROR: 'Falha na captura',
+  MODEL_ERROR: 'Falha no modelo',
+  STORAGE_FULL: 'Armazenamento indisponível',
   UNREVIEWED: 'Não revisado',
   PERSON_ON_FLOOR_CONFIRMED: 'Postura no chão confirmada',
   FALL_REPORTED: 'Queda relatada',
@@ -178,7 +190,9 @@ export function SourceCard({
             Último heartbeat: <Stamp value={camera.health.receivedAt} />
           </p>
           {heartbeat.qualityFlags.length > 0 && (
-            <p className="error">Flags: {heartbeat.qualityFlags.join(', ')}</p>
+            <p className="error" role="status">
+              {heartbeat.qualityFlags.map(label).join(' · ')}
+            </p>
           )}
           {camera.health.stale && (
             <p className="warning">

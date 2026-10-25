@@ -1,5 +1,49 @@
 # Status de construção
 
+**Evolução do núcleo — 24/10/2026: PARCIAL; MVP funcional não aprovado.**
+Recebidos 16 vídeos inéditos confirmados pelo fundador: seis candidatos de
+pessoa já no chão e dez negativos, com duas cenas vazias. Todos decodificados
+integralmente e associados por SHA aos bytes das fontes publicadas. Reserva
+anotada e congelada antes das previsões. Fundador confirmou cenas/intervalos
+dos 16 e reprovou as marcações originais de piso/exclusões. Revisão manual:
+**16/16 contornos refeitos e aprovados**, com refinamento visual ainda desejado
+nos dois alvos da sala. **Comparação FILE executada:** baseline e V2 detectaram
+2/6 alvos em 2000 ms e perderam quatro. V2 recuperou chao_06 e regrediu em
+chao_04; nenhum ganho global. Zero alertas nos dez negativos; baseline 5 PASS/5
+inconclusivos, V2 4 PASS/6 inconclusivos. V2 não aprovado como candidato final.
+Trinta e duas execuções ok/ENDED, 986 análises por versão, traces completos,
+quatro envelopes locais validados no contrato TS/AJV e SQLite; zero HTTP,
+JPEG ou webcam. Fonte congelada 65ad8c16… preservada, sem novo treino.
+Hipótese anterior de movimento da cadeira branca não foi comprovada;
+a omissão da cadeira na máscara foi corrigida e conferida pelo fundador.
+As cores são regiões manuais, sem reconhecimento automático de móveis.
+Não são 16 sessões independentes nem gravações
+do cômodo do fundador. Candidato LINEAR_BODY_V2 preparado com 29 atributos
+corporais, ajustado/selecionado somente nos dados antigos; preserva o modelo de
+35 atributos e sua restrição de instalação. Verificações e pendências no
+[preparação](RELATORIOS/EVOLUCAO_DETECTOR_03.md) e nos
+[resultados da avaliação](RELATORIOS/EVOLUCAO_DETECTOR_04.md).
+As quatro perdas novas foram localizadas: duas classificações erradas apesar
+de pose suficiente, uma ausência de pose e uma postura incerta. Corrigir piso
+não resolve essas falhas. As três perdas históricas continuam preservadas;
+desenvolvimento/validação no cômodo do fundador e novo aceite permanecem pendentes.
+
+Estado anterior, preservado como referência do candidato de 35 atributos:
+Baseline 0778e02 preservada, RTMO-s mantido. Classificador opt-in, contexto,
+motor com histerese, diagnósticos FILE/LIVE, treino reproduzível e incerteza no
+painel implementados. Inventário consolidado de regressões positivas: **4/7 cenas
+com alerta; três perdas históricas ainda não resolvidas**, ante 3/7 na baseline.
+No subconjunto CAUCAFall, FILE real: 4/4 alvos de desenvolvimento/seleção, ante 3/4,
+latências 1400/1400/3800/4000 ms, sem duplicações. Zero alertas nos oito negativos,
+mas cinco inconclusivos por observação insuficiente. Passaram 344 testes Python,
+104 contratos TS, 159 API, 20 E2E, lint, tipos e build. Quatro envelopes reais do
+candidato também atravessaram HTTP em banco isolado, com avisos locais e sem
+duplicação; revisão automatizada não conta como conferência do fundador. Modelo restrito ao
+CAUCAFall, três perdas históricas preservadas. Faltam dados novos do cômodo,
+aceite, reserva final e webcam iniciada pelo fundador; ele preparará vídeos depois.
+[Plano](EVOLUCAO_DO_DETECTOR.md) · [Relatório](RELATORIOS/EVOLUCAO_DETECTOR_02.md).
+O fechamento histórico da 08 abaixo não é aprovação dessa nova entrega.
+
 **Última atualização — 24/10/2026:** etapa 08 **CONCLUÍDA NO ESCOPO REVISADO
 DA BANCADA** (D50/D51), demonstração local experimental.
 
