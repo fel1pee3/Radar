@@ -8,6 +8,13 @@ Solicitação atual do fundador, independente do fechamento histórico da etapa 
 [Avaliação dos 16 arquivos](RELATORIOS/EVOLUCAO_DETECTOR_04.md) ·
 [Roteiro curto](USO_DETECTOR_EXPERIMENTAL.md).
 
+**Atualização 25/10, D53:** 16 clipes reclassificados pelo fundador como
+desenvolvimento/regressão. V3: 6/6 alvos em 2000 ms, dez negativos PASS, zero
+alertas indevidos/duplicações nesse lote. Fonte, pesos e anotações identificados no
+[incremento 05](RELATORIOS/EVOLUCAO_DETECTOR_05.md). O teste reservado original
+continua 2/6; o resultado novo não é independente. Três perdas históricas,
+limitações nas transições e validação no cômodo permanecem abertas.
+
 ## Escopo e aceite
 
 Câmera fixa, um cômodo, uma pessoa, região observada e exclusões confirmadas,

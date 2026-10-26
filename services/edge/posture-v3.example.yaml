@@ -1,0 +1,47 @@
+# Modelo e contexto precisam ser preparados e conferidos; exemplo nao abre fonte.
+schemaVersion: 1
+purpose: RADAR_FILE_POSE
+cameraId: '11111111-1111-4111-8111-111111111111'
+source:
+  kind: FILE
+  path: .local/videos/teste.mp4
+  videoId: postura-v3
+  authorized: false
+model:
+  variant: rtmo-s
+  path: .local/models/rtmo_s_body7_640.onnx
+  recovery: RTMO_ADAPTIVE_V2
+processing:
+  maxWidth: 640
+  targetAnalysisFps: 5
+  minKeypointScore: 0.5
+  replaySpeed: 0
+  preview: false
+calibrationPath: .local/calibration.json
+posture:
+  method: MULTICLASS_BODY_V3
+  artifactPath: .local/posture-v3.json
+  artifactSha256: '0000000000000000000000000000000000000000000000000000000000000000'
+  installationId: camera-fixa-local
+  calibrationSha256: '0000000000000000000000000000000000000000000000000000000000000000'
+  operatorConfirmed: false
+  excludedRegions: []
+  supportRegions: []
+diagnostics:
+  outputDirectory: .local/results/posture-v3
+  exportObservations: false
+  exportDecisions: true
+events:
+  enabled: false
+  outboxPath: .local/edge/posture-v3.sqlite
+  evidenceMode: skeleton
+  snapshotAuthorized: false
+  policy:
+    version: floor-rtmo-score-posture-multiclass-v3-dynamics01-adaptive2
+    qualitySource: RTMO_KEYPOINT_SCORE
+    minKeypointScore: 0.5
+    temporalMode: EVIDENCE_V2
+    transitionEvidence: POSTURE_DYNAMICS_V1
+  delivery:
+    enabled: false
+    credentialFile: null

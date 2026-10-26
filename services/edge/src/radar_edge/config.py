@@ -55,9 +55,12 @@ class WebcamConfig(StrictModel):
 class ModelConfig(StrictModel):
     variant: Literal["lite", "full", "rtmo-s"] = "lite"
     path: str = ".local/models/pose_landmarker_lite.task"
+    recovery: Literal["NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2"] = "NONE"
 
     @model_validator(mode="after")
     def full_path_is_explicit(self):
+        if self.recovery != "NONE" and self.variant != "rtmo-s":
+            raise ValueError("Recuperacao adaptativa exige RTMO explicito.")
         if self.variant != "lite" and "path" not in self.model_fields_set:
             raise ValueError("Informe model.path explicitamente ao selecionar outro modelo.")
         return self
@@ -132,7 +135,9 @@ class SupportRegion(StrictModel):
 
 
 class PostureConfig(StrictModel):
-    method: Literal["BASELINE", "LINEAR_CONTEXT_V1", "LINEAR_BODY_V2"] = "BASELINE"
+    method: Literal["BASELINE", "LINEAR_CONTEXT_V1", "LINEAR_BODY_V2", "MULTICLASS_BODY_V3"] = (
+        "BASELINE"
+    )
     artifactPath: str | None = None
     artifactSha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     installationId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]{1,80}$")

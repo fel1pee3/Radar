@@ -30,6 +30,7 @@ def temporal_state(engine, timestamp):
         "requiredWindowMs": engine.policy.floorHoldMs,
         "validObservations": sum(valid for ts, valid in samples if ts >= cutoff),
         "rapidDescentObserved": engine.rapid,
+        "transitionMotionAtMs": getattr(engine, "motion_at", None),
         "recoveryEvidenceMs": engine.rearm_ms,
         "negativeEvidenceMs": getattr(engine, "negative_ms", None),
         "mode": engine.policy.temporalMode,
@@ -167,8 +168,15 @@ class DecisionTrace:
                 reasons.append("INSUFFICIENT_PERSISTENT_EVIDENCE")
         feature_values = asdict(features)
         if self.evidence_mode == "none":
-            feature_values.pop("hipY", None)
-            feature_values.pop("postureAttributes", None)
+            for name in (
+                "hipY",
+                "hipX",
+                "shoulderX",
+                "shoulderY",
+                "bodyScale",
+                "postureAttributes",
+            ):
+                feature_values.pop(name, None)
         self.write(
             {
                 "schemaVersion": 1,
@@ -185,6 +193,14 @@ class DecisionTrace:
                 "policyVersion": policy.version,
                 "capture": "FRAME_AVAILABLE",
                 "inferenceState": o.inferenceState,
+                "perception": {
+                    "personLocated": bool(o.personDetections) or bool(o.poses),
+                    "poseAvailable": bool(o.poses),
+                    "acceptedPersonScores": [box[4] for box in o.personDetections],
+                    "topProposalScore": o.personProposalScore,
+                    "passes": o.perceptionPasses,
+                    "absenceDoesNotConfirmEmptyScene": True,
+                },
                 "posture": posture,
                 "quality": {
                     "eligible": features.eligible,

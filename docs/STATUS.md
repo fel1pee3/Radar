@@ -1,5 +1,52 @@
 # Status de construção
 
+**25/10/2026 — dois vídeos novos de yoga testados com referência, V2 e V3.**
+V3 detectou pessoa já no chão nos dois, em 2002/4000 ms. No segundo,
+referência/V2 demoraram 12400 ms; V3 reduziu NO_POSE de 33 para 11 das 80
+análises. Cobertura V3 **79,7468%**, abaixo do gate de 80%: caso permanece
+parcial, sem arredondar para aprová-lo. Primeiro vídeo teve cobertura 100%.
+Seis execuções FILE ok/ENDED, seis envelopes locais, zero duplicação/HTTP/JPEG.
+Sem treino/alteração de parâmetros; modelos congelados e registros anteriores
+preservados. Não substitui a validação física ou uma reserva final.
+[Resultados e comandos](RELATORIOS/TESTE_DOIS_VIDEOS_YOGA_V3_2026_10_25.md).
+
+**25/10/2026 — primeiro teste físico V3: INSATISFATÓRIO PARA O ACEITE.**
+Sessão `continuous-cf26651e…` encerrou sem erro após 106,06 s: 377 análises,
+cadência 3,67/s, cobertura decisória conservadora 56,72%. Gerou um alerta
+PERSON_ON_FLOOR LIVE/CURRENT, entregue e com aviso local. Incidente
+`b1c438bc-ee52-4e13-ad9e-8e5d966a862a`, ainda sem revisão na consulta.
+Fundador relatou três idas ao chão de 5–7 s, em pé entre elas e piso correto:
+um alerta para três tentativas, duas sem alerta separado. Duração no chão era
+suficiente; não aprovar o teste só pela entrega. Tempos exatos/duração em pé
+ainda desconhecidos; reconhecimento, lacunas e rearme precisam de investigação.
+Sem nova captura nesta análise.
+[Resultados e próximos passos](RELATORIOS/SESSAO_WEBCAM_V3_2026_10_25.md).
+
+**25/10/2026 — candidato V3: regressão dos 16 APROVADA; núcleo funcional ainda PARCIAL.**
+Após autorização de novo treino local, os 16 materiais passaram a desenvolvimento/regressão.
+A avaliação original 2/6 permanece íntegra. Classificador multiclasse com orientação e
+qualidade explícitas, recuperação RTMO por recorte/inversão e decisão temporal versionada:
+**6/6 pessoas já no chão em 2000 ms, zero alertas nos dez negativos, dez PASS com
+cobertura ≥80%, zero duplicações**. Repetido pelo comando público evaluate, 986 análises,
+259,48 s de processamento para 195,99 s de conteúdo: custo maior, sem promessa de 30 FPS.
+Não equivale a avaliação independente nem aprovação do cômodo do fundador.
+
+CAUCAFall antigo: quatro alertas de permanência no chão, mas **somente 1/4 transições
+encenadas gerou POSSIBLE_FALL**; os outros três geraram PERSON_ON_FLOOR. Oito negativos
+sem alerta, um ainda inconclusivo. Três perdas históricas e um controle adicional de
+deitar voluntariamente continuam sem evento por contexto/observação: não foram retirados.
+Dez envelopes nativos passaram pela API isolada com avisos locais e sem duplicação.
+Replay adicional no banco de demonstração, porta 15432, conferido pelo fundador:
+incidente `1d192fe1-b325-4ff8-907e-dee9007ce29e`, revisão humana salva, versão 2.
+Avisos são locais, canal SIMULATED; nenhuma comunicação externa ou webcam nesta rodada.
+
+Faltam avaliação nova reservada, melhoria das transições/perdas restantes e sessão
+física V3. [Comparativo, comandos e limites](RELATORIOS/EVOLUCAO_DETECTOR_05.md) ·
+[Reproduzir e testar no cômodo](USO_DETECTOR_EXPERIMENTAL.md).
+Sem commit, push, deploy ou início da etapa 09 nesta solicitação.
+
+Resultado anterior preservado:
+
 **Evolução do núcleo — 24/10/2026: PARCIAL; MVP funcional não aprovado.**
 Recebidos 16 vídeos inéditos confirmados pelo fundador: seis candidatos de
 pessoa já no chão e dez negativos, com duas cenas vazias. Todos decodificados

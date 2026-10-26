@@ -70,3 +70,50 @@ def test_possible_fall_requires_observed_upright_sequence_not_only_hip_delta():
     assert kinds == ["PERSON_ON_FLOOR", "POSSIBLE_FALL"]
     with pytest.raises(ValueError, match="CONTEXT_CHANGED"):
         engine.step(replace(feature(3000), context=("another-room",)))
+
+
+def test_dynamics_requires_orientation_and_real_body_motion_before_floor():
+    policy = configured_policy(
+        {
+            "version": "floor-rtmo-score-posture-multiclass-v3-synthetic",
+            "qualitySource": "RTMO_KEYPOINT_SCORE",
+            "temporalMode": "EVIDENCE_V2",
+            "transitionEvidence": "POSTURE_DYNAMICS_V1",
+        }
+    )
+
+    def f(t, posture, angle, y):
+        return replace(
+            feature(t, posture, y),
+            context=("room", "cal", 1, "rtmo", 640, 360, 0),
+            hipX=0.5,
+            bodyScale=0.5,
+            torsoAngleDeg=angle,
+            shoulderX=0.5,
+            shoulderY=y - 0.2,
+        )
+
+    kinds = []
+    for angle, y in [(0, 0.7), (70, 0.4), (70, 0.7)]:
+        engine = EvidenceEngine(policy)
+        for t in range(0, 800, 200):
+            engine.step(f(t, "STANDING_OR_WALKING", 0, 0.4))
+        for t in range(800, 2801, 200):
+            event = engine.step(f(t, "LYING", angle, y))
+            if event:
+                kinds.append(event.kind)
+    assert kinds == ["PERSON_ON_FLOOR", "PERSON_ON_FLOOR", "POSSIBLE_FALL"]
+
+
+def test_dynamics_does_not_infer_transition_from_already_lying_start():
+    policy = configured_policy(
+        {
+            "version": "floor-rtmo-score-posture-multiclass-v3-synthetic",
+            "qualitySource": "RTMO_KEYPOINT_SCORE",
+            "temporalMode": "EVIDENCE_V2",
+            "transitionEvidence": "POSTURE_DYNAMICS_V1",
+        }
+    )
+    engine = EvidenceEngine(policy)
+    events = [e for t in range(0, 2400, 200) if (e := engine.step(feature(t)))]
+    assert len(events) == 1 and events[0].kind == "PERSON_ON_FLOOR"

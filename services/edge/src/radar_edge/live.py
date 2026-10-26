@@ -64,7 +64,11 @@ def doctor_live(config):
     spec = get_model_spec(config.model.variant)
     with WebcamSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()
-        with create_estimator(config.model.path, config.model.variant) as estimator:
+        with create_estimator(
+            config.model.path,
+            config.model.variant,
+            **({"recovery": config.model.recovery} if config.model.recovery != "NONE" else {}),
+        ) as estimator:
             poses, duration = estimator.estimate(frame)
         return {
             "status": "ok",
@@ -151,7 +155,15 @@ def run_live(config):
             network = resources.enter_context(NetworkWorker(config, health))
             # Save error/final state before the network resource is closed.
             estimator = resources.enter_context(
-                create_estimator(config.model.path, config.model.variant)
+                create_estimator(
+                    config.model.path,
+                    config.model.variant,
+                    **(
+                        {"recovery": config.model.recovery}
+                        if config.model.recovery != "NONE"
+                        else {}
+                    ),
+                )
             )
             preview = LocalPreview(config.processing.preview, config.processing.previewStartPaused)
             if config.processing.previewStabilization:
@@ -305,6 +317,9 @@ def run_live(config):
                     identicalFrameDurationMs=max(
                         0, round((source.last_acquired_ns - source.info[12]) / 1e6)
                     ),
+                    personDetections=getattr(estimator, "person_detections", ()),
+                    perceptionPasses=getattr(estimator, "perception_passes", ()),
+                    personProposalScore=getattr(estimator, "person_proposal_score", None),
                 )
                 features = runtime.process(o, frame) if runtime else None
                 if diagnostic_gate is not None:

@@ -7,6 +7,20 @@ abaixo é histórico e experimental. A evolução atual tem critérios de detec�
 para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
+
+**Evolução de 25/10:** V3 recuperou os seis alvos dos 16 vídeos, todos em 2000 ms,
+com zero alertas nos dez negativos e cobertura suficiente nos dez. Esses materiais
+agora são desenvolvimento/regressão; a primeira avaliação abaixo foi preservada.
+Melhora comprovada nesses erros conhecidos, com maior custo de CPU. Possível queda
+continua limitada: 1/4 transições antigas reconhecida como tal, três perdas históricas
+preservadas. Fluxo novo até revisão humana no painel confirmado. Nova reserva e
+validação física V3 pendentes. [Comparativo desta iteração](docs/RELATORIOS/EVOLUCAO_DETECTOR_05.md).
+Primeiro ensaio físico V3: alerta LIVE entregue, 106 s de sessão e cobertura
+decisória de 56,72%. Fundador relatou três idas ao chão de 5–7 s, em pé entre
+elas: **um alerta para três tentativas, teste físico insatisfatório**.
+[Análise da sessão](docs/RELATORIOS/SESSAO_WEBCAM_V3_2026_10_25.md).
+
+Avaliação original, preservada:
 Novo lote de 16 vídeos recebido e conferido por hash/procedência, reservado
 antes das previsões. Candidato corporal V2 preparado apenas com dados antigos;
 cenas e 16 contornos corrigidos/conferidos pelo fundador antes das previsões.

@@ -257,14 +257,14 @@ def guard_candidate_evaluation(entries):
     from radar_edge.calibration import load_calibration
     from radar_edge.model import get_model_spec
     from radar_edge.policy import configured_policy
-    from radar_edge.posture import PostureClassifier
+    from radar_edge.posture import create_posture_classifier
 
     final = []
     for entry in entries:
         config = load_config(entry.config)
         if config.posture.method == "BASELINE" or entry.role != "EVALUATION":
             continue
-        classifier = PostureClassifier(
+        classifier = create_posture_classifier(
             config.posture,
             load_calibration(config.calibrationPath),
             get_model_spec(config.model.variant),
@@ -276,14 +276,21 @@ def guard_candidate_evaluation(entries):
         ]
         if not consulted:
             raise EdgeError("EVALUATION_PROVENANCE_REQUIRED", "Falta procedência do classificador.")
-        session_split = protocol.get("splitStrategy", "PARTICIPANT") == "SESSION"
+        recording_protocol = protocol.get("splitProtocol") == (
+            "RECORDING_GROUPS_POSSIBLE_SHARED_PARTICIPANTS"
+        )
+        session_split = (
+            recording_protocol or protocol.get("splitStrategy", "PARTICIPANT") == "SESSION"
+        )
         if session_split and (
-            not protocol.get("sessionIndependenceEstablished")
+            (not recording_protocol and not protocol.get("sessionIndependenceEstablished"))
             or "unknown" in entry.sessionId.lower()
         ):
             raise EdgeError("EVALUATION_SESSION_REQUIRED", "Identifique a nova sessão de gravação.")
         if any(
             entry.sha256 == clip["sourceSha256"]
+            or recording_protocol
+            and entry.sessionId == clip.get("groupId")
             or not session_split
             and entry.personPseudonym == clip["participantId"]
             or clip["sessionId"] is not None

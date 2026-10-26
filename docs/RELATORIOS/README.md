@@ -1,5 +1,8 @@
 # Relatórios de implementação
 
+Diagnóstico adicional: [dois vídeos de yoga, V3 congelado](TESTE_DOIS_VIDEOS_YOGA_V3_2026_10_25.md).
+Detectou os dois dentro de 5 s; segundo ainda parcial por cobertura <80%.
+
 [Status](../STATUS.md) · [Plano](../../etapas/README.md)
 
 Os relatórios são criados durante a implementação. As etapas [00](ETAPA_00.md), [01](ETAPA_01.md), [02](ETAPA_02.md) e [03](ETAPA_03.md) registram verificações reais e seus limites; o [inventário técnico](DEPENDENCIAS_E_MODELOS.md) registra as dependências selecionadas. Use `ETAPA_00.md` a `ETAPA_09.md`; o relatório final será `VALIDACAO_MVP.md`.
@@ -32,6 +35,9 @@ parcial, sem substituir o fechamento histórico ou iniciar a etapa 09.
 registra procedência, independência limitada e correção dos contornos.
 [Primeira avaliação dos 16 arquivos](EVOLUCAO_DETECTOR_04.md): baseline/V2
 2/6 alvos; V2 sem melhora global e não aprovado, seis negativos inconclusivos.
+[Incremento 05](EVOLUCAO_DETECTOR_05.md): V3 recupera 6/6 em desenvolvimento,
+resolve os dez negativos daquele lote e verifica o fluxo até revisão humana;
+transições, perdas históricas, avaliação reservada e webcam ainda limitam o aceite.
 
 A [etapa 08](ETAPA_08.md) registra validação de engenharia, instalação limpa,
 backup/restore e candidata local, com [matriz final](VALIDACAO_MVP.md).

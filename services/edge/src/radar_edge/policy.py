@@ -29,6 +29,9 @@ class Policy:
     temporalMode: str = "LEGACY"
     negativeResetMs: int = 600
     transitionUprightHoldMs: int = 400
+    transitionEvidence: str = "UPRIGHT_HIP_LEGACY"
+    transitionAngleChangeDeg: float = 35.0
+    transitionBodyDisplacement: float = 0.3
 
     def __post_init__(self):
         if self.qualitySource not in {"MEDIAPIPE", "RTMO_KEYPOINT_SCORE"}:
@@ -39,8 +42,10 @@ class Policy:
             raise ValueError("Invalid policy version")
         if self.temporalMode not in {"LEGACY", "EVIDENCE_V2"}:
             raise ValueError("Invalid temporal mode")
+        if self.transitionEvidence not in {"UPRIGHT_HIP_LEGACY", "POSTURE_DYNAMICS_V1"}:
+            raise ValueError("Invalid transition evidence")
         for field in fields(self):
-            if field.name in {"version", "qualitySource", "temporalMode"}:
+            if field.name in {"version", "qualitySource", "temporalMode", "transitionEvidence"}:
                 continue
             value = getattr(self, field.name)
             if (
@@ -64,6 +69,13 @@ class Policy:
 
     def to_dict(self):
         value = asdict(self)
+        if self.transitionEvidence == "UPRIGHT_HIP_LEGACY":
+            for name in (
+                "transitionEvidence",
+                "transitionAngleChangeDeg",
+                "transitionBodyDisplacement",
+            ):
+                value.pop(name)
         if self.temporalMode == "LEGACY":
             for name in ("temporalMode", "negativeResetMs", "transitionUprightHoldMs"):
                 value.pop(name)
@@ -79,6 +91,10 @@ DEFAULT_POLICY = Policy()
 
 def configured_policy(overrides):
     policy = Policy(**overrides)
+    if policy.transitionEvidence != "UPRIGHT_HIP_LEGACY" and not policy.version.startswith(
+        "floor-rtmo-score-posture-multiclass-v3"
+    ):
+        raise ValueError("Posture dynamics requires a separate explicit policy version")
     score_version = policy.version.startswith("floor-rtmo-score-")
     if score_version != (policy.qualitySource == "RTMO_KEYPOINT_SCORE"):
         raise ValueError("RTMO score quality requires its explicit policy family")

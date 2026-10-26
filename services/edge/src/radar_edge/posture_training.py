@@ -131,6 +131,10 @@ def train_posture(filename, output):
         path = private_path(filename)
         if path.stat().st_size > 1024 * 1024:
             raise ValueError()
+        if json.loads(path.read_bytes()).get("schemaVersion") == 2:
+            from radar_edge.posture_multiclass_training import train_multiclass
+
+            return train_multiclass(filename, output)
         manifest = TrainingManifest.model_validate_json(path.read_bytes())
         destination = private_path(output)
         if destination.exists():

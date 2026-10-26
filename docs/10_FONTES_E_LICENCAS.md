@@ -1,5 +1,12 @@
 # Fontes técnicas e licenças
 
+Complemento 25/10/2026: fundador forneceu dois recortes de Yoga With Ginny,
+episódios 022/131, NCTV/Internet Archive. Hashes dos recortes conferidos;
+metadados oficiais de nomes/MD5/tamanhos das fontes coincidem com o pacote.
+licenseurl/rights não informados nas respostas consultadas. Teste privado
+com modelo congelado, sem treino, redistribuição ou pressuposição de direitos
+comerciais. [Procedência, limites e resultados](RELATORIOS/TESTE_DOIS_VIDEOS_YOGA_V3_2026_10_25.md).
+
 [Voltar ao README central](../README.md)
 
 Consulta técnica em **21/10/2026**. As decisões de arquitetura, valores de parâmetros, limites e etapas são propostas específicas deste projeto, não promessas dos fornecedores. Links podem mudar; fixar as versões efetivamente usadas na implementação.

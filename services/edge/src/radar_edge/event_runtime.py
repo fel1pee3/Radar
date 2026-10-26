@@ -23,13 +23,15 @@ from radar_edge.model import get_model_spec
 from radar_edge.observations import point_usable
 from radar_edge.outbox import FileLock, Outbox, encode
 from radar_edge.policy import configured_policy
-from radar_edge.posture import PostureClassifier
+from radar_edge.posture import create_posture_classifier
 
 WORKER_VERSION = "edge-temporal-v1"
 SCHEMAS = Path(__file__).resolve().parents[4] / "packages/contracts/src/schemas"
 
 
 def worker_version(policy):
+    if policy.version.startswith("floor-rtmo-score-posture-multiclass-v3"):
+        return "edge-posture-v3"
     if policy.version.startswith("floor-rtmo-score-posture-body-v2"):
         return "edge-posture-v2"
     return "edge-posture-v1" if policy.temporalMode == "EVIDENCE_V2" else WORKER_VERSION
@@ -148,7 +150,7 @@ class EventRuntime:
                 "POSTURE_POLICY_CONFLICT", "O candidato exige sua política temporal versionada."
             )
         self.classifier = (
-            PostureClassifier(config.posture, calibration, self.model_spec, self.policy)
+            create_posture_classifier(config.posture, calibration, self.model_spec, self.policy)
             if new_posture
             else None
         )
@@ -182,6 +184,11 @@ class EventRuntime:
                     if hasattr(geometry, "to_dict")
                     else vars(geometry),
                     "model": self.model_spec.sha256,
+                    **(
+                        {"perceptionRecovery": config.model.recovery}
+                        if config.model.recovery != "NONE"
+                        else {}
+                    ),
                     "worker": worker_version(self.policy),
                     "processing": {
                         k: v
@@ -392,7 +399,7 @@ class EventRuntime:
                         "sha256": self.config.posture.artifactSha256,
                         "installationId": self.config.posture.installationId,
                         "scope": "EXPERIMENTAL_UNSEEN_INSTALLATION_EVALUATION"
-                        if self.config.posture.method == "LINEAR_BODY_V2"
+                        if self.config.posture.method in {"LINEAR_BODY_V2", "MULTICLASS_BODY_V3"}
                         else "EXPERIMENTAL_INSTALLATION_SPECIFIC",
                         "descriptor": self.classifier.artifact.descriptor,
                         "contextMode": self.classifier.artifact.contextMode,

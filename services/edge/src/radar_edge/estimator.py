@@ -17,11 +17,13 @@ class PoseEstimator(Protocol):
     def close(self) -> None: ...
 
 
-def create_estimator(model_path, variant="lite"):
+def create_estimator(model_path, variant="lite", recovery="NONE"):
     if variant == "rtmo-s":
         from radar_edge.rtmo import RtmoEstimator
 
-        return RtmoEstimator(model_path)
+        return RtmoEstimator(model_path, recovery=recovery)
+    if recovery != "NONE":
+        raise EdgeError("INVALID_MODEL_VARIANT", "Recuperacao exige RTMO.")
     return MediaPipeEstimator(model_path, variant)
 
 

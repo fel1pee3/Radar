@@ -47,6 +47,9 @@ class Observation:
     calibrationVersion: int
     frameFingerprint: str | None = None
     identicalFrameDurationMs: int | None = None
+    personDetections: tuple[tuple[float, ...], ...] = ()
+    perceptionPasses: tuple[str, ...] = ()
+    personProposalScore: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

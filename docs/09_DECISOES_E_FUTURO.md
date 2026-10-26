@@ -173,6 +173,22 @@ desenvolvimento para esse sucessor, com outra reserva para aceite.
 
 O caso de uso assistivo, o processamento local, o reconhecimento de concorrentes, o fluxo humano, a necessidade de medir falsos alertas e a evolução por evidências. O pacote atual define uma bancada mais acessível para começar; não apaga os requisitos de um futuro serviço real.
 
+## D53 — correção e regressão do detector V3, 25/10/2026
+
+Solicitação do fundador autoriza treino local leve, comparação de percepção e
+evolução da decisão. Os 16 vídeos já consultados passam a DEVELOPMENT/REGRESSION;
+preservar a avaliação original e exigir nova reserva por gravação/sessão. Não
+sortear frames entre partições. Reusar os contornos aprovados, sem redesenho
+por postura. Permanecem 2000 ms de persistência e prazo de 5000 ms.
+
+V3 preserva orientação, máscaras de ausência e score nativo; quatro classes
+internas e abstenção. RTMO e dependências existentes mantidos. Recuperação
+opcional por recorte da proposta de pessoa e inversão/recorte central, com
+coordenadas restauradas e limiar de aceitação preservado. Políticas antigas
+continuam disponíveis. Sessão física requer ação do fundador, sem abertura
+automática de câmera. Resultados: [incremento 05](RELATORIOS/EVOLUCAO_DETECTOR_05.md).
+Não aprova uso assistencial, piloto, eficácia geral nem inicia etapa 09.
+
 ## Trajetória depois da v0.1
 
 | Fase | Próxima prova | Condição de avanço |

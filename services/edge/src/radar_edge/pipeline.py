@@ -40,6 +40,7 @@ class ObservationExport:
         value = observation.to_dict()
         if self.evidence_mode == "none":
             value["poses"] = []
+            value["personDetections"] = []
         data = (json.dumps(value, allow_nan=False, separators=(",", ":")) + "\n").encode("utf-8")
         if (
             self.count >= self.config.maxExportObservations
@@ -86,6 +87,19 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     preview = None
     preview_paused_seconds = 0.0
     trace = None
+    capture_read_seconds = 0.0
+    capture_read_count = 0
+    preview_call_seconds = 0.0
+
+    def read_frame():
+        nonlocal capture_read_seconds, capture_read_count
+        started = perf_counter()
+        try:
+            return source.read()
+        finally:
+            capture_read_seconds += perf_counter() - started
+            capture_read_count += 1
+
     try:
         trace = DecisionTrace(
             directory,
@@ -96,7 +110,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         with ExitStack() as resources:
             resources.callback(exporter.close)
             resources.enter_context(source)
-            frame = source.read()
+            frame = read_frame()
             calibration = load_calibration(config.calibrationPath)
             check_compatibility(calibration, frame.geometry, config.cameraId)
             trace.status("RUNNING", "SOURCE_FRAME_AVAILABLE")
@@ -130,7 +144,15 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                     health.update(capture="ENDED", flags=set())
                 network = resources.enter_context(NetworkWorker(config, health))
             estimator = resources.enter_context(
-                create_estimator(config.model.path, config.model.variant)
+                create_estimator(
+                    config.model.path,
+                    config.model.variant,
+                    **(
+                        {"recovery": config.model.recovery}
+                        if config.model.recovery != "NONE"
+                        else {}
+                    ),
+                )
             )
             model_loaded = True
             preview = resources.enter_context(
@@ -197,12 +219,15 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         calibrationVersion=calibration["version"],
                         frameFingerprint=frame_digest,
                         identicalFrameDurationMs=frame.timestamp_ms - identical_since,
+                        personDetections=getattr(estimator, "person_detections", ()),
+                        perceptionPasses=getattr(estimator, "perception_passes", ()),
+                        personProposalScore=getattr(estimator, "person_proposal_score", None),
                     )
                     if runtime is not None and frame.index <= runtime.run["frame_index"]:
                         # Decode and warm the VIDEO tracker, but do not replay decisions,
                         # accumulate recovery time or repeat exported observations.
                         warmup_observations += 1
-                        frame = source.read()
+                        frame = read_frame()
                         continue
                     if runtime is not None:
                         runtime.process(observation, frame)
@@ -219,12 +244,15 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                     metrics.add(observation)
                     sequence.update(f"{frame.index}:{frame.timestamp_ms}\n".encode())
                     exporter.write(observation)
-                    if not preview.show(
+                    preview_started = perf_counter()
+                    keep_running = preview.show(
                         frame,
                         observation,
                         calibration["floorPolygon"],
                         quality_threshold(config),
-                    ):
+                    )
+                    preview_call_seconds += perf_counter() - preview_started
+                    if not keep_running:
                         state = "STOPPED_REQUEST"
                         break
                     if (
@@ -235,7 +263,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         break
                 else:
                     metrics.skipped += 1
-                frame = source.read()
+                frame = read_frame()
             if runtime is not None and state == "ENDED":
                 runtime.finish()
             preview_paused_seconds = preview.paused_seconds
@@ -287,7 +315,9 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "captureState": state,
         "error": error,
         "workerVersion": (
-            "edge-posture-v2"
+            "edge-posture-v3"
+            if config.posture.method == "MULTICLASS_BODY_V3"
+            else "edge-posture-v2"
             if config.posture.method == "LINEAR_BODY_V2"
             else "edge-posture-v1"
             if config.posture.method == "LINEAR_CONTEXT_V1"
@@ -306,7 +336,21 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "processing": config.processing.model_dump(),
         "decodedFrames": source.frames_read,
         "mediaSequenceSha256": sequence.hexdigest(),
-        "metrics": metrics.summary(),
+        "metrics": {
+            **metrics.summary(),
+            "captureRead": {
+                "calls": capture_read_count,
+                "totalMs": capture_read_seconds * 1000,
+                "scope": "FILE decode, timestamp and resize; includes end-of-file read",
+            },
+            "previewCalls": {
+                "enabled": config.processing.preview,
+                "totalMs": preview_call_seconds * 1000,
+                "scope": (
+                    "show calls including pacing/interaction; disabled is not display throughput"
+                ),
+            },
+        },
         "observationExport": {
             "enabled": config.diagnostics.exportObservations,
             "count": exporter.count,
@@ -338,7 +382,11 @@ def doctor(config: EdgeConfig) -> dict:
     model_spec = get_model_spec(config.model.variant)
     with FileSource(config.source, config.processing.maxWidth) as source:
         frame = source.read()
-        with create_estimator(config.model.path, config.model.variant) as estimator:
+        with create_estimator(
+            config.model.path,
+            config.model.variant,
+            **({"recovery": config.model.recovery} if config.model.recovery != "NONE" else {}),
+        ) as estimator:
             poses, duration = estimator.estimate(frame)
         calibration_status = "MISSING"
         if private_path(config.calibrationPath).exists():

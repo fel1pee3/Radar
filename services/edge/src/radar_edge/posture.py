@@ -240,6 +240,14 @@ class PostureClassifier:
         )
 
 
+def create_posture_classifier(settings, calibration, model_spec, policy):
+    if settings.method == "MULTICLASS_BODY_V3":
+        from radar_edge.posture_multiclass import MulticlassClassifier
+
+        return MulticlassClassifier(settings, calibration, model_spec, policy)
+    return PostureClassifier(settings, calibration, model_spec, policy)
+
+
 def check_posture(config):
     """Verify local model/context before a founder elects to open any source."""
     from radar_edge.calibration import load_calibration
@@ -257,7 +265,7 @@ def check_posture(config):
     }
     if config.posture.method != "BASELINE":
         verify_model(config.model.path, config.model.variant)
-        classifier = PostureClassifier(
+        classifier = create_posture_classifier(
             config.posture,
             load_calibration(config.calibrationPath),
             get_model_spec(config.model.variant),

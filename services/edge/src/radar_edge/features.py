@@ -38,6 +38,13 @@ class Features:
     postureMethod: str | None = None
     postureAttributes: tuple[float, ...] = ()
     regionState: str | None = None
+    postureClassScores: tuple[float, ...] = ()
+    postureQualityReasons: tuple[str, ...] = ()
+    postureEvidenceOrigin: str | None = None
+    hipX: float | None = None
+    bodyScale: float | None = None
+    shoulderX: float | None = None
+    shoulderY: float | None = None
 
 
 def extract_features(o: Observation, polygon, policy: Policy = DEFAULT_POLICY) -> Features:

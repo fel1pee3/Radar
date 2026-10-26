@@ -98,6 +98,7 @@ def test_unknown_is_not_empty_scene_or_positive_evidence_and_none_redacts_points
     assert records[1]["emission"] is None
     assert "UNCERTAIN_NO_POSITIVE_EVIDENCE" in records[1]["decisionReasons"]
     assert "hipY" not in records[0]["features"]
+    assert not {"hipX", "shoulderX", "shoulderY", "bodyScale"} & records[0]["features"].keys()
     assert all("x" not in p and "score" not in p for p in records[0]["quality"]["essential"])
 
 
