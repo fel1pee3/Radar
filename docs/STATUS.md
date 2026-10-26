@@ -1,5 +1,75 @@
 # Status de construção
 
+**26/10/2026 — preferência adaptativa comparada; V1 não promovido.**
+Hipótese sustentada no alvo caro: recuperação de 270° repetidamente útil após
+duas chamadas anteriores. RTMO_PREFERRED_V1 opt-in implementado com inferência
+atual, até duas chamadas/análise, inspeção canônica e busca/lease limitados.
+24 transmissões sequenciais/repetidas: candidato passou 12/12 nos quatro cenários,
+com reduções de custo por análise de 58,22% no alvo caro e 66,95% no vazio; sem
+relaxar qualidade, temporizadores, cobertura ou lacuna. Regressão de 36 arquivos
+manteve 12 eventos e quatro perdas históricas, mas criou quatro controles
+inconclusivos por menor cobertura. Foram localizadas omissões de ORIGINAL durante
+reaquisição, inclusive em frames onde a referência já encontrava pose útil.
+399 testes Python, 104 contratos TS, 159 API e 20 E2E passaram, além de lint,
+typecheck e build; esses checks não aprovam a regressão perceptual do candidato.
+Referência REFERENCE_4_SPIN/RTMO_ADAPTIVE_V3 e configurações mantidas. Nenhum novo
+protocolo físico preparado, webcam aberta ou aprovação integral do MVP.
+[Método, comparação, regressões e comandos](RELATORIOS/RECUPERACAO_ADAPTATIVA_2026_10_26.md).
+
+**26/10/2026 — cadência investigada; referência preservada, gargalo ainda aberto.**
+Implementada transmissão técnica FILE a 1× pelo agendamento LIVE, com inferência
+real, slot de frame recente, perfil por fase e saídas isoladas REPLAY/TEST.
+36 comparações sequenciais (quatro casos, três perfis, três repetições), mais três
+verificações com prévia. Duas threads pioraram custo/cobertura; desativar espera
+ativa não trouxe ganho consistente. Mantido REFERENCE_4_SPIN, sem mudar pesos,
+pisos, qualidade, permanência ou tolerância de lacuna. Inferência ocupou 95,95%
+do processamento da referência; caso caro continuou com cobertura insuficiente
+e sem alerta em duas das três repetições. Vazio sem alerta continua inconclusivo.
+72 FILE de regressão (36 por perfil de referência/sem espera ativa) preservaram
+exatamente eventos, horários de mídia, cobertura e rejeições: quatro perdas e
+dois negativos inconclusivos mantidos. 383 Python, 159 API, 20 E2E, contratos,
+lint, typecheck e build passaram; cinco testes novos foram conferidos novamente
+após os ajustes finais nos testes.
+Nenhuma webcam aberta ou novo ensaio físico solicitado nesta rodada. A reprodução
+técnica não substitui validação física nem aprova o MVP.
+[Perfil, comparação, regressões e comandos](RELATORIOS/DESEMPENHO_TRANSMISSAO_2026_10_26.md).
+
+**26/10/2026 — ensaio físico auditado: NÃO APROVADO para o aceite.**
+Sessão `10347778…`, 704,774 s, 12 janelas encerradas, 2041 análises e quatro
+incidentes LIVE/CURRENT entregues com quatro avisos locais; encerramento ENDED
+persistido. Três janelas positivas tiveram alerta, três ficaram sem, e um quarto
+alerta ocorreu fora das cenas. Não é recall 3/6: fundador marcou antes de ir ao
+chão/depois de voltar e não lembra quais tentativas ficaram abaixo de 10 s ou
+incompletas. Limites/durações posturais inconclusivos, seis mantidas no relatório.
+Cobertura das janelas positivas: 87,77%; 57,78%; 71,62%; 79,7917%; 67,44%; 68,17%.
+Seis controles confirmados sem pessoa deitada e sem alerta, mas todos abaixo do
+gate correspondente de cobertura. Análise 2,908/s; 281 lacunas >500 ms, máxima
+1797 ms; frames recentes no início (máximo 79 ms), sem acúmulo observado.
+Rearme concluiu antes da primeira candidata da segunda cabeça; o trace mostra
+fragmentação posterior da permanência. Quatro incidentes sem ações/revisão na
+última consulta de 11:59:27 UTC−03; exibição no prazo não verificada. Alerta fora das
+cenas permanece não adjudicado. Duas sessões próximas incompletas preservadas.
+Fonte/parâmetros inalterados; nenhuma câmera aberta ou tentativa repetida pela
+auditoria. [Resultados completos](RELATORIOS/ENSAIO_WEBCAM_ORIENTACAO_2026_10_26.md).
+
+**26/10/2026, antes do ensaio — recuperação de orientação: ganho em arquivo; webcam então pendente.**
+V3 congelado reproduzido: casa 2002 ms/100%; sala 4000 ms/79,7468%.
+Diagnóstico das 80 análises localizou 11 rejeições no gate de pessoa, sem falha
+de classe/piso nas 69 poses aceitas. Candidato opt-in RTMO_ADAPTIVE_V3 recuperou
+as 11, com sala em 2000 ms/100%; oito essenciais reais e scores preservados.
+Sem treino, troca de pesos, novo piso, dependência ou relaxamento temporal.
+Comparação: 36 FILE por versão, incluindo cadeiras históricas. Seis alvos dos
+16 preservados, zero alertas nos 20 negativos e zero duplicação; dois negativos
+inconclusivos. Três perdas históricas e controle de deitar continuam perdidos;
+POSSIBLE_FALL segue limitado a 1/4 transições CAUCA.
+378 Python, 159 API, 104 contratos TS e 20 E2E passaram; engenharia não aprova
+percepção geral. Sessão física nova **não realizada**, nenhuma webcam aberta.
+Roteiro de 12 minutos preparado com marcação humana independente, seis tentativas,
+controles, métricas de idade/custo e fluxo até revisão. Depende do fundador.
+[Diagnóstico, custo e verificações](RELATORIOS/PERCEPCAO_ORIENTACAO_V3_2026_10_26.md) ·
+[Roteiro único](USO_DETECTOR_EXPERIMENTAL.md).
+Sem commit/push/deploy ou avanço para câmera IP.
+
 **25/10/2026 — dois vídeos novos de yoga testados com referência, V2 e V3.**
 V3 detectou pessoa já no chão nos dois, em 2002/4000 ms. No segundo,
 referência/V2 demoraram 12400 ms; V3 reduziu NO_POSE de 33 para 11 das 80

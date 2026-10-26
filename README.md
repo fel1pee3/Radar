@@ -8,6 +8,24 @@ para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
 
+**Estratégia adaptativa, 26/10:** preferência de transformação reduziu chamadas e
+passou nos quatro cenários técnicos, mas a regressão criou quatro controles
+inconclusivos. V1 não promovido; referência e configurações preservadas, sem nova
+webcam. [Comparação e defeitos encontrados](docs/RELATORIOS/RECUPERACAO_ADAPTATIVA_2026_10_26.md).
+
+**Cadência, 26/10:** 36 comparações em transmissão técnica reproduziram o bloqueio
+de processamento. Duas opções de CPU não trouxeram ganho consistente; referência
+preservada. Instrumentação e reprodução a 1× disponíveis, sem nova webcam ou
+mudança dos critérios. [Resultados e comandos](docs/RELATORIOS/DESEMPENHO_TRANSMISSAO_2026_10_26.md).
+
+**26/10:** recuperação de orientação melhorou o arquivo da sala (2 s/100%) e
+preservou a regressão dos 16. Ensaio físico posterior **não aprovado**: quatro
+incidentes entregues, três janelas positivas sem alerta, cobertura insuficiente
+e tempos reais das posturas não delimitados. Revisões humanas ainda pendentes;
+sem alteração de parâmetros ou repetição pela auditoria. V3 anterior mantido.
+[Diagnóstico](docs/RELATORIOS/PERCEPCAO_ORIENTACAO_V3_2026_10_26.md) ·
+[Auditoria física](docs/RELATORIOS/ENSAIO_WEBCAM_ORIENTACAO_2026_10_26.md).
+
 **Evolução de 25/10:** V3 recuperou os seis alvos dos 16 vídeos, todos em 2000 ms,
 com zero alertas nos dez negativos e cobertura suficiente nos dez. Esses materiais
 agora são desenvolvimento/regressão; a primeira avaliação abaixo foi preservada.

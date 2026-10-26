@@ -50,6 +50,9 @@ class Observation:
     personDetections: tuple[tuple[float, ...], ...] = ()
     perceptionPasses: tuple[str, ...] = ()
     personProposalScore: float | None = None
+    perceptionAttempts: tuple[dict, ...] = ()
+    frameAgeAtAnalysisStartMs: float | None = None
+    frameAgeAfterInferenceMs: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

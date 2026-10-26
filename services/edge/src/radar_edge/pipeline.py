@@ -15,7 +15,7 @@ from radar_edge.calibration import check_compatibility, load_calibration
 from radar_edge.config import EdgeConfig, private_path, quality_threshold
 from radar_edge.decision_trace import DecisionTrace
 from radar_edge.errors import EdgeError
-from radar_edge.estimator import create_estimator
+from radar_edge.estimator import create_estimator, perception_summary, reset_processing_preference
 from radar_edge.features import QualityGate, extract_features
 from radar_edge.metrics import Metrics
 from radar_edge.model import file_hash, get_model_spec, model_metadata
@@ -67,6 +67,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
     directory = private_path(config.diagnostics.outputDirectory) / run_id
     directory.mkdir(parents=True, exist_ok=False)
     metrics = Metrics(quality_threshold(config), model_metadata(model_spec)["qualitySource"])
+    estimator = None
     source = FileSource(config.source, config.processing.maxWidth)
     sequence = hashlib.sha256()
     exporter = ObservationExport(
@@ -152,6 +153,11 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         if config.model.recovery != "NONE"
                         else {}
                     ),
+                    **(
+                        {"runtime_profile": config.model.runtimeProfile}
+                        if config.model.runtimeProfile != "REFERENCE_4_SPIN"
+                        else {}
+                    ),
                 )
             )
             model_loaded = True
@@ -163,6 +169,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
             if health is not None:
 
                 def on_pause(paused):
+                    reset_processing_preference(estimator, "PAUSE_OR_RESUME")
                     runtime.break_observation()
                     health.update(capture="PAUSED" if paused else "RUNNING", flags=set())
                     trace.status("PAUSED" if paused else "RUNNING", "OPERATOR_PREVIEW_CONTROL")
@@ -221,6 +228,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         identicalFrameDurationMs=frame.timestamp_ms - identical_since,
                         personDetections=getattr(estimator, "person_detections", ()),
                         perceptionPasses=getattr(estimator, "perception_passes", ()),
+                        perceptionAttempts=tuple(getattr(estimator, "perception_attempts", ())),
                         personProposalScore=getattr(estimator, "person_proposal_score", None),
                     )
                     if runtime is not None and frame.index <= runtime.run["frame_index"]:
@@ -334,6 +342,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         if calibration
         else None,
         "processing": config.processing.model_dump(),
+        **perception_summary(estimator),
         "decodedFrames": source.frames_read,
         "mediaSequenceSha256": sequence.hexdigest(),
         "metrics": {
@@ -386,6 +395,11 @@ def doctor(config: EdgeConfig) -> dict:
             config.model.path,
             config.model.variant,
             **({"recovery": config.model.recovery} if config.model.recovery != "NONE" else {}),
+            **(
+                {"runtime_profile": config.model.runtimeProfile}
+                if config.model.runtimeProfile != "REFERENCE_4_SPIN"
+                else {}
+            ),
         ) as estimator:
             poses, duration = estimator.estimate(frame)
         calibration_status = "MISSING"

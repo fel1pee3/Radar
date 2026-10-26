@@ -116,7 +116,7 @@ class DecisionTrace:
         self.count += 1
         self.bytes += len(data)
 
-    def observation(self, o, features, policy, before, after, emission=None):
+    def observation(self, o, features, policy, before, after, emission=None, live_timing=None):
         if not self.enabled:
             return
         points = {p.index: p for p in o.poses[0].landmarks} if len(o.poses) == 1 else {}
@@ -182,6 +182,7 @@ class DecisionTrace:
                 "schemaVersion": 1,
                 "recordType": "DECISION",
                 "timestampMs": o.timestampMs,
+                "recordedAt": datetime.now(UTC).isoformat(),
                 "timestampSource": o.timestampSource,
                 "frameIndex": o.frameIndex,
                 "mode": o.mode,
@@ -199,7 +200,15 @@ class DecisionTrace:
                     "acceptedPersonScores": [box[4] for box in o.personDetections],
                     "topProposalScore": o.personProposalScore,
                     "passes": o.perceptionPasses,
+                    "attempts": o.perceptionAttempts,
                     "absenceDoesNotConfirmEmptyScene": True,
+                },
+                "timing": {
+                    "inferenceMs": o.inferenceMs,
+                    "frameAgeAtAnalysisStartMs": o.frameAgeAtAnalysisStartMs,
+                    "frameAgeAfterInferenceMs": o.frameAgeAfterInferenceMs,
+                    "liveAgeClock": "HOST_MONOTONIC" if o.mode == "LIVE" else None,
+                    **(live_timing or {}),
                 },
                 "posture": posture,
                 "quality": {
@@ -244,6 +253,17 @@ class DecisionTrace:
                 "timestampSource": "NOT_AN_OBSERVATION",
             }
         )
+
+    def processing(self, timestamp_ms, values):
+        if self.settings.profileProcessing:
+            self.write(
+                {
+                    "schemaVersion": 1,
+                    "recordType": "PROCESSING_PROFILE",
+                    "timestampMs": timestamp_ms,
+                    **values,
+                }
+            )
 
     def summary(self):
         return {

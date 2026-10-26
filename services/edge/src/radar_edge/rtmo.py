@@ -95,21 +95,29 @@ def decode_outputs(outputs, ratio, width, height):
 
 
 class RtmoEstimator:
-    def __init__(self, model_path, variant="rtmo-s", recovery="NONE"):
+    def __init__(
+        self, model_path, variant="rtmo-s", recovery="NONE", runtime_profile="REFERENCE_4_SPIN"
+    ):
         if variant != "rtmo-s":
             raise EdgeError("INVALID_MODEL_VARIANT", "O adaptador RTMO exige rtmo-s.")
         self.model_path = model_path
         self.session = None
         self.previous_ms = -1
-        if recovery not in {"NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2"}:
+        if recovery not in {"NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2", "RTMO_ADAPTIVE_V3"}:
             raise ValueError("Invalid recovery method")
         self.recovery = recovery
         self.person_detections = ()
         self.perception_passes = ()
         self.person_proposal_score = None
         self.proposal = None
+        self.proposal_essential = 0
+        self.perception_attempts = []
+        if runtime_profile not in {"REFERENCE_4_SPIN", "CPU_2_SPIN", "CPU_4_SLEEP", "CPU_2_SLEEP"}:
+            raise ValueError("Invalid RTMO CPU runtime profile")
+        self.runtime_profile = runtime_profile
 
     def infer_image(self, image):
+        started = perf_counter()
         height, width = image.shape[:2]
         ratio = min(640 / width, 640 / height)
         resized = cv2.resize(
@@ -118,7 +126,9 @@ class RtmoEstimator:
         padded = np.full((640, 640, 3), 114, dtype=np.uint8)
         padded[: resized.shape[0], : resized.shape[1]] = resized
         tensor = np.ascontiguousarray(padded.transpose(2, 0, 1)[None], dtype=np.float32)
+        prepared = perf_counter()
         outputs = self.session.run(["dets", "keypoints"], {"input": tensor})
+        inferred = perf_counter()
         poses = decode_outputs(outputs, ratio, width, height)
         selected = select_detections(outputs[0][0])
         boxes = tuple(
@@ -137,7 +147,69 @@ class RtmoEstimator:
             if outputs[0].shape[1] and score >= 0.3
             else None
         )
+        self.proposal_essential = 0
+        if self.proposal is not None:
+            native = outputs[1][0, int(np.argmax(outputs[0][0, :, 4]))]
+            for source, target in COCO_TO_BODY.items():
+                x, y, confidence = native[source]
+                self.proposal_essential += bool(
+                    target in ESSENTIAL
+                    and confidence >= 0.5
+                    and 0 <= x / ratio <= width
+                    and 0 <= y / ratio <= height
+                )
+        self.perception_attempts.append(
+            {
+                "inputWidth": width,
+                "inputHeight": height,
+                "topPersonProposalScore": score,
+                "acceptedPersonScores": [b[4] for b in boxes],
+                "poseCount": len(poses),
+                "usableEssentialCount": self.valid_essential(poses),
+                "proposalUsableEssentialCount": self.proposal_essential,
+                "inferenceMs": (perf_counter() - started) * 1000,
+                "prepareMs": (prepared - started) * 1000,
+                "sessionRunMs": (inferred - prepared) * 1000,
+                "decodeMs": (perf_counter() - inferred) * 1000,
+            }
+        )
         return poses, boxes, score
+
+    def quarter_turn(self, image, clockwise):
+        """Infer fresh pixels and restore to the original image; never swap body labels."""
+        height, width = image.shape[:2]
+        rotation = cv2.ROTATE_90_CLOCKWISE if clockwise else cv2.ROTATE_90_COUNTERCLOCKWISE
+        poses, boxes, score = self.infer_image(cv2.rotate(image, rotation))
+        restore_started = perf_counter()
+
+        def restore(x, y):
+            return (y, (height - 1) / height - x) if clockwise else ((width - 1) / width - y, x)
+
+        poses = tuple(
+            Pose(
+                tuple(
+                    replace(p, x=restore(p.x, p.y)[0], y=restore(p.x, p.y)[1])
+                    for p in pose.landmarks
+                ),
+                pose.qualitySource,
+            )
+            for pose in poses
+        )
+        restored_boxes = []
+        for b in boxes:
+            corners = [restore(b[x], b[y]) for x, y in ((0, 1), (0, 3), (2, 1), (2, 3))]
+            restored_boxes.append(
+                (
+                    min(p[0] for p in corners),
+                    min(p[1] for p in corners),
+                    max(p[0] for p in corners),
+                    max(p[1] for p in corners),
+                    b[4],
+                )
+            )
+        if self.perception_attempts:
+            self.perception_attempts[-1]["restoreMs"] = (perf_counter() - restore_started) * 1000
+        return poses, tuple(restored_boxes), score
 
     @staticmethod
     def valid_essential(poses):
@@ -162,8 +234,21 @@ class RtmoEstimator:
             min(height, int(y2 + dy)),
         )
         if x2 - x1 < 16 or y2 - y1 < 16:
+            self.perception_attempts.append(
+                {
+                    "inputWidth": max(0, x2 - x1),
+                    "inputHeight": max(0, y2 - y1),
+                    "topPersonProposalScore": None,
+                    "acceptedPersonScores": [],
+                    "poseCount": 0,
+                    "usableEssentialCount": 0,
+                    "inferenceMs": 0.0,
+                    "skippedReason": "CROP_TOO_SMALL",
+                }
+            )
             return (), (), None
         poses, boxes, score = self.infer_image(image[y1:y2, x1:x2])
+        restore_started = perf_counter()
         poses = tuple(
             Pose(
                 tuple(
@@ -184,6 +269,8 @@ class RtmoEstimator:
             )
             for b in boxes
         )
+        if self.perception_attempts:
+            self.perception_attempts[-1]["restoreMs"] = (perf_counter() - restore_started) * 1000
         return poses, boxes, score
 
     def __enter__(self):
@@ -192,8 +279,11 @@ class RtmoEstimator:
             import onnxruntime as ort
 
             options = ort.SessionOptions()
-            options.intra_op_num_threads = 4
+            options.intra_op_num_threads = 2 if "_2_" in self.runtime_profile else 4
             options.inter_op_num_threads = 1
+            if self.runtime_profile.endswith("SLEEP"):
+                options.add_session_config_entry("session.intra_op.allow_spinning", "0")
+                options.add_session_config_entry("session.inter_op.allow_spinning", "0")
             self.session = ort.InferenceSession(
                 str(path), sess_options=options, providers=["CPUExecutionProvider"]
             )
@@ -208,11 +298,14 @@ class RtmoEstimator:
             raise EdgeError("MODEL_TIMESTAMP_ERROR", "Timestamps da análise devem ser crescentes.")
         try:
             start = perf_counter()
+            self.perception_attempts = []
             height, width = frame.bgr.shape[:2]
             poses, boxes, score = self.infer_image(frame.bgr)
+            original_proposal = self.proposal
+            original_proposal_essential = self.proposal_essential
             passes = ["ORIGINAL"]
             if (
-                self.recovery == "RTMO_ADAPTIVE_V2"
+                self.recovery in {"RTMO_ADAPTIVE_V2", "RTMO_ADAPTIVE_V3"}
                 and len(poses) <= 1
                 and self.valid_essential(poses) < 8
                 and self.proposal is not None
@@ -226,11 +319,31 @@ class RtmoEstimator:
                     or self.valid_essential(cropped) > self.valid_essential(poses)
                 ):
                     poses, boxes = cropped, crop_boxes
+            if (
+                not poses
+                and self.recovery == "RTMO_ADAPTIVE_V3"
+                and original_proposal is not None
+                and original_proposal_essential == len(ESSENTIAL)
+                and original_proposal[2] - original_proposal[0]
+                > original_proposal[3] - original_proposal[1]
+            ):
+                # Bounded extra work only for a current horizontal proposal with all
+                # eight real essential points. This only gates work, never accepts
+                # a person/pose below the detector threshold or fabricates visibility.
+                # Try both directions, with identical acceptance thresholds. V1/V2 unchanged.
+                for clockwise, name in ((False, "ROTATE_270"), (True, "ROTATE_90")):
+                    turned, turned_boxes, turned_score = self.quarter_turn(frame.bgr, clockwise)
+                    passes.append(name)
+                    score = max(x for x in (score, turned_score) if x is not None)
+                    if len(turned) > 1 or self.valid_essential(turned) == len(ESSENTIAL):
+                        poses, boxes = turned, turned_boxes
+                        break
             if not poses and self.recovery != "NONE":
                 rotated, rotated_boxes, rotated_score = self.infer_image(
                     cv2.rotate(frame.bgr, cv2.ROTATE_180)
                 )
                 passes.append("ROTATE_180")
+                restore_started = perf_counter()
                 score = (
                     max(x for x in (score, rotated_score) if x is not None)
                     if score is not None or rotated_score is not None
@@ -256,6 +369,10 @@ class RtmoEstimator:
                     )
                     for b in rotated_boxes
                 )
+                if self.perception_attempts:
+                    self.perception_attempts[-1]["restoreMs"] = (
+                        perf_counter() - restore_started
+                    ) * 1000
                 if not poses:
                     x1, y1, x2, y2 = (
                         int(0.1 * width),
@@ -265,6 +382,7 @@ class RtmoEstimator:
                     )
                     cropped, crop_boxes, crop_score = self.infer_image(frame.bgr[y1:y2, x1:x2])
                     passes.append("CENTER_80")
+                    restore_started = perf_counter()
                     score = (
                         max(x for x in (score, crop_score) if x is not None)
                         if score is not None or crop_score is not None
@@ -294,8 +412,14 @@ class RtmoEstimator:
                         )
                         for b in crop_boxes
                     )
+                    if self.perception_attempts:
+                        self.perception_attempts[-1]["restoreMs"] = (
+                            perf_counter() - restore_started
+                        ) * 1000
             self.person_detections = boxes
             self.perception_passes = tuple(passes)
+            for attempt, name in zip(self.perception_attempts, passes, strict=False):
+                attempt["pass"] = name
             self.person_proposal_score = score
             self.previous_ms = frame.timestamp_ms
             return poses, (perf_counter() - start) * 1000

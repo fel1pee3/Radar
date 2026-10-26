@@ -17,13 +17,34 @@ class PoseEstimator(Protocol):
     def close(self) -> None: ...
 
 
-def create_estimator(model_path, variant="lite", recovery="NONE"):
+def reset_processing_preference(estimator, reason):
+    if hasattr(estimator, "reset_preference"):
+        estimator.reset_preference(reason)
+
+
+def perception_summary(estimator):
+    return (
+        {"perceptionStrategy": estimator.strategy_summary()}
+        if hasattr(estimator, "strategy_summary")
+        else {}
+    )
+
+
+def create_estimator(
+    model_path, variant="lite", recovery="NONE", runtime_profile="REFERENCE_4_SPIN"
+):
     if variant == "rtmo-s":
+        if recovery == "RTMO_PREFERRED_V1":
+            from radar_edge.preferred_rtmo import PreferredRtmoEstimator
+
+            return PreferredRtmoEstimator(model_path, runtime_profile=runtime_profile)
         from radar_edge.rtmo import RtmoEstimator
 
-        return RtmoEstimator(model_path, recovery=recovery)
+        return RtmoEstimator(model_path, recovery=recovery, runtime_profile=runtime_profile)
     if recovery != "NONE":
         raise EdgeError("INVALID_MODEL_VARIANT", "Recuperacao exige RTMO.")
+    if runtime_profile != "REFERENCE_4_SPIN":
+        raise EdgeError("INVALID_MODEL_VARIANT", "Runtime CPU exige RTMO.")
     return MediaPipeEstimator(model_path, variant)
 
 

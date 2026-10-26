@@ -1,5 +1,23 @@
 # Relatórios de implementação
 
+[Preferência adaptativa, 26/10](RECUPERACAO_ADAPTATIVA_2026_10_26.md):
+24 transmissões e 36 regressões, economia de chamadas com quatro novos controles
+inconclusivos. Candidato não promovido, referência mantida, sem teste físico novo.
+
+[Processamento de transmissão, 26/10](DESEMPENHO_TRANSMISSAO_2026_10_26.md):
+perfil por fase, reprodução técnica a 1× no agendamento LIVE e 36 comparações.
+Sem ganho consistente nas duas opções de CPU; referência preservada, gargalo
+aberto e nenhuma nova webcam executada.
+
+[Ensaio físico de orientação, 26/10](ENSAIO_WEBCAM_ORIENTACAO_2026_10_26.md):
+12 janelas auditadas, quatro incidentes/avisos entregues, insuficiência de
+cobertura/cadência e limites de anotação humana. Aceite não aprovado; sem
+alteração de parâmetros ou repetição automática.
+
+[Recuperação de orientação, 26/10](PERCEPCAO_ORIENTACAO_V3_2026_10_26.md):
+V3 reproduzido, perdas da sala localizadas, candidato sem treino comparado em
+arquivos; desempenho e validação física ainda dependem do ensaio controlado.
+
 Diagnóstico adicional: [dois vídeos de yoga, V3 congelado](TESTE_DOIS_VIDEOS_YOGA_V3_2026_10_25.md).
 Detectou os dois dentro de 5 s; segundo ainda parcial por cobertura <80%.
 

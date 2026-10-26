@@ -185,6 +185,11 @@ class EventRuntime:
                     else vars(geometry),
                     "model": self.model_spec.sha256,
                     **(
+                        {"runtimeProfile": config.model.runtimeProfile}
+                        if config.model.runtimeProfile != "REFERENCE_4_SPIN"
+                        else {}
+                    ),
+                    **(
                         {"perceptionRecovery": config.model.recovery}
                         if config.model.recovery != "NONE"
                         else {}
@@ -245,9 +250,12 @@ class EventRuntime:
     def __exit__(self, *_):
         self.resources.close()
 
-    def process(self, observation, frame=None):
+    def process(self, observation, frame=None, acquired_ns=None):
+        profile = self.config.diagnostics.profileProcessing
+        p0 = perf_counter() if profile else 0
         settings = self.config.events.delivery
         self.store.check_capacity(settings.maxItems, settings.maxBytes, extra_bytes=65536)
+        p1 = perf_counter() if profile else 0
         f = self.gate.apply(
             observation,
             extract_features(observation, self.calibration["floorPolygon"], self.policy),
@@ -258,12 +266,14 @@ class EventRuntime:
             "LOW_LIGHT",
             "POSSIBLE_FROZEN",
         }
+        p2 = perf_counter() if profile else 0
         if self.classifier:
             started = perf_counter()
             f = self.classifier.classify(observation, f)
             elapsed = perf_counter() - started
             self.classification_seconds += elapsed
             self.classification_max = max(self.classification_max, elapsed)
+        p3 = perf_counter() if profile else 0
         tracing = self.decision_trace is not None and self.decision_trace.enabled
         before = temporal_state(self.engine, observation.timestampMs) if tracing else None
         emission = self.engine.step(f)
@@ -287,6 +297,7 @@ class EventRuntime:
                 image = encode_snapshot(frame, observation)
             except Exception:
                 image_error = "SNAPSHOT_CAPTURE_FAILED"
+        p4 = perf_counter() if profile else 0
         try:
             self.store.checkpoint(
                 self.run["run_id"],
@@ -303,6 +314,7 @@ class EventRuntime:
                 "Falha ao persistir episódio/checkpoint/outbox; "
                 "execução interrompida sem envio HTTP.",
             ) from None
+        p5 = perf_counter() if profile else 0
         self.generated += bool(value)
         self.processed += 1
         self.reasons.update(f.reasons)
@@ -337,7 +349,10 @@ class EventRuntime:
                 self.eligible_ms += dt - excluded_ms
         self.previous_features = f
         self.previous_capture_eligible = capture_eligible
+        p6 = perf_counter() if profile else 0
         if tracing:
+            from time import monotonic_ns
+
             self.decision_trace.observation(
                 observation,
                 f,
@@ -345,9 +360,22 @@ class EventRuntime:
                 before,
                 temporal_state(self.engine, observation.timestampMs),
                 emission,
+                live_timing={"capturedFrameAgeAtDecisionMs": (monotonic_ns() - acquired_ns) / 1e6}
+                if acquired_ns is not None
+                else None,
             )
         if self.delivery:
             self.delivery.flush()
+        if profile:
+            self.last_processing = {
+                "innerCapacityMs": (p1 - p0) * 1000,
+                "qualityGateMs": (p2 - p1) * 1000,
+                "classificationMs": (p3 - p2) * 1000,
+                "decisionPayloadMs": (p4 - p3) * 1000,
+                "checkpointMs": (p5 - p4) * 1000,
+                "countersMs": (p6 - p5) * 1000,
+                "decisionDiagnosticMs": (perf_counter() - p6) * 1000,
+            }
         return f
 
     def finish(self):

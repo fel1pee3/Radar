@@ -75,6 +75,10 @@ class Metrics:
         self.inference_min = None
         self.first_ms = None
         self.last_ms = None
+        self.live_age = {
+            name: {"samples": 0, "sum": 0.0, "max": 0.0}
+            for name in ("frameAgeAtAnalysisStartMs", "frameAgeAfterInferenceMs")
+        }
         self.pose_observations = Counter({"none": 0, "one": 0, "multiple": 0})
         self.pose_count_mismatches = 0
         self.quality_sources = Counter()
@@ -130,6 +134,12 @@ class Metrics:
                 )
 
     def add(self, observation):
+        for name, values in self.live_age.items():
+            age = getattr(observation, name, None)
+            if age is not None and math.isfinite(age) and age >= 0:
+                values["samples"] += 1
+                values["sum"] += age
+                values["max"] = max(values["max"], age)
         self.analyzed += 1
         self.states[observation.inferenceState] += 1
         self.reasons.update(observation.qualityReasons)
@@ -189,6 +199,14 @@ class Metrics:
                 "max": self.inference_max if self.analyzed else None,
             },
             "totalWallSeconds": wall,
+            "liveFrameAgeMs": {
+                name: {
+                    "samples": value["samples"],
+                    "mean": value["sum"] / value["samples"] if value["samples"] else None,
+                    "max": value["max"] if value["samples"] else None,
+                }
+                for name, value in self.live_age.items()
+            },
             "processCpuSeconds": cpu,
             "processCpuPercentOneCore": 100 * cpu / wall if wall > 0 else None,
             "logicalCpuCount": os.cpu_count(),

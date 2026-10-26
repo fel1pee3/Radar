@@ -8,6 +8,177 @@ Comandos na raiz, com os materiais privados desta bancada; não abrem webcam.
 Pesos e vídeos não estão no Git. Instalações novas precisam dos materiais e
 artefato autorizados correspondentes.
 
+## Preferência adaptativa — experimental, não promovida
+
+RTMO_PREFERRED_V1 reduziu custo nos quatro cenários técnicos, mas perdeu cobertura
+em quatro controles da regressão. Mantenha as configurações existentes; não há
+novo ensaio de webcam preparado para este candidato.
+[Resultados e diagnóstico](RELATORIOS/RECUPERACAO_ADAPTATIVA_2026_10_26.md).
+Para reproduzir somente em arquivo, com saída privada nova:
+
+```powershell
+. ./scripts/activate.ps1
+$saida = ".local/benchmarks/adaptive-$([guid]::NewGuid())"
+uv run --offline --project services/edge --frozen python scripts/validation/benchmark-stream.py --config .local/detector-evolution/perception-dce2d01b-278b-4029-a405-974ffb0d00e9/candidate-final/intake16-03/comparison.yaml --output $saida --recovery RTMO_PREFERRED_V1
+```
+
+Para referência use `--recovery RTMO_ADAPTIVE_V3`, com outra saída. Ambos ficam
+em REPLAY/TEST isolado, sem HTTP ou câmera física. A estratégia não guarda pose
+antiga nem interpreta ausência de pose como ambiente vazio.
+
+## Investigar cadência sem abrir a webcam — 26/10
+
+As duas opções de CPU testadas não demonstraram ganho consistente. A referência
+permanece `REFERENCE_4_SPIN`; nenhuma configuração de câmera foi migrada.
+[Comparação, métricas e limitações](RELATORIOS/DESEMPENHO_TRANSMISSAO_2026_10_26.md).
+Nesta rodada, use somente os arquivos existentes para reproduzir o diagnóstico:
+
+```powershell
+. ./scripts/activate.ps1
+$saida = ".local/benchmarks/stream-$([guid]::NewGuid())"
+uv run --offline --project services/edge --frozen python scripts/validation/benchmark-stream.py --config .local/detector-evolution/perception-dce2d01b-278b-4029-a405-974ffb0d00e9/candidate-final/yoga2-02/comparison.yaml --output $saida --runtime-profile REFERENCE_4_SPIN
+```
+
+O comando usa inferência real, entrega frames a 1× e exercita o mesmo agendamento
+LIVE com buffer de frame recente. Registra `REPLAY`/transmissão técnica, sem HTTP,
+snapshot, credencial ou abertura de dispositivo. `--preview` mostra o arquivo;
+não é vídeo previamente inferido. A pasta de saída deve ser nova e fica privada.
+O resumo distingue lacunas, idades, cobertura, eventos e custos. Ficar sem alerta
+com cobertura insuficiente permanece inconclusivo. Os casos conhecidos não
+constituem avaliação independente.
+
+`complete: true` confirma que o arquivo terminou; não significa aprovação da
+detecção. A cobertura e o prazo de cada alvo continuam sendo critérios separados.
+
+O roteiro físico abaixo fica preservado como histórico. Sem ganho consistente
+nesta rodada, não há novo candidato aprovado que justifique repetir os 12 minutos.
+
+## Ensaio controlado preparado em 26/10 — recuperação de orientação
+
+**Ensaio executado e auditado:** sessão `10347778…` não aprovou o aceite.
+Marcadores incluíram preparação/retorno; algumas tentativas foram incompletas
+ou curtas, sem identificação de quais. Há cobertura insuficiente e revisões
+pendentes. [Auditoria e dados por cena](RELATORIOS/ENSAIO_WEBCAM_ORIENTACAO_2026_10_26.md).
+Roteiro preservado para referência; nenhuma repetição foi iniciada pelo auditor.
+
+A sequência desta seção pertence ao ensaio anterior. O roteiro de três minutos abaixo
+fica preservado como referência; não executar as duas sessões juntas.
+O candidato `RTMO_ADAPTIVE_V3` mantém o classificador V3 e acrescenta uma tentativa
+de orientação em frames atuais com proposta horizontal e oito essenciais com
+score suficiente. O V3 anterior continua disponível como `RTMO_ADAPTIVE_V2`.
+[Diagnóstico, comparação e limitações](RELATORIOS/PERCEPCAO_ORIENTACAO_V3_2026_10_26.md).
+Não houve treino nos dois vídeos de yoga; eles agora são desenvolvimento/regressão.
+
+**Sua presença só é necessária a partir da conferência da câmera.** Não execute
+o ensaio ainda se não tiver como marcar os instantes reais: outra pessoa pode
+operar os botões, ou você pode usar um teclado já disponível ao alcance, mantendo
+o notebook imóvel. Não é necessário conversar no chat enquanto fica no chão.
+Horário de instrução/contagem regressiva não será tratado como início da postura.
+Sem marcação confiável, a latência da tentativa fica inconclusiva.
+
+1. Na raiz, inicie os serviços, preservando seu banco e proprietário:
+
+   ```powershell
+   . ./scripts/activate.ps1
+   pnpm.cmd infra:up
+   ```
+
+   Em outros dois terminais, ative o ambiente em cada um e execute `pnpm.cmd dev:api`
+   e `pnpm.cmd dev:web`. Se já estiverem ativos, use as instâncias existentes.
+   Abra `http://127.0.0.1:3000`, entre com sua conta e deixe Incidentes/Fontes disponíveis.
+   O PostgreSQL da demonstração permanece na 15432; não alterar o serviço na 5432.
+
+2. Quando estiver pronto, confira a lente descoberta, câmera fixa e corpo inteiro.
+   Este comando abre somente a prévia da webcam, sem inferência/eventos:
+
+   ```powershell
+   uv run --offline --project services/edge --frozen radar-edge probe --config .local/detector-evolution/candidate-orientation/webcam-controlled.yaml --seconds 60 --preview
+   ```
+
+   Feche com Q/Esc. A configuração usa índice 0/DSHOW, 640×480 e os mesmos modelos,
+   credencial e uma **cópia idêntica** da calibração anterior. A compatibilidade
+   digital passou; isso não confirma que o notebook continua na mesma posição.
+   Confira o contorno na prévia do ensaio antes de marcar a primeira cena.
+
+   **Somente se o enquadramento mudou ou o piso está incorreto**, deixe o chão
+   livre, feche o worker e execute:
+
+   ```powershell
+   uv run --offline --project services/edge --frozen radar-edge calibrate --config .local/detector-evolution/candidate-orientation/webcam-controlled.yaml
+   uv run --offline --project services/edge --frozen python scripts/validation/confirm-posture-context.py --config .local/detector-evolution/candidate-orientation/webcam-controlled.yaml --confirmed
+   ```
+
+   A calibração mostra imagem parada de propósito. Marque somente o chão, em
+   ordem, e Enter. A cópia preserva o piso original. Confirme o contexto somente
+   depois de conferir a marcação; não ajustar o piso para cada postura.
+
+3. Sem abrir câmera, o preflight reproduzível é:
+
+   ```powershell
+   uv run --offline --project services/edge --frozen python scripts/validation/physical-session.py --config .local/detector-evolution/candidate-orientation/webcam-controlled.yaml --check
+   ```
+
+   Quando a câmera estiver posicionada, o operador preparado e você pronto para
+   participar, inicie **uma única sessão**, limitada a 12 minutos:
+
+   ```powershell
+   uv run --offline --project services/edge --frozen python scripts/validation/physical-session.py --config .local/detector-evolution/candidate-orientation/webcam-controlled.yaml --start
+   ```
+
+   Abre a webcam e uma janela para marcar as cenas, sem vídeo bruto/snapshot.
+   O comando verifica a API, usa fila nova por sessão e preserva a credencial,
+   a configuração-base e os ensaios anteriores. Não há repetição nem extensão
+   automática. Q/Esc na janela da câmera encerra antes se necessário.
+
+4. O operador observa a cena real e clica **Marcar início/fim REAL da cena**,
+   ou usa Enter com essa janela em foco. Marque início quando a pessoa terminar
+   de chegar à postura; marque fim antes de ela sair. Informe depois se a
+   marcação atrasou ou houve erro. O botão não pausa a captura.
+
+   A ordem é: lateral duas vezes; pés para a câmera duas vezes; cabeça para a
+   câmera duas vezes; cadeira; ajoelhar; pegar objeto; caminhar; cômodo vazio;
+   retorno caminhando. Permaneça aproximadamente 10 s em cada postura no chão,
+   com chegada voluntária, lenta e segura. Entre tentativas, levante com calma
+   e fique em pé por 20 s. A política ainda exige 3 s contínuos de recuperação
+   observada: esperar 20 s não comprova que o modelo conseguiu observá-la.
+   Nos controles, marque pelo menos 15 s; nenhuma queda deve ser provocada.
+
+   O programa grava marcadores humanos UTC/monotônicos separados das previsões.
+   Não usar o instante em que apareceu um alerta como início da situação-alvo.
+   Tentativa perdida/incompleta permanece no relatório; outra execução será
+   uma repetição identificada, sem substituir a primeira.
+
+5. Confira os incidentes e os avisos locais. O botão **Vi um novo incidente no
+   painel** registra a hora da conferência visual, incluindo reação humana;
+   não é cronômetro automático de renderização. Nos incidentes, registre a revisão
+   adequada, com nota “Ensaio controlado de orientação, tentativa [número]”.
+   Verifique que a nova linha permaneceu no Histórico auditado após recarregar.
+
+   Pelo contrato atual, webcam é **Ao vivo**, em geral entrega **Atual**; não
+   falsificar `REPLAY/TEST` para chamar a sessão de teste. Sua natureza controlada
+   fica no protocolo e na nota de revisão. O canal SIMULATED do aviso é local;
+   não representa mensagem externa ou socorro. Entrega atrasada/incerta deve ser
+   reportada como tal.
+
+6. Ao encerrar, a janela deve fechar e Fontes mostrar Fonte encerrada. Guarde o
+   diretório `.local/detector-evolution/physical-sessions/<id>` impresso no terminal.
+   Contém configuração, protocolo, marcadores, erros e relatório do worker.
+   Não envie credencial, senha ou arquivos privados ao chat.
+
+**Critérios definidos antes da sessão:** seis tentativas mantidas no denominador;
+PERSON_ON_FLOOR em até 5000 ms desde cada início humano, cobertura temporal ≥80%
+em cada tentativa e nenhum episódio duplicado. Reportar rearme bloqueado como
+falha/limitação, sem remover a tentativa. Nos controles, zero alertas indevidos
+e cobertura decisória ≥80%; no vazio confirmado por humano, cobertura de captura
+≥80%, sem inferir vazio a partir de NO_POSE. Medir as lacunas e os frames com
+idade >2000 ms rejeitados pelo worker. A inferência cara pode impedir a cadência
+necessária; não aprovar desempenho por FPS de arquivo. Para o painel, propõe-se
+entrega/exibição em até 5 s após a decisão; sem marcador de exibição, esse tempo
+fica não verificado. Revisão precisa estar persistida. Qualquer POSSIBLE_FALL
+exige examinar a transição real observada; postura deitada sozinha não a sustenta.
+Esse ensaio não aprova reserva independente, operação prolongada, novo teste
+offline ou reconhecimento geral de quedas.
+
 ## Candidato atual V3 — 25/10/2026
 
 [Resultado desta iteração](RELATORIOS/EVOLUCAO_DETECTOR_05.md): seis alvos e dez
@@ -83,10 +254,12 @@ pesos, não eficácia independente.
 ## Sessão física V3 — roteiro e primeiro ensaio
 
 Primeiro ensaio executado pelo fundador em 25/10: um alerta LIVE entregue,
-106 s de worker e cobertura decisória de 56,72%; conferência das atividades
-e revisão humana ainda pendentes. [Análise](RELATORIOS/SESSAO_WEBCAM_V3_2026_10_25.md).
-O roteiro abaixo permanece para novas sessões combinadas; não repetir antes
-de concluir a anotação desta execução.
+106 s de worker e cobertura decisória de 56,72%. Fundador relatou três idas ao
+chão de 5–7 s, em pé entre elas e piso correto: um alerta para três tentativas,
+resultado insatisfatório. Faltam tempos exatos; não reconstruir essas tentativas
+pelas próprias previsões. [Análise](RELATORIOS/SESSAO_WEBCAM_V3_2026_10_25.md).
+O roteiro abaixo é histórico. Para a nova sessão, use somente o roteiro
+controlado de 12 minutos acima.
 
 Configuração `.local/detector-evolution/candidate-v3/webcam-short.yaml`: índice 0,
 DSHOW, mesma calibração histórica, limite de 180 s, outbox nova, diagnóstico

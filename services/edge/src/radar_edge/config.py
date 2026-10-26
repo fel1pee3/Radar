@@ -55,10 +55,17 @@ class WebcamConfig(StrictModel):
 class ModelConfig(StrictModel):
     variant: Literal["lite", "full", "rtmo-s"] = "lite"
     path: str = ".local/models/pose_landmarker_lite.task"
-    recovery: Literal["NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2"] = "NONE"
+    recovery: Literal[
+        "NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2", "RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V1"
+    ] = "NONE"
+    runtimeProfile: Literal["REFERENCE_4_SPIN", "CPU_2_SPIN", "CPU_4_SLEEP", "CPU_2_SLEEP"] = (
+        "REFERENCE_4_SPIN"
+    )
 
     @model_validator(mode="after")
     def full_path_is_explicit(self):
+        if self.runtimeProfile != "REFERENCE_4_SPIN" and self.variant != "rtmo-s":
+            raise ValueError("CPU runtime profiles require RTMO.")
         if self.recovery != "NONE" and self.variant != "rtmo-s":
             raise ValueError("Recuperacao adaptativa exige RTMO explicito.")
         if self.variant != "lite" and "path" not in self.model_fields_set:
@@ -80,6 +87,7 @@ class ProcessingConfig(StrictModel):
 
 
 class DiagnosticsConfig(StrictModel):
+    profileProcessing: bool = False
     outputDirectory: str = ".local/results/edge"
     exportObservations: bool = False
     maxExportObservations: int = Field(default=1000, ge=1, le=10000)

@@ -189,7 +189,39 @@ continuam disponíveis. Sessão física requer ação do fundador, sem abertura
 automática de câmera. Resultados: [incremento 05](RELATORIOS/EVOLUCAO_DETECTOR_05.md).
 Não aprova uso assistencial, piloto, eficácia geral nem inicia etapa 09.
 
+## D54 — investigação de cadência sem novo ensaio físico, 26/10/2026
+
+Por solicitação do fundador, medir o custo por fase e comparar até duas hipóteses
+de execução, preservando o candidato, critérios e falhas. Transmissão técnica de
+arquivo a 1× usa agendamento LIVE e inferência real, mas é REPLAY/TEST isolado,
+sem HTTP, webcam ou gravação. Comparação de três repetições em quatro casos não
+demonstrou ganho consistente com duas threads ou sem espera ativa; manter quatro
+threads com espera ativa padrão. Não treinar, redesenhar polígonos, relaxar a
+persistência/qualidade/lacuna ou pedir nova sessão de 12 minutos para compensar.
+[Perfil, resultados e reprodução](RELATORIOS/DESEMPENHO_TRANSMISSAO_2026_10_26.md).
+
+## D55 — preferência de processamento e regressão, 26/10/2026
+
+Investigar a recuperação repetida, preservando REFERENCE_4_SPIN e V3. Candidato
+RTMO_PREFERRED_V1 usa somente inferências atuais, preferência finita, inspeção
+canônica e busca limitada. Os limites foram fixados antes das 24 comparações.
+Economia de chamadas nos casos caros não autoriza perder observabilidade:
+quatro novos controles inconclusivos nos 36 arquivos impedem a promoção de V1.
+Manter configurações existentes; nenhum novo teste físico preparado ou executado.
+Sem treino, alteração de polígonos ou relaxamento dos gates.
+[Resultados e decisão](RELATORIOS/RECUPERACAO_ADAPTATIVA_2026_10_26.md).
+
 ## Trajetória depois da v0.1
+
+Complemento a D53 — 26/10/2026: rodada limitada a duas hipóteses de percepção,
+sem treino nos dois novos vídeos de yoga. Referência V3 congelada e preservada;
+RTMO_ADAPTIVE_V3 opt-in acrescenta recuperação de orientação com os mesmos
+scores, coordenadas restauradas, contexto e limites temporais. Os dois vídeos
+orientaram alterações e passam a desenvolvimento/regressão. Sessão física nova
+requer disponibilidade explícita do fundador e marcadores humanos independentes;
+não abrir webcam automaticamente, gravar vídeo ou aprovar o MVP por esses arquivos.
+Perdas históricas e restrições de uso permanecem.
+[Resultado e critérios do ensaio](RELATORIOS/PERCEPCAO_ORIENTACAO_V3_2026_10_26.md).
 
 | Fase | Próxima prova | Condição de avanço |
 | --- | --- | --- |
