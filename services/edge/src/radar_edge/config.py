@@ -56,7 +56,12 @@ class ModelConfig(StrictModel):
     variant: Literal["lite", "full", "rtmo-s"] = "lite"
     path: str = ".local/models/pose_landmarker_lite.task"
     recovery: Literal[
-        "NONE", "RTMO_ADAPTIVE_V1", "RTMO_ADAPTIVE_V2", "RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V1"
+        "NONE",
+        "RTMO_ADAPTIVE_V1",
+        "RTMO_ADAPTIVE_V2",
+        "RTMO_ADAPTIVE_V3",
+        "RTMO_PREFERRED_V1",
+        "RTMO_PREFERRED_V2",
     ] = "NONE"
     runtimeProfile: Literal["REFERENCE_4_SPIN", "CPU_2_SPIN", "CPU_4_SLEEP", "CPU_2_SLEEP"] = (
         "REFERENCE_4_SPIN"

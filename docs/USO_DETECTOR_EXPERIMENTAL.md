@@ -10,6 +10,12 @@ artefato autorizados correspondentes.
 
 ## Preferência adaptativa — experimental, não promovida
 
+RTMO_PREFERRED_V2 acrescenta reaquisição começando por ORIGINAL, mantendo o V1 e
+a referência. Continua opt-in e não autoriza migrar a configuração LIVE.
+[Correção, comparação e limites restantes](RELATORIOS/REAQUISICAO_V2_2026_10_26.md).
+O mesmo executor abaixo aceita `--recovery RTMO_PREFERRED_V2`, sempre com uma
+saída nova. Nenhum ensaio físico é executado por esse comando.
+
 RTMO_PREFERRED_V1 reduziu custo nos quatro cenários técnicos, mas perdeu cobertura
 em quatro controles da regressão. Mantenha as configurações existentes; não há
 novo ensaio de webcam preparado para este candidato.

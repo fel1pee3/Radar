@@ -49,12 +49,10 @@ def measure(
     config.model.runtimeProfile = profile
     if recovery is not None:
         config.model.recovery = recovery
-    if config.model.recovery == "RTMO_PREFERRED_V1" and not config.events.policy[
-        "version"
-    ].endswith("-preferred-v1"):
-        config.events.policy["version"] = (
-            config.events.policy["version"] + "-preferred-v1"
-        )
+    if config.model.recovery in {"RTMO_PREFERRED_V1", "RTMO_PREFERRED_V2"}:
+        suffix = "-preferred-" + config.model.recovery.rsplit("_", 1)[1].lower()
+        if not config.events.policy["version"].endswith(suffix):
+            config.events.policy["version"] += suffix
     config.processing.preview = preview
     config.processing.previewStartPaused = False
     config.processing.replaySpeed = 1
@@ -173,7 +171,10 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True)
     parser.add_argument("--runtime-profile", choices=PROFILES, default=PROFILES[0])
     parser.add_argument("--preview", action="store_true")
-    parser.add_argument("--recovery", choices=("RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V1"))
+    parser.add_argument(
+        "--recovery",
+        choices=("RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V1", "RTMO_PREFERRED_V2"),
+    )
     args = parser.parse_args()
     result = measure(
         args.config, args.output, args.runtime_profile, args.preview, args.recovery

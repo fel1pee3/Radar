@@ -8,6 +8,12 @@ para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
 
+**Reaquisição V2, 26/10:** prioridade de ORIGINAL corrigida, mantendo referência
+e V1. Economia nos caminhos caros preservada, mas somente 16/24 transmissões
+técnicas do V2 cumpriram os critérios; controles ainda perdem cobertura.
+Sem promoção ou novo ensaio físico.
+[Reprodução, comparação e perdas restantes](docs/RELATORIOS/REAQUISICAO_V2_2026_10_26.md).
+
 **Estratégia adaptativa, 26/10:** preferência de transformação reduziu chamadas e
 passou nos quatro cenários técnicos, mas a regressão criou quatro controles
 inconclusivos. V1 não promovido; referência e configurações preservadas, sem nova

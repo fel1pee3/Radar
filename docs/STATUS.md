@@ -1,5 +1,25 @@
 # Status de construção
 
+**26/10/2026 — ORIGINAL na reaquisição corrigido; V2 não elegível para webcam.**
+Referência e V1 preservados separadamente. RTMO_PREFERRED_V2 opt-in começa cada
+análise em reaquisição com ORIGINAL, com observações atuais e os mesmos limites.
+Reproduzidos e recuperados os 16 frames de ORIGINAL omitido; 28 das 46 antigas
+saídas sem pose ficaram elegíveis. Restam 18, sendo sete em que a referência
+encontra pose em outro caminho. Nenhuma omissão nas 174 reaquisições técnicas.
+72 transmissões novas, oito cenários/três métodos/três repetições: V2 passou
+16/24, referência 14/24 e V1 13/24. Economia de custo no alvo caro e no vazio
+preservada nas três rodadas, mas controles e sala ainda falham em cobertura/latência.
+108 regressões novas, 36 por método: V2 preservou 12 eventos/tipos e zero novos
+alertas indevidos/duplicações; recuperou três dos quatro controles, mas cauca-12
+ficou em 70,7692% contra 80% da referência. Há 12 quedas numéricas de cobertura.
+Quatro perdas históricas e os dois controles já inconclusivos mantidos.
+409 testes Python, 104 contratos TS, 159 API e 20 E2E passaram, além de lint,
+typecheck, build e imports reais. Fonte medida e pesos/configurações preservados.
+Bloqueio restante: seleção da recuperação dentro do orçamento, sem prova de
+que uma única passagem inviabilize universalmente os critérios. V2 não promovido;
+nenhum protocolo físico novo preparado, webcam aberta ou aprovação integral do MVP.
+[Comparação, sete perdas localizadas e comandos](RELATORIOS/REAQUISICAO_V2_2026_10_26.md).
+
 **26/10/2026 — preferência adaptativa comparada; V1 não promovido.**
 Hipótese sustentada no alvo caro: recuperação de 270° repetidamente útil após
 duas chamadas anteriores. RTMO_PREFERRED_V1 opt-in implementado com inferência

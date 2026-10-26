@@ -211,6 +211,20 @@ Manter configurações existentes; nenhum novo teste físico preparado ou execut
 Sem treino, alteração de polígonos ou relaxamento dos gates.
 [Resultados e decisão](RELATORIOS/RECUPERACAO_ADAPTATIVA_2026_10_26.md).
 
+## D56 — reaquisição canônica sem promoção automática, 26/10/2026
+
+Preservar referência e V1 separadamente. RTMO_PREFERRED_V2 opt-in começa cada
+análise em reaquisição com ORIGINAL, mantendo os limites de trabalho e os
+critérios de observação. Corrigir a prioridade não basta para aprovar o candidato:
+os quatro controles precisam recuperar o aceite em arquivo completo e nas
+repetições a 1×, sem regredir os outros casos ou perder eventos/tipos.
+Resultados negativos e quedas numéricas de cobertura permanecem registrados.
+Nenhuma configuração existente é migrada; nenhuma webcam é aberta nesta rodada.
+Comparação concluída: V2 recuperou 16/16 omissões e três controles em arquivo,
+mas cauca-12 permaneceu inconclusivo e somente 16/24 transmissões passaram.
+Manter a referência; não preparar ensaio físico para V2 com esses resultados.
+[Comparação, perdas restantes e decisão](RELATORIOS/REAQUISICAO_V2_2026_10_26.md).
+
 ## Trajetória depois da v0.1
 
 Complemento a D53 — 26/10/2026: rodada limitada a duas hipóteses de percepção,

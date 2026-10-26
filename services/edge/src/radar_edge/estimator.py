@@ -34,6 +34,10 @@ def create_estimator(
     model_path, variant="lite", recovery="NONE", runtime_profile="REFERENCE_4_SPIN"
 ):
     if variant == "rtmo-s":
+        if recovery == "RTMO_PREFERRED_V2":
+            from radar_edge.reacquiring_rtmo import ReacquiringRtmoEstimator
+
+            return ReacquiringRtmoEstimator(model_path, runtime_profile=runtime_profile)
         if recovery == "RTMO_PREFERRED_V1":
             from radar_edge.preferred_rtmo import PreferredRtmoEstimator
 

@@ -1,5 +1,10 @@
 # Relatórios de implementação
 
+[Reaquisição canônica V2, 26/10](REAQUISICAO_V2_2026_10_26.md):
+correção da prioridade de ORIGINAL, reprodução dos frames omitidos e comparação
+com referência/V1 em oito cenários e nos 36 arquivos. Resultados e decisão de
+elegibilidade física separados da aprovação de engenharia.
+
 [Preferência adaptativa, 26/10](RECUPERACAO_ADAPTATIVA_2026_10_26.md):
 24 transmissões e 36 regressões, economia de chamadas com quatro novos controles
 inconclusivos. Candidato não promovido, referência mantida, sem teste físico novo.
