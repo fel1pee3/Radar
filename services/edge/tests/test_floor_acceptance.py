@@ -42,3 +42,34 @@ def test_already_lying_clip_cannot_validate_an_unobserved_fall_transition():
     )
     assert result["matched"] == 1 and result["unjustifiedTransitionAlerts"] == 1
     assert result["transitionAccuracyEvaluated"] and not result["approved"]
+
+
+def test_unobserved_source_tail_cannot_inflate_positive_coverage():
+    target = Target(startMs=0, endMs=10000, kind="PERSON_ON_FLOOR")
+    result = match_floor_acceptance(
+        [{"kind": "PERSON_ON_FLOOR", "sourceOffsetMs": 2000}],
+        [target],
+        [],
+        2000,
+        2000,
+        evaluation_duration_ms=10000,
+    )
+    assert result["observedMs"] == 2000
+    assert result["evaluatedDurationMs"] == 10000
+    assert result["eligibleFraction"] == 0.2
+    assert not result["approved"]
+
+
+def test_short_healthy_capture_does_not_certify_full_empty_video():
+    result = match_floor_acceptance(
+        [],
+        [],
+        [],
+        0,
+        2000,
+        negative_expected_person=False,
+        capture_eligible_ms=2000,
+        evaluation_duration_ms=10000,
+    )
+    assert result["negativeResult"] == "INCONCLUSIVE"
+    assert not result["approved"]

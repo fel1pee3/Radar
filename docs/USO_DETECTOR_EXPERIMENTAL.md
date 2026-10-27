@@ -8,6 +8,26 @@ Comandos na raiz, com os materiais privados desta bancada; não abrem webcam.
 Pesos e vídeos não estão no Git. Instalações novas precisam dos materiais e
 artefato autorizados correspondentes.
 
+## Auditoria de recuperação em arquivo — sem câmera
+
+A investigação de estabilização não aprovou uma nova política para o worker.
+A ROI foi mantida como experimento FILE isolado; os estimadores e configurações
+existentes continuam preservados. [Resultados e regressões](RELATORIOS/ESTABILIZACAO_PERCEPTUAL_2026_10_26.md).
+O auditor versionado reproduz os sete frames e suas alternativas:
+
+```powershell
+. ./scripts/activate.ps1
+$saida = ".local/auditoria-rtmo-$([guid]::NewGuid())"
+uv run --offline --project services/edge --frozen python scripts/validation/audit-rtmo-recovery.py --manifest .local/detector-evolution/stabilization-ce12cde8-31ee-4665-9727-c5f1da1111d5/seven-frame-manifest.json --output $saida --repeats 3
+```
+
+Exige os arquivos autorizados e pesos privados desta bancada. Rejeita webcam e
+timestamp inexistente, sem aproximar um frame. Não abre banco/HTTP nem cria
+incidente; as poses detalhadas ficam na saída privada. O manifesto e os limites
+da análise estão no [diagnóstico](RELATORIOS/DIAGNOSTICO_RECUPERACAO_2026_10_26.md).
+Uma alternativa contrafactual útil não é informação disponível antecipadamente
+ao detector. Este comando não comprova aceite temporal ou desempenho ao vivo.
+
 ## Preferência adaptativa — experimental, não promovida
 
 RTMO_PREFERRED_V2 acrescenta reaquisição começando por ORIGINAL, mantendo o V1 e

@@ -1,5 +1,12 @@
 # Relatórios de implementação
 
+[Decisão limitada e retificação temporal](DECISAO_PERCEPCAO_2026_10_26.md):
+725 s explicados, 240 resultados reavaliados, alternativas sem promoção.
+
+[Estabilização perceptual, 26/10](ESTABILIZACAO_PERCEPTUAL_2026_10_26.md):
+diagnóstico nativo dos sete frames, alternativas A/B/C e comparação completa
+de referência/V1/V2/ROI isolada. [Detalhes e reprodução do diagnóstico](DIAGNOSTICO_RECUPERACAO_2026_10_26.md).
+
 [Reaquisição canônica V2, 26/10](REAQUISICAO_V2_2026_10_26.md):
 correção da prioridade de ORIGINAL, reprodução dos frames omitidos e comparação
 com referência/V1 em oito cenários e nos 36 arquivos. Resultados e decisão de

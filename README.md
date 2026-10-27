@@ -8,6 +8,18 @@ para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
 
+**Decisão e retificação temporal, 26/10:** suspensão explica os 725 s;
+aceite recalculado com fonte completa e tempo da decisão. Nenhuma alternativa
+aprovada. Os valores históricos abaixo estão retificados no
+[relatório atual](docs/RELATORIOS/DECISAO_PERCEPCAO_2026_10_26.md).
+
+**Estabilização, 26/10:** sete frames diagnosticados e três estratégias comparadas.
+ROI de contexto melhorou transmissões (22/24), mas regrediu na matriz completa
+(27/36 contra 30/36 da referência), com três perdas de aceite e uma mudança de
+tipo. Não integrada ao worker. Auditor FILE reproduzível entregue; sem webcam
+ou promoção. [Diagnóstico](docs/RELATORIOS/DIAGNOSTICO_RECUPERACAO_2026_10_26.md) ·
+[Comparação final](docs/RELATORIOS/ESTABILIZACAO_PERCEPTUAL_2026_10_26.md).
+
 **Reaquisição V2, 26/10:** prioridade de ORIGINAL corrigida, mantendo referência
 e V1. Economia nos caminhos caros preservada, mas somente 16/24 transmissões
 técnicas do V2 cumpriram os critérios; controles ainda perdem cobertura.

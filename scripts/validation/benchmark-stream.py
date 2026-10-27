@@ -12,6 +12,7 @@ import numpy as np
 import yaml
 from radar_edge.config import load_config, private_path
 from radar_edge.live import run_live
+from radar_edge.stream_acceptance import assess_stream_timing
 
 PROFILES = ("REFERENCE_4_SPIN", "CPU_2_SPIN", "CPU_4_SLEEP", "CPU_2_SLEEP")
 
@@ -160,6 +161,11 @@ def measure(
         "metrics": report["metrics"],
         "temporal": report["temporal"],
         "profileWrite": report["processingProfile"],
+        "wallTimingAcceptance": assess_stream_timing(
+            records,
+            report["source"]["durationMsEstimate"],
+            report["source"]["hostMonotonicOriginNs"],
+        ),
     }
     (output / "summary.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     return result

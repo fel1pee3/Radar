@@ -225,6 +225,22 @@ mas cauca-12 permaneceu inconclusivo e somente 16/24 transmissões passaram.
 Manter a referência; não preparar ensaio físico para V2 com esses resultados.
 [Comparação, perdas restantes e decisão](RELATORIOS/REAQUISICAO_V2_2026_10_26.md).
 
+## D57 — estabilização orientada por diagnóstico, 26/10/2026
+
+Sete frames reproduzidos com alternativas isoladas; sinais atuais, localização
+barata/ROI e busca finita comparados. Não presumir RTMO_PREFERRED_V3 nem integrar
+uma nova política apenas por recuperar alguns frames. A melhor ROI melhorou
+cenários, mas falhou em duas das 24 transmissões técnicas e já tinha um controle
+inconclusivo no piloto. Permanecer em experimento FILE isolado, sem novo seletor
+do worker normal, novo modelo ou alteração dos critérios. Completar a matriz
+funcional e registrar todas as regressões; nenhuma preparação física com esses
+resultados. Auditor contrafactual reproduzível é código da entrega.
+Matriz concluída: ROI 27/36 contra 30/36 da referência, três perdas novas de
+aceite e tipo alterado em cauca-01; 12 eventos sem novos alertas indevidos ou
+duplicações. Rejeitar integração, preservando o ganho condicionado e as falhas.
+[Diagnóstico A/B/C](RELATORIOS/DIAGNOSTICO_RECUPERACAO_2026_10_26.md) ·
+[Matriz e recomendação](RELATORIOS/ESTABILIZACAO_PERCEPTUAL_2026_10_26.md).
+
 ## Trajetória depois da v0.1
 
 Complemento a D53 — 26/10/2026: rodada limitada a duas hipóteses de percepção,
@@ -262,3 +278,23 @@ Desempenho no notebook e em ambientes novos; acesso local da KAP-S069; aceitaç�
 Nova funcionalidade só entra no MVP se for necessária para demonstrar ou verificar o fluxo definido. Ideias de rua, áudio, identificação nominal, sensores novos, aplicativo, plataforma de parceiros ou câmera própria são registradas como backlog, não implementadas pela IA sem uma nova decisão.
 
 Se o modelo de pose não servir, comparar outra base com licença compatível e manter o restante do produto. Se a KAP-S069 não expuser stream, manter webcam. Se o fluxo não gerar utilidade para interessados, rever o caso de uso antes de ampliar hardware e infraestrutura.
+
+## D58 — decisão limitada e retificação temporal, 26/10/2026
+
+Suspensão confirmada explica o tempo decorrido de 725 s no checkpoint.
+O aceite antigo não tratava adequadamente EOF tardio; passa a considerar duração
+inteira e decisão final no host, mantendo os limites. O produtor FILE registra
+publicação real e rechecagem de espera, sem mover PTS. Resultados antigos
+preservados: reavaliação dos streams 14/13/17/21 de 24; FILE completos
+27/25/27/26 de 36, por referência/V1/V2/ROI.
+
+Regra geométrica congelada rejeitada (3/4 recuperações); par leve YOLOX-tiny +
+RTMPose-s rápido, mas com perdas de percepção e contrato de scores não
+qualificado para o classificador atual. Não integrado. Sem treino, troca
+automática do worker, limiares por arquivo ou nova busca de margens.
+
+Referência é comparador, não verdade de terreno. Tipo diferente em cauca-01
+requer cena/anotação, não igualdade cega. Perdas e controles inconclusivos
+mantidos. Novo teste físico depende de localização/pose demonstradas, scores
+compatíveis e tratamento de interrupção até o fechamento da decisão.
+[Relatório](RELATORIOS/DECISAO_PERCEPCAO_2026_10_26.md).

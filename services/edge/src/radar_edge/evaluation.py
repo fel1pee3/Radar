@@ -166,6 +166,7 @@ def match_floor_acceptance(
     max_latency_ms=5000,
     negative_expected_person=True,
     capture_eligible_ms=None,
+    evaluation_duration_ms=None,
 ):
     """New primary result: no target is removed for lack of pose or exclusions.
 
@@ -185,11 +186,14 @@ def match_floor_acceptance(
             duplicates += 1
         else:
             unexpected += 1
-    coverage = ratio(eligible_ms, observed_ms)
+    denominator_ms = observed_ms if evaluation_duration_ms is None else evaluation_duration_ms
+    coverage = ratio(eligible_ms, denominator_ms)
     negative_coverage = (
         coverage
         if negative_expected_person
-        else (ratio(capture_eligible_ms, observed_ms) if capture_eligible_ms is not None else None)
+        else (
+            ratio(capture_eligible_ms, denominator_ms) if capture_eligible_ms is not None else None
+        )
     )
     approval_coverage = coverage if targets else negative_coverage
     latencies = [matched[i] for i in sorted(matched)]
@@ -219,6 +223,7 @@ def match_floor_acceptance(
         ),
         "eligibleMs": eligible_ms,
         "observedMs": observed_ms,
+        "evaluatedDurationMs": denominator_ms,
         "eligibleFraction": coverage,
         "negativeResult": None
         if targets
@@ -414,6 +419,7 @@ def evaluate_manifest(filename, replay_speed=0.0):
                             entry.annotationsComplete and not result_code,
                             negative_expected_person=entry.expectedPerson,
                             capture_eligible_ms=temporal.get("captureEligibleMs"),
+                            evaluation_duration_ms=entry.durationMs,
                         )
                     }
                     if config.posture.method != "BASELINE"

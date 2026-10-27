@@ -57,6 +57,14 @@ class PacedFileSource:
         self.thread = threading.Thread(target=self._produce, daemon=True)
         self.thread.start()
 
+    def _wait_until(self, due):
+        # A timeout can wake early; never publish a future media deadline.
+        while not self.stop.is_set():
+            remaining = due - monotonic_ns()
+            if remaining <= 0:
+                return
+            self.stop.wait(remaining / 1e9)
+
     def _produce(self):
         try:
             frame = self.first
@@ -64,7 +72,7 @@ class PacedFileSource:
             period_ns = round(1e9 / self.reader.fps) if self.reader.fps else 40_000_000
             while frame is not None and not self.stop.is_set():
                 due = self.origin_ns + frame.timestamp_ms * 1_000_000
-                self.stop.wait(max(0, (due - monotonic_ns()) / 1e9))
+                self._wait_until(due)
                 if self.stop.is_set():
                     break
                 lag = max(0, monotonic_ns() - due) / 1e6
@@ -74,25 +82,24 @@ class PacedFileSource:
                     self.late_skipped += 1
                 else:
                     with self.lock:
+                        acquired = monotonic_ns()
                         digest = hashlib.sha256(frame.bgr.tobytes()).hexdigest()
                         if digest != previous_digest:
-                            identical_since = due
+                            identical_since = acquired
                         previous_digest = digest
                         if self.latest is not None and self.latest[0].index > self.last_index:
                             self.dropped += 1
-                        self.latest = (frame, due)
+                        self.latest = (frame, acquired)
                         self.published += 1
                         self.info[0] = 1
                         self.info[1] = self.frames_read
-                        self.info[2] = due
+                        self.info[2] = acquired
                         self.info[12] = identical_since
                         self.info[13] = float(cv2.cvtColor(frame.bgr, cv2.COLOR_BGR2GRAY).mean())
                 frame = self.reader.read()
             duration = self.reader.metadata().get("durationMsEstimate")
             if duration:
-                self.stop.wait(
-                    max(0, (self.origin_ns + round(duration * 1e6) - monotonic_ns()) / 1e9)
-                )
+                self._wait_until(self.origin_ns + round(duration * 1e6))
             self.full_playback_completed = frame is None and not self.stop.is_set()
         except EdgeError as error:
             self.error_code = error.code
@@ -124,6 +131,7 @@ class PacedFileSource:
             **self.reader.metadata(),
             "executionKind": "TECHNICAL_PACED_FILE_NOT_WEBCAM",
             "playbackRate": 1,
+            "frameAgeClock": "HOST_PUBLICATION_MONOTONIC_NOT_MEDIA_DUE",
             "framesDecoded": self.frames_read,
             "framesPublished": self.published,
             "framesConsumed": self.delivered,

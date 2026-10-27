@@ -1,5 +1,48 @@
 # Status de construção
 
+**26/10/2026 — decisão limitada; nenhum substituto aprovado.**
+Suspensão do Windows explica os 725 s de cauca-11; execução original preservada,
+agora reprovada com cobertura completa de 18,75% e decisão velha no EOF.
+Avaliação inclui duração inteira, decisão no host e idade; relógio FILE corrigido.
+Mesmos 96 streams reavaliados: referência 14/24, V1 13/24, V2 17/24, ROI 21/24.
+Mesmos 144 FILE, denominador completo: 27/36, 25/36, 27/36 e 26/36.
+Esses valores retificam os publicados abaixo. Idades iniciais negativas antigas
+foram preservadas; tempos finais reconstruídos, sem truncar o dado para zero.
+Regra geométrica congelada recuperou 3/4 frames discriminantes (abaixo do gate).
+Detector leve + RTMPose isolado: 61,5 ms médios completos, mas apenas 12/36
+observações com oito essenciais pelo proxy, com perdas e classificador incompatível.
+Nenhum estimador novo integrado nem matriz completa repetida para rejeitados.
+Quatro perdas históricas e controles inconclusivos mantidos. Mudança de tipo
+em cauca-01 é plausível, sem validação automática de transição.
+424 testes Python passaram; uma GUI explícita ignorada; lint/formatação passaram.
+Sem webcam, banco/credenciais alterados, protocolo físico aprovado ou commit/push.
+[Relatório e reprodução](RELATORIOS/DECISAO_PERCEPCAO_2026_10_26.md) ·
+[240 avaliações retificadas](RELATORIOS/DECISAO_PERCEPCAO_REAVALIACAO_2026_10_26.csv).
+
+**26/10/2026 — estabilização investigada; ROI experimental rejeitada, referência mantida.**
+Sete timestamps exatos reproduzidos em 126 inferências diagnósticas; sinais
+atuais, HOG/ROI e busca por famílias comparados, sem modelo novo incorporado.
+ROI de contexto foi a melhor alternativa dos pilotos, mas a comparação completa
+não sustentou integração. 96 transmissões novas: ROI 22/24, referência 14/24,
+V1 13/24, V2 17/24. Cauca-12 falhou em duas repetições mesmo sem lacuna >500 ms.
+144 arquivos finais, ordem alternada: referência 30/36, V1 26/36, V2 29/36,
+ROI 27/36. ROI manteve 12 eventos e zero alertas indevidos/duplicações, porém
+mudou PERSON_ON_FLOOR para POSSIBLE_FALL em cauca-01. Novas perdas de aceite:
+intake16-16, cauca-04 e cauca-08. Sete quedas numéricas de cobertura publicadas;
+quatro perdas históricas e controles já inconclusivos preservados.
+Nos sete frames, ROI teve cinco corpos completos e seis decisões elegíveis,
+incluindo uma negativa parcial; isso não são seis acertos de pessoa no chão.
+416 testes Python, nove testes do experimento, 104 contratos TS, 159 API e
+20 E2E passaram, além de lint/typecheck/build e imports reais. 48 eventos nativos
+persistidos em filas isoladas foram revalidados em modo somente leitura.
+Auditor FILE reproduzível adicionado; nenhum novo estimador foi integrado ao
+worker normal. Referência, V1/V2, pesos, classificador, configurações, vídeos e
+critérios mantidos. Sem webcam, gravação, protocolo físico, commit/push/deploy
+ou aprovação do MVP. Próxima investigação é de seleção/percepção atual sob
+orçamento, antes de novo ensaio físico.
+[Diagnóstico e comando](RELATORIOS/DIAGNOSTICO_RECUPERACAO_2026_10_26.md) ·
+[Comparação completa e bloqueio](RELATORIOS/ESTABILIZACAO_PERCEPTUAL_2026_10_26.md).
+
 **26/10/2026 — ORIGINAL na reaquisição corrigido; V2 não elegível para webcam.**
 Referência e V1 preservados separadamente. RTMO_PREFERRED_V2 opt-in começa cada
 análise em reaquisição com ORIGINAL, com observações atuais e os mesmos limites.

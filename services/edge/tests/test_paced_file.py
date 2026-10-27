@@ -107,3 +107,24 @@ def test_technical_guard_rejects_webcam_and_delivery_before_opening(monkeypatch)
         run_live(c, technical_stream=True)
     with pytest.raises(ValueError):
         PacedFileSource(SimpleNamespace(kind="WEBCAM"))
+
+
+def test_early_wait_is_rechecked_and_acquisition_is_actual_publication(monkeypatch):
+    value, clock = source(monkeypatch)
+    wait = value.stop.wait
+    early = [True]
+
+    def wake_early(seconds):
+        wait(seconds)
+        if early[0] and seconds > 0.003:
+            clock[0] -= 3_000_000
+            early[0] = False
+
+    value.stop.wait = wake_early
+    with value:
+        value._produce()
+        frame, acquired = value.latest
+        assert frame.timestamp_ms == 80
+        assert acquired == 80_000_000
+        assert clock[0] == 120_000_000
+        assert value.metadata()["frameAgeClock"] == "HOST_PUBLICATION_MONOTONIC_NOT_MEDIA_DUE"
