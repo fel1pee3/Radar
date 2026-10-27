@@ -12,7 +12,7 @@ export const labels: Record<string, string> = {
   REPLAY: 'Reprodução',
   LIVE: 'Ao vivo',
   TEST: 'Teste',
-  CURRENT: 'Atual',
+  CURRENT: 'Recebido na janela',
   DELAYED: 'Atrasado',
   CLOCK_UNCERTAIN: 'Relógio incerto',
   PERSON_ON_FLOOR: 'Possível pessoa no chão',

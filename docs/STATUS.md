@@ -1,5 +1,26 @@
 # Status de construção
 
+**27/10/2026 — continuidade protegida; diagnóstico visual parcial.**
+Rechecagens antes/depois do checkpoint e antes do HTTP quebram evidência velha,
+preservando evento possivelmente confirmado, envelope, timestamps e episódio ativo.
+SQLite v3 aditivo registra relógios/auditoria; API aceita somente restrição
+DELAYED/CLOCK_UNCERTAIN e reavalia aviso pendente. CURRENT agora aparece como
+“Recebido na janela”; reenvio preserva recibo original, sem urgência nova.
+448 testes Python passaram, uma GUI ignorada; 161 API passaram, incluindo commit
+interrompido e ACK perdido. Lint/typecheck/build passaram.
+Amostra de 14 frames/11 vídeos, A automático × B com caixa fornecida, quatro
+orientações e duas repetições: 448 linhas diagnósticas. Corrigido BGR→RGB
+apenas na entrada da pose do auditor isolado; detector continua BGR.
+F07 e F13 não localizados em nenhum ângulo. Fundador rejeitou os rótulos
+articulares, sobretudo F07/F14: PCK do rascunho invalidado para julgar o modelo.
+Revisão V2 por imagem preparada, sem coordenadas para pontos incertos.
+Zero probes do classificador; anatomia/compatibilidade continuam inconclusivas.
+Falso sofá e duplicidades separados, NMS/pesos/limiares inalterados.
+Referência/candidatos/configurações e quatro perdas históricas preservados;
+nenhum estimador promovido, matriz completa nova, webcam ou aprovação do MVP.
+[Relatório, reprodução e revisão pequena](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md) ·
+[448 comparações provisórias](RELATORIOS/CONTINUIDADE_VISUAL_AUDITORIA_2026_10_27.csv).
+
 **26/10/2026 — decisão limitada; nenhum substituto aprovado.**
 Suspensão do Windows explica os 725 s de cauca-11; execução original preservada,
 agora reprovada com cobertura completa de 18,75% e decisão velha no EOF.

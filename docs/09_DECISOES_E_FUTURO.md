@@ -298,3 +298,32 @@ requer cena/anotação, não igualdade cega. Perdas e controles inconclusivos
 mantidos. Novo teste físico depende de localização/pose demonstradas, scores
 compatíveis e tratamento de interrupção até o fechamento da decisão.
 [Relatório](RELATORIOS/DECISAO_PERCEPCAO_2026_10_26.md).
+
+
+## D59 — continuidade e diagnóstico visual delimitado, 27/10/2026
+
+Solicitação do fundador: proteger decisão envelhecida e separar localização,
+pose e classificador com pequena referência visual, sem webcam ou nova busca
+ampla. Implementar rechecagens até entrega/aviso, sem modificar envelope,
+horários ou apagar commit possivelmente confirmado. Preservar critérios
+retificados, referência REFERENCE_4_SPIN, rejeitados e quatro perdas históricas.
+
+Amostra interna de 14 frames/11 vídeos, construção/verificação por vídeo,
+quatro orientações e duas repetições. Caixa fornecida é oráculo diagnóstico
+offline, não dependência do produto nem desempenho automático. Scores nativos
+não equivalem a visibilidade RTMO; classificador exige anatomia qualificada.
+
+Correção perceptual comprovada: honrar RGB na pose RTMPose-s do auditor isolado,
+mantendo BGR no detector e pesos/pós-processamento. Duplicidades compatíveis
+com NMS exportado e falso sofá permanecem separados, sem fusão ou limiar novo.
+Pessoa não localizada em F07/F13 independe de classificador. Rótulos articulares
+foram rejeitados pelo fundador como imprecisos; PCK não vale para julgar o
+modelo. Revisão V2 por imagem mantém incertos sem coordenada; nenhuma
+classificação nova foi executada por falta de qualificação. A antiga saída shadow errada não isola, por si só,
+incompatibilidade do classificador.
+
+Não promover o par leve ou repetir matriz completa com essa evidência.
+Próximo passo específico é conferir a pequena referência e reavaliar anatomia
+A/B antes de atribuir a causa restante ou propor calibração. Sem treino,
+novo ensaio físico ou aprovação integral.
+[Relatório e reprodução](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).

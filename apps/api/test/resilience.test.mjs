@@ -133,8 +133,18 @@ test('Python LIVE sintético: API fora, restart, ACK perdido, revogação, atras
     const permanent = path();
     expect((await run('emit', permanent, 172800)).status).toBe('PERMANENT_ERROR');
     expect((await run('deliver', permanent)).attempts).toBe(1);
+    const paused = await run('paused-commit', path());
+    expect(paused.interruptionInjected).toBe(true);
+    expect(paused.preservedPayload).toBe(true);
+    expect(paused.confirmation.deliveryClass).toBe('DELAYED');
+    const persisted = await db.incident.findUniqueOrThrow({
+      where: { id: paused.confirmation.incidentId },
+    });
+    // Real server wall time is still within 120s; the worker's monotonic
+    // interruption proof downgrades delivery without changing the envelope.
+    expect(persisted.receivedAt.getTime() - persisted.detectedAt.getTime()).toBeLessThan(120000);
     await app.get(NotificationExecutor).drain();
-    for (const result of [delayed, uncertain]) {
+    for (const result of [delayed, uncertain, paused]) {
       const notices = await db.notificationDelivery.findMany({
         where: { intent: { incidentId: result.confirmation.incidentId } },
       });

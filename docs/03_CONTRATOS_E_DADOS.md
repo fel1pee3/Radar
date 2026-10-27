@@ -126,6 +126,27 @@ O payload detalhado pode sofrer redação por retenção, mantendo hash e chaves
 
 Essas janelas são configurações de bancada, não políticas de atendimento clínico. Ao perder um ACK e reenviar, preservar a classificação e os avisos originais. Não criar uma nova urgência. Snapshot recebido depois não muda a classificação.
 
+Complemento de 27/10: `POST /v1/edge/events` aceita o header opcional
+`X-Radar-Delivery-State: DELAYED|CLOCK_UNCERTAIN`. Ele só restringe atualidade
+na criação; CURRENT ou outro valor responde 400 INVALID_DELIVERY_STATE.
+Não entra no hash/envelope nem reclassifica recibo conhecido. REPLAY/SIMULATED
+permanecem TEST. A API continua impondo suas regras UTC mesmo sem o header.
+
+O worker reavalia cada envio com UTC e metadados monotônicos persistidos
+atomicamente com o evento. Interrupção não altera timestamps nem autoriza
+apagar um commit. Contexto de relógio novo após restart, ainda dentro da janela,
+é CLOCK_UNCERTAIN; atraso UTC comprovado permanece DELAYED. Restrição detectada
+é durável e não se transforma em CURRENT num retry posterior. Eventos legados
+sem metadados continuam pelo UTC existente, sem inventar relógio passado.
+
+CURRENT é classe histórica do recebimento, exibida como **Recebido na janela**.
+Não afirma que a postura continua presente quando a página é consultada.
+O executor reavalia a classe no despacho do aviso pendente; só há urgência
+se ele ainda estiver na janela e com relógio coerente. Aviso envelhecido fica
+sem urgência, com motivo auditado; incidente, recibo e horários originais
+permanecem imutáveis. Worker e API devem usar a versão que implementa esse header.
+[Provas e limites](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).
+
 ## Estados de incidente
 
 ```mermaid

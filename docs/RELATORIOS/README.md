@@ -1,5 +1,11 @@
 # Relatórios de implementação
 
+[Continuidade e referência visual, 27/10](CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md):
+proteção antes/depois do commit e na entrega, testes de interrupção e auditoria
+A/B nas quatro orientações. Entrada RGB da pose corrigida no experimento;
+rótulos articulares provisórios, nenhuma promoção perceptual.
+[448 comparações diagnósticas](CONTINUIDADE_VISUAL_AUDITORIA_2026_10_27.csv).
+
 [Decisão limitada e retificação temporal](DECISAO_PERCEPCAO_2026_10_26.md):
 725 s explicados, 240 resultados reavaliados, alternativas sem promoção.
 

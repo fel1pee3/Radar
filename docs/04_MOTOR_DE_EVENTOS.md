@@ -185,3 +185,28 @@ transição para o chão. POSSIBLE_FALL nessa faixa conta como alerta de postura
 no resultado principal, mas também como unjustifiedTransitionAlerts e impede
 approved. Não modificar a anotação após ver a previsão. Anotação ausente não
 certifica transição e preserva a leitura histórica dos manifestos.
+
+
+## Interrupção durante a decisão e persistência — 27/10/2026
+
+LIVE e transmissão técnica FILE com instante de aquisição verificam idade
+máxima de 2000 ms antes da decisão, antes e depois do checkpoint. Lacuna
+do host >500 ms quebra continuidade mesmo com PTS próximo. Checkpoint que
+retorna após >500 ms também invalida a observação para continuidade/cobertura.
+A suspeita precisa de novas observações; episódio ativo persistido continua
+ativo até recuperação válida. Não reutilizar pontos ou tempo positivo anterior.
+
+Antes de iniciar a transação, emissão apenas em memória pode ser rejeitada
+como NOT_STARTED se envelheceu. Depois de commit conhecido, preservar evento,
+episódio, horários e envelope; auditar COMMITTED e quebrar continuidade.
+Erro com resultado possivelmente confirmado é UNKNOWN, nunca rollback alegado.
+O timestamp anterior continua no denominador de cobertura, como inelegível:
+a lacuna não desaparece da avaliação.
+
+SQLite v3 acrescenta delivery_timing/timing_audit. Contexto de relógio acompanha
+o evento na mesma transação. Cada envio HTTP reavalia atualidade pela janela
+contratual de 120 s e incoerência de relógio; não confundir essa janela com
+a idade máxima de observação de 2 s. Nenhum cancelamento transacional ou
+deadline do sistema operacional é prometido. FILE não cadenciado conserva
+o relógio de mídia; testes de suspensão usam relógios injetados, sem hardware.
+[Implementação e testes](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).

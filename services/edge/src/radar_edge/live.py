@@ -390,6 +390,8 @@ def run_live(config, *, technical_stream=False):
                 )
                 if age > 2000:
                     stale_analysis_discarded += 1
+                    if runtime:
+                        runtime.break_observation()
                     trace.status("RUNNING", "STALE_ANALYSIS_DISCARDED_NO_DECISION")
                     health.update(flags={"FRAME_TIMEOUT", "LOW_FPS"})
                     next_analysis = monotonic()

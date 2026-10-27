@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, Res, UseGuards, Injectable, Inject } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import type { EventV1 } from '@radar/contracts';
 import { Database } from './database.js';
@@ -10,6 +10,7 @@ import {
   ContractPipe,
   contentHash,
   deliveryClass,
+  deliveryStateHint,
   episodeHash,
   fail,
   lockCamera,
@@ -23,7 +24,8 @@ export class IngestService {
     private readonly database: Database,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
-  async accept(worker: DeviceRequest['worker'], event: EventV1) {
+  async accept(worker: DeviceRequest['worker'], event: EventV1, hintValue?: unknown) {
+    const hint = deliveryStateHint(hintValue);
     if (event.cameraId.toLowerCase() !== worker.cameraId) fail(403, 'CAMERA_SCOPE_MISMATCH');
     const hash = contentHash(event);
     return this.database.$transaction(
@@ -89,7 +91,7 @@ export class IngestService {
               episodeHash: immutableHash,
               kind: event.kind,
               mode: event.mode,
-              deliveryClass: deliveryClass(event, receivedAt),
+              deliveryClass: deliveryClass(event, receivedAt, hint),
               occurredAt: new Date(event.occurredAt),
               detectedAt: new Date(event.detectedAt),
               receivedAt,
@@ -174,6 +176,12 @@ export class IngestService {
 export class IngestController {
   constructor(private readonly ingest: IngestService) {}
   @Post('events')
+  @ApiHeader({
+    name: 'X-Radar-Delivery-State',
+    required: false,
+    enum: ['DELAYED', 'CLOCK_UNCERTAIN'],
+    description: 'Restricao conservadora de atualidade; nao altera envelope nem recibo anterior.',
+  })
   @ApiBody({ schema: { $ref: '#/components/schemas/EventV1' } })
   @ApiResponse({
     status: 201,
@@ -186,7 +194,11 @@ export class IngestController {
     @Body(new ContractPipe('event-v1')) event: EventV1,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.ingest.accept(request.worker, event);
+    const result = await this.ingest.accept(
+      request.worker,
+      event,
+      request.headers['x-radar-delivery-state'],
+    );
     response.status(result.status);
     return result.body;
   }

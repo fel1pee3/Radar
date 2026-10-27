@@ -914,3 +914,58 @@ test('OpenAPI materializa os três schemas e logs/auditoria não expõem credenc
   ])
     expect(recorded).not.toContain(secret);
 });
+
+test('delivery hints only downgrade, preserve immutable receipts and ignore replay urgency', async () => {
+  const body = event({ mode: 'LIVE' });
+  const send = (value, hint) =>
+    api
+      .post('/v1/edge/events')
+      .set('Authorization', `Bearer ${credentialA.token}`)
+      .set('X-Radar-Delivery-State', hint)
+      .send(value);
+  const first = await send(body, 'DELAYED');
+  expect(first.status).toBe(201);
+  expect(first.body.deliveryClass).toBe('DELAYED');
+  const repeated = await send(body, 'CLOCK_UNCERTAIN');
+  expect(repeated.status).toBe(200);
+  expect(repeated.body).toMatchObject({
+    incidentId: first.body.incidentId,
+    duplicate: true,
+    deliveryClass: 'DELAYED',
+  });
+  expect((await worker('events', body)).body.deliveryClass).toBe('DELAYED');
+  const uncertain = await send(event({ mode: 'LIVE' }), 'CLOCK_UNCERTAIN');
+  expect(uncertain.body.deliveryClass).toBe('CLOCK_UNCERTAIN');
+  const replay = await send(event({ mode: 'REPLAY', sourceOffsetMs: 2000 }), 'DELAYED');
+  expect(replay.body.deliveryClass).toBe('TEST');
+  const invalid = await send(event({ mode: 'LIVE' }), 'CURRENT');
+  expect(invalid.status).toBe(400);
+  expect(invalid.body.code).toBe('INVALID_DELIVERY_STATE');
+  const future = await send(
+    event({
+      mode: 'LIVE',
+      detectedAt: new Date(now.getTime() + 30001).toISOString(),
+    }),
+    'DELAYED',
+  );
+  expect(future.body.deliveryClass).toBe('CLOCK_UNCERTAIN');
+});
+
+test('pending notification is checked at dispatch without changing original receipt class', async () => {
+  const body = event({ mode: 'LIVE' });
+  const receipt = await ingest(body);
+  expect(receipt.deliveryClass).toBe('CURRENT');
+  now = new Date(now.getTime() + 120001);
+  await executor.drain(200);
+  const intent = await database.notificationIntent.findUniqueOrThrow({
+    where: { incidentId: receipt.incidentId },
+    include: { delivery: true },
+  });
+  expect(intent.delivery.urgent).toBe(false);
+  expect(intent.delivery.message).toContain('DELAYED');
+  const repeated = await worker('events', body);
+  expect(repeated.status).toBe(200);
+  expect(repeated.body.deliveryClass).toBe('CURRENT');
+  expect(repeated.body.incidentId).toBe(receipt.incidentId);
+  expect(await database.notificationDelivery.count({ where: { intentId: intent.id } })).toBe(1);
+});

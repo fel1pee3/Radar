@@ -68,7 +68,7 @@ class Outbox:
             self.db.execute("PRAGMA journal_mode=WAL")
             self.db.execute("PRAGMA synchronous=FULL")
             self.db.execute("PRAGMA secure_delete=ON")
-            if self.db.execute("PRAGMA user_version").fetchone()[0] not in {0, 1, 2}:
+            if self.db.execute("PRAGMA user_version").fetchone()[0] not in {0, 1, 2, 3}:
                 raise EdgeError(
                     "OUTBOX_SCHEMA_UNSUPPORTED",
                     "Versão SQLite não suportada; preserve a outbox e confira a versão do worker.",
@@ -104,12 +104,23 @@ class Outbox:
                     status TEXT NOT NULL DEFAULT 'PENDING', attempts INTEGER NOT NULL DEFAULT 0,
                     next_attempt REAL NOT NULL DEFAULT 0, error_code TEXT
                 );
+                CREATE TABLE IF NOT EXISTS delivery_timing (
+                    event_id TEXT PRIMARY KEY REFERENCES outbox(event_id) ON DELETE CASCADE,
+                    timing TEXT NOT NULL, delivery_hint TEXT
+                );
+                CREATE TABLE IF NOT EXISTS timing_audit (
+                    id INTEGER PRIMARY KEY, run_id TEXT, event_id TEXT,
+                    frame_index INTEGER NOT NULL, stage TEXT NOT NULL,
+                    reason TEXT NOT NULL, age_ms REAL, checkpoint_outcome TEXT,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(event_id, frame_index, stage, reason)
+                );
                 CREATE TABLE IF NOT EXISTS resets (
                     id TEXT PRIMARY KEY, camera_id TEXT NOT NULL, run_id TEXT,
                     reason TEXT NOT NULL, created_at TEXT NOT NULL
                 );
             """)
-            self.db.execute("PRAGMA user_version=2")
+            self.db.execute("PRAGMA user_version=3")
             self.db.commit()
             cameras = {r[0] for r in self.db.execute("SELECT DISTINCT camera_id FROM executions")}
             if cameras and cameras != {self.camera_id}:
@@ -216,6 +227,7 @@ class Outbox:
         closed=False,
         snapshot=None,
         snapshot_error=None,
+        timing=None,
     ):
         # Episode creation + event + checkpoint must commit together before any HTTP.
         with self.transaction():
@@ -228,6 +240,11 @@ class Outbox:
                     "INSERT INTO outbox(event_id,payload,created_at) VALUES(?,?,?)",
                     (event["eventId"], encode(event), utc_now()),
                 )
+                if timing is not None:
+                    self.db.execute(
+                        "INSERT INTO delivery_timing(event_id,timing) VALUES(?,?)",
+                        (event["eventId"], encode(timing)),
+                    )
                 if event.get("evidenceMode") == "snapshot":
                     count, size = self.db.execute(
                         "SELECT COUNT(jpeg),COALESCE(SUM(LENGTH(jpeg)),0) FROM snapshots"
@@ -268,6 +285,46 @@ class Outbox:
                     run_id,
                 ),
             )
+
+    def delivery_timing(self, event_id):
+        row = self.db.execute(
+            "SELECT timing,delivery_hint FROM delivery_timing WHERE event_id=?", (event_id,)
+        ).fetchone()
+        return (
+            {"timing": json.loads(row["timing"]), "deliveryHint": row["delivery_hint"]}
+            if row
+            else None
+        )
+
+    def audit_timing(
+        self,
+        run_id,
+        frame_index,
+        stage,
+        reason,
+        age_ms=None,
+        event_id=None,
+        outcome=None,
+        engine=None,
+        delivery_hint=None,
+    ):
+        with self.transaction():
+            if engine is not None:
+                self.db.execute(
+                    "UPDATE executions SET engine=? WHERE run_id=?",
+                    (encode(engine.snapshot()), run_id),
+                )
+            self.db.execute(
+                "INSERT OR IGNORE INTO timing_audit "
+                "(run_id,event_id,frame_index,stage,reason,age_ms,checkpoint_outcome,created_at) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (run_id, event_id, frame_index, stage, reason, age_ms, outcome, utc_now()),
+            )
+            if event_id and stage == "DELIVERY_PREFLIGHT" and delivery_hint is not None:
+                self.db.execute(
+                    "UPDATE delivery_timing SET delivery_hint=? WHERE event_id=?",
+                    (delivery_hint, event_id),
+                )
 
     def finish(self, run_id):
         with self.transaction():

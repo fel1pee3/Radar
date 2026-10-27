@@ -50,12 +50,28 @@ export function episodeHash(event: EventV1): string {
   void ignored;
   return contentHash(context);
 }
-export function deliveryClass(event: EventV1, receivedAt: Date) {
+export type DeliveryStateHint = 'DELAYED' | 'CLOCK_UNCERTAIN';
+
+export function deliveryStateHint(value: unknown): DeliveryStateHint | undefined {
+  if (value === undefined) return undefined;
+  if (value !== 'DELAYED' && value !== 'CLOCK_UNCERTAIN') fail(400, 'INVALID_DELIVERY_STATE');
+  return value;
+}
+
+export function deliveryClass(
+  event: Pick<EventV1, 'mode' | 'detectedAt' | 'occurredAt'>,
+  receivedAt: Date,
+  hint?: DeliveryStateHint,
+) {
   if (event.mode !== 'LIVE') return 'TEST' as const;
   const detected = Date.parse(event.detectedAt);
-  if (detected > receivedAt.getTime() + 30000 || Date.parse(event.occurredAt) > detected)
+  if (
+    hint === 'CLOCK_UNCERTAIN' ||
+    detected > receivedAt.getTime() + 30000 ||
+    Date.parse(event.occurredAt) > detected
+  )
     return 'CLOCK_UNCERTAIN' as const;
-  if (receivedAt.getTime() - detected > 120000) return 'DELAYED' as const;
+  if (hint === 'DELAYED' || receivedAt.getTime() - detected > 120000) return 'DELAYED' as const;
   return 'CURRENT' as const;
 }
 

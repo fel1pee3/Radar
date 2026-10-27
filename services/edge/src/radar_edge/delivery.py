@@ -6,7 +6,7 @@ import random
 import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
-from time import time
+from time import monotonic_ns, time
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -14,6 +14,7 @@ import httpx
 
 from radar_edge.config import private_path
 from radar_edge.errors import EdgeError
+from radar_edge.freshness import PROCESS_CLOCK_SESSION, delivery_freshness
 
 
 def credentials(settings, camera_id):
@@ -68,8 +69,20 @@ def valid_ack(value, event_id, status, mode="REPLAY"):
 
 
 class Delivery:
-    def __init__(self, store, settings, client=None, clock=time, jitter=random.uniform):
+    def __init__(
+        self,
+        store,
+        settings,
+        client=None,
+        clock=time,
+        jitter=random.uniform,
+        freshness_clock=time,
+        monotonic_clock=monotonic_ns,
+        clock_session=PROCESS_CLOCK_SESSION,
+    ):
         self.store, self.settings, self.clock = store, settings, clock
+        self.freshness_clock = freshness_clock
+        self.monotonic_clock, self.clock_session = monotonic_clock, clock_session
         self.url, token = credentials(settings, store.camera_id)
         self.client = client or httpx.Client(
             timeout=settings.timeoutSeconds, trust_env=False, follow_redirects=False
@@ -102,12 +115,32 @@ class Delivery:
             status, error, ack = "PENDING", None, None
             delay = min(30.0, max(1.0, 2.0 ** min(attempts - 1, 5) * self.jitter(0.8, 1.2)))
             try:
+                payload = json.loads(row["payload"])
+                state, reason, age = delivery_freshness(
+                    payload,
+                    self.store.delivery_timing(row["event_id"]),
+                    self.freshness_clock(),
+                    self.monotonic_clock(),
+                    self.clock_session,
+                )
+                headers = dict(self.headers)
+                if state in {"DELAYED", "CLOCK_UNCERTAIN"}:
+                    headers["X-Radar-Delivery-State"] = state
+                    self.store.audit_timing(
+                        None,
+                        -1,
+                        "DELIVERY_PREFLIGHT",
+                        reason or state,
+                        age,
+                        event_id=row["event_id"],
+                        delivery_hint=state,
+                    )
                 # Stream and cap even an untrusted/malformed local ACK.
                 with self.client.stream(
                     "POST",
                     self.url + "/edge/events",
                     content=row["payload"].encode(),
-                    headers=self.headers,
+                    headers=headers,
                 ) as response:
                     data = b""
                     for part in response.iter_bytes():

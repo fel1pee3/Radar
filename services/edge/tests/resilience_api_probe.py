@@ -5,6 +5,7 @@ import os
 import sys
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from time import monotonic_ns, time
 
 import httpx
 from temporal_support import GEOMETRY, calibration, observation
@@ -12,7 +13,25 @@ from temporal_support import GEOMETRY, calibration, observation
 from radar_edge.config import EdgeConfig
 from radar_edge.delivery import Delivery
 from radar_edge.event_runtime import EventRuntime
+from radar_edge.freshness import PROCESS_CLOCK_SESSION
 from radar_edge.outbox import Outbox
+
+
+class InjectedClock:
+    session_id = PROCESS_CLOCK_SESSION
+
+    def __init__(self):
+        self.ns, self.wall = monotonic_ns(), time()
+
+    def monotonic_ns(self):
+        return self.ns
+
+    def time(self):
+        return self.wall
+
+    def advance(self, ms):
+        self.ns += round(ms * 1e6)
+        self.wall += ms / 1000
 
 
 def main():
@@ -27,8 +46,9 @@ def main():
         }
     )
     action = sys.argv[1]
-    if action in {"emit", "lost-ack"}:
-        with EventRuntime(c, calibration(), "SYNTHETIC-LIVE", GEOMETRY) as runtime:
+    injected = InjectedClock() if action == "paused-commit" else None
+    if action in {"emit", "lost-ack", "paused-commit"}:
+        with EventRuntime(c, calibration(), "SYNTHETIC-LIVE", GEOMETRY, clock=injected) as runtime:
             shift = int(os.environ.get("EDGE_TIME_SHIFT", "0"))
             anchor = (
                 (datetime.now(UTC) + timedelta(seconds=shift))
@@ -40,8 +60,22 @@ def main():
                 "UPDATE executions SET anchor=? WHERE run_id=?", (anchor, runtime.run["run_id"])
             )
             runtime.store.db.commit()
+            if injected:
+                checkpoint = runtime.store.checkpoint
+
+                def paused_checkpoint(*args, **kwargs):
+                    checkpoint(*args, **kwargs)
+                    if args[3]:
+                        injected.advance(125000)
+
+                runtime.store.checkpoint = paused_checkpoint
             for t in range(0, 2200, 200):
-                runtime.process(replace(observation(t), mode="LIVE", cameraId=c.cameraId))
+                if injected and t:
+                    injected.advance(200)
+                runtime.process(
+                    replace(observation(t), mode="LIVE", cameraId=c.cameraId),
+                    **({"acquired_ns": injected.ns} if injected else {}),
+                )
     with Outbox(c.events.outboxPath, c.cameraId) as store:
         before = store.db.execute("SELECT payload FROM outbox").fetchone()[0]
         client = None
@@ -61,6 +95,15 @@ def main():
             client=client,
             clock=lambda: float(os.environ["EDGE_TEST_CLOCK"]),
             jitter=lambda a, b: 1.0,
+            **(
+                {
+                    "freshness_clock": injected.time,
+                    "monotonic_clock": injected.monotonic_ns,
+                    "clock_session": injected.session_id,
+                }
+                if injected
+                else {}
+            ),
         )
         try:
             sender.flush(resume_auth=action == "resume")
@@ -76,6 +119,7 @@ def main():
             "eventId": row["event_id"],
             "confirmation": json.loads(row["ack"]) if row["ack"] else None,
             "preservedPayload": True,
+            "interruptionInjected": injected is not None,
         }
         print(json.dumps(result))
 

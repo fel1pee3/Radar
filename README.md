@@ -8,6 +8,12 @@ para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
 
+**27/10 — continuidade e referência visual:** proteção de decisão envelhecida
+implementada e testada até a API. Auditoria A/B em 14 frames corrigiu a entrada
+RGB da pose isolada, mas ainda mostrou falhas de localização. Referência articular
+em revisão, sem estimador promovido.
+[Resultados e reprodução](docs/RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).
+
 **Decisão e retificação temporal, 26/10:** suspensão explica os 725 s;
 aceite recalculado com fonte completa e tempo da decisão. Nenhuma alternativa
 aprovada. Os valores históricos abaixo estão retificados no

@@ -7,6 +7,7 @@ import re
 import sqlite3
 from collections import Counter
 from contextlib import ExitStack
+from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from time import perf_counter
@@ -19,6 +20,7 @@ from radar_edge.delivery import Delivery
 from radar_edge.errors import EdgeError
 from radar_edge.evidence_engine import create_engine
 from radar_edge.features import QualityGate, extract_features
+from radar_edge.freshness import MAX_FRAME_AGE_MS, ProcessingClock
 from radar_edge.model import get_model_spec
 from radar_edge.observations import point_usable
 from radar_edge.outbox import FileLock, Outbox, encode
@@ -112,8 +114,12 @@ class EventRuntime:
         excluded=None,
         async_delivery=False,
         decision_trace=None,
+        clock=None,
     ):
         self.config, self.calibration = config, calibration
+        self.clock = clock or ProcessingClock()
+        self.previous_acquired_ns = None
+        self.timing_interruptions = 0
         self.async_delivery = async_delivery
         self.decision_trace = decision_trace
         self.model_spec = get_model_spec(config.model.variant)
@@ -212,15 +218,41 @@ class EventRuntime:
             ).encode()
         ).hexdigest()
 
-    def break_observation(self):
-        """Pause/reconnect breaks timing even when FILE media time barely advances."""
-        if self.policy.temporalMode == "EVIDENCE_V2":
-            self.engine = create_engine(
-                self.policy, active=self.engine.state in {"ACTIVE", "REARMING"}
-            )
-            self.gate = QualityGate(self.policy)
-            self.previous_features = None
-            self.previous_capture_eligible = False
+    def break_observation(self, active=None):
+        """Drop continuity, never erase a persisted active episode."""
+        if active is None:
+            active = self.engine.state in {"ACTIVE", "REARMING"}
+        self.engine = create_engine(self.policy, active=active)
+        self.gate = QualityGate(self.policy)
+        if self.previous_features is not None:
+            self.previous_features = self._ineligible_timing(self.previous_features)
+        self.previous_capture_eligible = False
+        self.previous_acquired_ns = None
+
+    def _timing_break(self, observation, stage, reason, age, outcome, event=None, active=None):
+        self.break_observation(active=active)
+        self.timing_interruptions += 1
+        self.store.audit_timing(
+            self.run["run_id"],
+            observation.frameIndex,
+            stage,
+            reason,
+            age,
+            event_id=event["eventId"] if event else None,
+            outcome=outcome,
+            engine=self.engine,
+        )
+        if self.decision_trace:
+            self.decision_trace.status("RUNNING", reason)
+
+    @staticmethod
+    def _ineligible_timing(features):
+        return replace(
+            features,
+            eligible=False,
+            candidate=False,
+            reasons=tuple(sorted(set(features.reasons) | {"FRAME_TIMEOUT"})),
+        )
 
     def __enter__(self):
         try:
@@ -239,7 +271,14 @@ class EventRuntime:
             self.capture_run_id = str(uuid4())
             self.engine.restore(json.loads(self.run["engine"]))
             if self.config.events.delivery.enabled and not self.async_delivery:
-                self.delivery = Delivery(self.store, self.config.events.delivery)
+                self.delivery = Delivery(
+                    self.store,
+                    self.config.events.delivery,
+                    clock=self.clock.time,
+                    freshness_clock=self.clock.time,
+                    monotonic_clock=self.clock.monotonic_ns,
+                    clock_session=self.clock.session_id,
+                )
                 self.resources.callback(self.delivery.close)
                 self.delivery.flush()
             return self
@@ -252,6 +291,8 @@ class EventRuntime:
 
     def process(self, observation, frame=None, acquired_ns=None):
         profile = self.config.diagnostics.profileProcessing
+        timing_reason = None
+        active_before = self.engine.state in {"ACTIVE", "REARMING"}
         p0 = perf_counter() if profile else 0
         settings = self.config.events.delivery
         self.store.check_capacity(settings.maxItems, settings.maxBytes, extra_bytes=65536)
@@ -274,6 +315,34 @@ class EventRuntime:
             self.classification_seconds += elapsed
             self.classification_max = max(self.classification_max, elapsed)
         p3 = perf_counter() if profile else 0
+        if acquired_ns is not None:
+            age = (self.clock.monotonic_ns() - acquired_ns) / 1e6
+            gap = (
+                (acquired_ns - self.previous_acquired_ns) / 1e6
+                if self.previous_acquired_ns is not None
+                else None
+            )
+            if age < 0 or age > MAX_FRAME_AGE_MS:
+                timing_reason = "STALE_BEFORE_DECISION"
+                self._timing_break(
+                    observation,
+                    "BEFORE_DECISION",
+                    timing_reason,
+                    age,
+                    "NOT_STARTED",
+                    active=active_before,
+                )
+                f = self._ineligible_timing(f)
+                capture_eligible = False
+            elif gap is not None and (gap < 0 or gap > self.policy.maxObservationGapMs):
+                self._timing_break(
+                    observation,
+                    "BEFORE_DECISION",
+                    "HOST_OBSERVATION_GAP",
+                    age,
+                    "NOT_STARTED",
+                    active=active_before,
+                )
         tracing = self.decision_trace is not None and self.decision_trace.enabled
         before = temporal_state(self.engine, observation.timestampMs) if tracing else None
         emission = self.engine.step(f)
@@ -297,6 +366,31 @@ class EventRuntime:
                 image = encode_snapshot(frame, observation)
             except Exception:
                 image_error = "SNAPSHOT_CAPTURE_FAILED"
+        timing = None
+        if acquired_ns is not None:
+            now_ns = self.clock.monotonic_ns()
+            age = (now_ns - acquired_ns) / 1e6
+            if age < 0 or age > MAX_FRAME_AGE_MS:
+                if not timing_reason:
+                    timing_reason = "STALE_BEFORE_CHECKPOINT"
+                    self._timing_break(
+                        observation,
+                        "BEFORE_CHECKPOINT",
+                        timing_reason,
+                        age,
+                        "NOT_STARTED",
+                        active=active_before,
+                    )
+                f = self._ineligible_timing(f)
+                capture_eligible = False
+                emission, value, image = None, None, None
+            timing = {
+                "sessionId": self.clock.session_id,
+                "recordedMonotonicNs": now_ns,
+                "recordedWallSeconds": self.clock.time(),
+                "frameAgeAtRecordMs": age,
+            }
+        checkpoint_started_ns = self.clock.monotonic_ns()
         p4 = perf_counter() if profile else 0
         try:
             self.store.checkpoint(
@@ -307,13 +401,40 @@ class EventRuntime:
                 self.engine.closed,
                 snapshot=image,
                 snapshot_error=image_error,
+                **({"timing": timing} if timing is not None else {}),
             )
         except sqlite3.Error:
+            try:
+                self.store.audit_timing(
+                    self.run["run_id"],
+                    observation.frameIndex,
+                    "CHECKPOINT",
+                    "CHECKPOINT_OUTCOME_UNKNOWN",
+                    event_id=value["eventId"] if value else None,
+                    outcome="UNKNOWN",
+                )
+            except sqlite3.Error:
+                pass  # Do not replace the original storage failure or claim rollback.
             raise EdgeError(
                 "STORAGE_ERROR",
                 "Falha ao persistir episódio/checkpoint/outbox; "
                 "execução interrompida sem envio HTTP.",
             ) from None
+        if acquired_ns is not None:
+            now_ns = self.clock.monotonic_ns()
+            age = (now_ns - acquired_ns) / 1e6
+            checkpoint_ms = (now_ns - checkpoint_started_ns) / 1e6
+            if not timing_reason and (
+                age < 0 or age > MAX_FRAME_AGE_MS or checkpoint_ms > self.policy.maxObservationGapMs
+            ):
+                timing_reason = "PERSISTED_DECISION_INTERRUPTED"
+                self._timing_break(
+                    observation, "AFTER_CHECKPOINT", timing_reason, age, "COMMITTED", event=value
+                )
+                f = self._ineligible_timing(f)
+                capture_eligible = False
+            elif not timing_reason:
+                self.previous_acquired_ns = acquired_ns
         p5 = perf_counter() if profile else 0
         self.generated += bool(value)
         self.processed += 1
@@ -351,8 +472,6 @@ class EventRuntime:
         self.previous_capture_eligible = capture_eligible
         p6 = perf_counter() if profile else 0
         if tracing:
-            from time import monotonic_ns
-
             self.decision_trace.observation(
                 observation,
                 f,
@@ -360,7 +479,12 @@ class EventRuntime:
                 before,
                 temporal_state(self.engine, observation.timestampMs),
                 emission,
-                live_timing={"capturedFrameAgeAtDecisionMs": (monotonic_ns() - acquired_ns) / 1e6}
+                live_timing={
+                    "capturedFrameAgeAtDecisionMs": (self.clock.monotonic_ns() - acquired_ns) / 1e6,
+                    "continuityBreakReason": timing_reason,
+                    "checkpointOutcome": "COMMITTED",
+                    "eventPersisted": bool(value),
+                }
                 if acquired_ns is not None
                 else None,
             )
@@ -394,6 +518,7 @@ class EventRuntime:
             "runId": self.run["run_id"],
             "resumed": self.resumed,
             "initialCheckpointFrame": self.run["frame_index"],
+            "timingInterruptions": self.timing_interruptions,
             "lastPersistedCheckpointFrame": checkpoint["frame_index"],
             "lastPersistedCheckpointTimestampMs": checkpoint["timestamp_ms"],
             "alreadyCompleted": bool(self.run["completed"]),

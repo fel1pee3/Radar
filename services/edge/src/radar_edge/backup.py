@@ -19,11 +19,11 @@ def copy_outbox(source, destination):
     with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as original:
         with closing(sqlite3.connect(destination)) as target:
             version = original.execute("PRAGMA user_version").fetchone()[0]
-            if version not in {1, 2}:
+            if version not in {1, 2, 3}:
                 raise EdgeError("OUTBOX_SCHEMA_UNSUPPORTED", "Confira a versão da outbox.")
             original.backup(target)
             target.execute("PRAGMA secure_delete=ON")
-            if version == 2:
+            if version >= 2:
                 target.execute(
                     "UPDATE snapshots SET jpeg=NULL,status='EXPIRED',error_code='BACKUP_NO_MEDIA'"
                 )

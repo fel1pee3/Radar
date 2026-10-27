@@ -2,7 +2,7 @@ import { Controller, Get, Injectable, Inject, Logger, Query, Req, UseGuards } fr
 import type { OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { Database } from './database.js';
-import { CLOCK, NOTIFICATIONS_ENABLED } from './event-support.js';
+import { deliveryClass, CLOCK, NOTIFICATIONS_ENABLED } from './event-support.js';
 import type { Clock } from './event-support.js';
 import { HumanGuard } from './identity.js';
 import type { HumanRequest } from './identity.js';
@@ -59,15 +59,30 @@ export class NotificationExecutor implements OnApplicationBootstrap, OnModuleDes
             where: { id: candidates[0]!.id },
             include: { incident: true, delivery: true },
           });
+          const dispatchedAt = this.clock.now();
+          const hint =
+            intent.incident.deliveryClass === 'DELAYED' ||
+            intent.incident.deliveryClass === 'CLOCK_UNCERTAIN'
+              ? intent.incident.deliveryClass
+              : undefined;
+          const currentClass = deliveryClass(
+            {
+              mode: intent.incident.mode,
+              detectedAt: intent.incident.detectedAt.toISOString(),
+              occurredAt: intent.incident.occurredAt.toISOString(),
+            },
+            dispatchedAt,
+            hint,
+          );
           if (!intent.delivery) {
             await tx.notificationDelivery.create({
               data: {
                 tenantId: intent.tenantId,
                 intentId: intent.id,
                 channel: 'SIMULATED',
-                urgent: intent.incident.deliveryClass === 'CURRENT',
-                createdAt: now,
-                message: `Aviso local SIMULATED: ${intent.incident.kind}; modo ${intent.incident.mode}; ${intent.incident.deliveryClass}. Nenhuma mensagem externa enviada.`,
+                urgent: currentClass === 'CURRENT',
+                createdAt: dispatchedAt,
+                message: `Aviso local SIMULATED: ${intent.incident.kind}; modo ${intent.incident.mode}; ${currentClass}. Nenhuma mensagem externa enviada.`,
               },
             });
             await tx.auditEntry.create({
@@ -76,8 +91,11 @@ export class NotificationExecutor implements OnApplicationBootstrap, OnModuleDes
                 incidentId: intent.incidentId,
                 objectId: intent.id,
                 action: 'SIMULATED_NOTIFICATION_RECORDED',
-                resultCode: 'RECORDED_LOCALLY',
-                createdAt: now,
+                resultCode:
+                  currentClass === intent.incident.deliveryClass
+                    ? 'RECORDED_LOCALLY'
+                    : 'RECORDED_LOCALLY_' + currentClass,
+                createdAt: dispatchedAt,
               },
             });
           }
