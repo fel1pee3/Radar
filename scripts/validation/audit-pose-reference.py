@@ -18,6 +18,7 @@ from radar_edge.policy import configured_policy
 from radar_edge.pose_audit import (
     assess_anatomy,
     box_iou,
+    native_shadow_readiness,
     pose_input_from_bgr,
     restore_box,
     restore_point,
@@ -81,13 +82,13 @@ def load_pair(vendor, detector_path, pose_path):
 def classify_shadow(
     points, item, reference, config, classifier, policy, calibration, duration
 ):
-    anatomy = assess_anatomy(points, reference, item["width"], item["height"])
-    essential = {11, 12, 23, 24, 25, 26, 27, 28}
-    mask = sum(
-        i in essential and 0.5 <= p[2] <= 1 and 0 <= p[0] <= 1 and 0 <= p[1] <= 1
-        for i, p in points.items()
+    readiness = native_shadow_readiness(points)
+    diagnostic_ready = (
+        readiness["descriptorCandidateForV3"]
+        if config.posture.method == "MULTICLASS_BODY_V3"
+        else readiness["readyForLegacyShadow"]
     )
-    if not anatomy["qualifiedVisibleSubset"] or mask != 8:
+    if not diagnostic_ready:
         return None
     proxy = Pose(
         tuple(
@@ -122,6 +123,16 @@ def classify_shadow(
     )
     f = classifier.classify(o, f)
     return {
+        "readiness": readiness,
+        "nativeScoresPreserved": True,
+        "wholeBodyAnatomyValidated": False,
+        "legacyClassifierScored": bool(f.postureClassScores),
+        "legacyClassScores": list(f.postureClassScores),
+        "legacyPartialDescriptorUsed": config.posture.method == "MULTICLASS_BODY_V3"
+        and not readiness["readyForLegacyShadow"],
+        "legacyCandidate": f.candidate,
+        "requiresCompleteHumanReference": False,
+        "eventsAuthorized": False,
         "posture": f.posture,
         "eligible": f.eligible,
         "candidate": f.candidate,

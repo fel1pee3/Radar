@@ -1,5 +1,11 @@
 # Relatórios de implementação
 
+[Referência parcial e localização, 27/10](REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md):
+nove tornozelos conferidos, causas dos zero probes auditadas e cache RGB
+reavaliado. YOLOX-m recupera dois alvos de localização, mas não é promovido
+por falsos boxes/regressões e qualidade de pose insuficiente.
+[Tabela por frame](REFERENCIA_PARCIAL_LOCALIZACAO_2026_10_27.csv).
+
 [Continuidade e referência visual, 27/10](CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md):
 proteção antes/depois do commit e na entrega, testes de interrupção e auditoria
 A/B nas quatro orientações. Entrada RGB da pose corrigida no experimento;

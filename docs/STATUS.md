@@ -1,5 +1,24 @@
 # Status de construção
 
+**27/10/2026 — referência parcial encerrada; localizador alternativo não promovido.**
+Nove regiões de tornozelo, em seis frames, conferidas pelo fundador; demais
+articulações e lateralidade continuam incertas. Caixas visíveis retificadas
+por imagem, com versões/avaliações antigas preservadas; PCK anterior segue inválido.
+Auditor deixava zero probes por exigir referência humana completa e oito
+pontos para qualquer classe. Corrigido somente no offline para usar o contrato
+parcial já existente do V3: 82 probes em 224 linhas RGB salvas, sem inferência nova
+por revisão de rótulo. Scores SimCC continuam nativos e shadow não validado.
+Uma alternativa, YOLOX-m HumanArt, recuperou F07/F13 em 0° (IoU 0,727/0,926).
+Trouxe falso box no vazio270, ambiguidade F08 e regressões shadow em F01/F14.
+Dois recortes manuais diagnósticos: F07 chega a oito pontos/LYING com a mesma pose;
+F13 continua insuficiente. Isso não é solução automática nem anatomia completa.
+458 testes Python passaram; uma GUI ignorada; lint/formatação passaram.
+Referência RTMO, classificadores, limiares, configurações e perdas históricas
+preservados. Sem matriz completa, stream novo, webcam, treino, banco alterado,
+commit/push/deploy ou aprovação do MVP.
+[Relatório e reprodução](RELATORIOS/REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md) ·
+[Tabela dos 14 frames](RELATORIOS/REFERENCIA_PARCIAL_LOCALIZACAO_2026_10_27.csv).
+
 **27/10/2026 — continuidade protegida; diagnóstico visual parcial.**
 Rechecagens antes/depois do checkpoint e antes do HTTP quebram evidência velha,
 preservando evento possivelmente confirmado, envelope, timestamps e episódio ativo.

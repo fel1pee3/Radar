@@ -126,3 +126,79 @@ def assess_anatomy(points, reference, width, height):
         "qualificationLimit": "Hidden anatomy and anatomical laterality unverified",
         "details": details,
     }
+
+
+ESSENTIAL_DIAGNOSTIC = (11, 12, 23, 24, 25, 26, 27, 28)
+
+
+def native_shadow_readiness(points):
+    """Legacy numeric mask only; SimCC scores remain uncalibrated native values.
+
+    Human labels measure error; missing labels never change this mask.
+    This does not authorize a detector event or certify visible anatomy.
+    """
+    details = []
+    for index in ESSENTIAL_DIAGNOSTIC:
+        p = points.get(index, points.get(str(index)))
+        present = p is not None and len(p) >= 3
+        finite = present and bool(np.isfinite(p[:3]).all())
+        in_frame = finite and 0 <= p[0] <= 1 and 0 <= p[1] <= 1
+        score_pass = finite and 0.5 <= p[2] <= 1
+        details.append(
+            {
+                "index": index,
+                "present": present,
+                "finite": finite,
+                "inFrame": bool(in_frame),
+                "nativeScore": float(p[2]) if finite else None,
+                "passesLegacyNumericMask": bool(in_frame and score_pass),
+            }
+        )
+    count = sum(p["passesLegacyNumericMask"] for p in details)
+    return {
+        "nativeQualitySource": "RTMPOSE_SIMCC_SCORE",
+        "nativeScoreCalibrationValidated": False,
+        "legacyNumericProjectionOnly": True,
+        "essentialMaskPassed": count,
+        "essentialMaskRequired": 8,
+        "readyForLegacyShadow": count == 8,
+        "validTorsoPoints": sum(
+            p["passesLegacyNumericMask"] and p["index"] in (11, 12, 23, 24) for p in details
+        ),
+        "descriptorCandidateForV3": count >= 4
+        and sum(p["passesLegacyNumericMask"] and p["index"] in (11, 12, 23, 24) for p in details)
+        >= 3,
+        "humanReferenceRequired": False,
+        "details": details,
+    }
+
+
+def localization_assessment(boxes, reference, width, height):
+    """Assess, never select or merge, automatic detections against a body box."""
+    current = [list(map(float, box)) for box in boxes]
+    expected = reference["count"]
+    if reference["box"] is None:
+        return {
+            "outputBoxes": len(current),
+            "primaryLocated": False,
+            "matchedBoxes": 0,
+            "duplicatePrimaryMatches": 0,
+            "unmatchedBoxes": len(current),
+            "knownEmptyFalseBoxes": len(current) if expected == [0, 0] else None,
+            "referenceIoUs": [],
+            "assessmentOnly": True,
+        }
+    target = np.array(reference["box"]) * [width, height, width, height]
+    overlaps = [box_iou(box, target) for box in current]
+    matches = sum(iou >= 0.5 for iou in overlaps)
+    return {
+        "outputBoxes": len(current),
+        "primaryLocated": matches > 0,
+        "matchedBoxes": matches,
+        "duplicatePrimaryMatches": max(0, matches - 1),
+        "unmatchedBoxes": len(current) - matches,
+        "knownEmptyFalseBoxes": None,
+        "referenceIoUs": overlaps,
+        "ambiguousAdditionalPeople": expected[1] > expected[0],
+        "assessmentOnly": True,
+    }

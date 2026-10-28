@@ -8,6 +8,12 @@ para um cômodo, diagnóstico por decisão e nova comparação de candidatos.
 [Estado e critérios](docs/EVOLUCAO_DO_DETECTOR.md) ·
 [Usar o candidato em arquivo](docs/USO_DETECTOR_EXPERIMENTAL.md).
 
+**27/10 — revisão parcial e localização:** nove tornozelos conferidos; auditor
+corrigido para permitir os diagnósticos parciais já previstos pelo V3.
+YOLOX-m recuperou a localização de dois alvos, mas regrediu em controles e
+qualidade da pose; permanece isolado. Sem promoção ou nova webcam.
+[Resultados por frame e reprodução](docs/RELATORIOS/REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md).
+
 **27/10 — continuidade e referência visual:** proteção de decisão envelhecida
 implementada e testada até a API. Auditoria A/B em 14 frames corrigiu a entrada
 RGB da pose isolada, mas ainda mostrou falhas de localização. Referência articular

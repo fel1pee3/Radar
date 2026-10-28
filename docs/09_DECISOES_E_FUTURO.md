@@ -327,3 +327,35 @@ Próximo passo específico é conferir a pequena referência e reavaliar anatomi
 A/B antes de atribuir a causa restante ou propor calibração. Sem treino,
 novo ensaio físico ou aprovação integral.
 [Relatório e reprodução](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).
+
+## D60 — referência parcial e único localizador alternativo, 27/10/2026
+
+A solicitação do fundador delimitou revisão pequena, auditoria dos zero probes,
+reuso das saídas RGB e uma alternativa de localização, sem webcam/treino/matriz
+completa antes de qualidade localizada promissora.
+
+Referência parcial encerrada para nove regiões observáveis de tornozelo,
+confirmadas pelo fundador; centros ocultos/lateralidade ficam sem coordenada.
+Presença/postura/caixa visível são campos separados. Caixas retificadas por
+inspeção dos originais depois das previsões, declarando essa ordem; versões
+anteriores e PCK invalidado preservados. Todos os dados continuam desenvolvimento.
+
+Zero probes não certificava falha de classificador: o auditor exigia referência
+humana completa/alinhamento invalidado e oito pontos até para diagnosticar
+postura. O V3 já admite quatro válidos e três de torso para descritor parcial;
+oito continuam obrigatórios para evidência positiva de chão. Corrigir somente
+o auditor. SimCC permanece score nativo com projeção shadow não validada,
+sem eventos, equivalência de probabilidades ou mudança dos limiares do produto.
+
+Uma alternativa escolhida por documentação/compatibilidade/licença declarada:
+YOLOX-m HumanArt, mesma pose RTMPose-s RGB. Recupera F07/F13 em localização,
+mas cria falso box no vazio270/ambiguidade F08 e regride F01/F14 no shadow.
+Dois recortes manuais novos, por transformações realmente diferentes, isolam
+recorte em F07; F13 continua bloqueado por pose/score. B nunca conta como
+localização automática.
+
+Não promover ou avançar a vídeos completos/stream/teste físico. Não iniciar
+série automática de margens/modelos. Preservar referência normal, perdas,
+controles inconclusivos e proteções temporais. Próxima proposta deve partir
+dessas causas discriminadas, sem treino amplo ou aprovação integral.
+[Relatório e tabela por frame](RELATORIOS/REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md).
