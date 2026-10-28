@@ -1,5 +1,13 @@
 # Relatórios de implementação
 
+[Viabilidade RTMO/DirectML, 27/10](VIABILIDADE_RTMO_DIRECTML_2026_10_27.md):
+GPU física comprovada, 60 análises, 45 transmissões e 72 regressões;
+aceleração útil isolada, mesmo reconhecimento conhecido e falhas preservadas.
+Configuração física curta preparada; nenhuma câmera aberta.
+[Tabelas por transmissão](VIABILIDADE_RTMO_DIRECTML_STREAMS_2026_10_27.csv) ·
+[Regressão por arquivo](VIABILIDADE_RTMO_DIRECTML_REGRESSAO_2026_10_27.csv).
+
+
 [Referência parcial e localização, 27/10](REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md):
 nove tornozelos conferidos, causas dos zero probes auditadas e cache RGB
 reavaliado. YOLOX-m recupera dois alvos de localização, mas não é promovido

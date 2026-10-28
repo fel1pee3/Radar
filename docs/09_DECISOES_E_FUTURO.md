@@ -359,3 +359,26 @@ série automática de margens/modelos. Preservar referência normal, perdas,
 controles inconclusivos e proteções temporais. Próxima proposta deve partir
 dessas causas discriminadas, sem treino amplo ou aprovação integral.
 [Relatório e tabela por frame](RELATORIOS/REFERENCIA_PARCIAL_E_LOCALIZACAO_2026_10_27.md).
+
+
+## D61 — RTMO DirectML como executor experimental isolado, 27/10/2026
+
+A prova pedida pelo fundador usa os mesmos pesos/classificador e
+REFERENCE_4_SPIN + RTMO_ADAPTIVE_V3. A GPU AMD 1002:15E7 aceita o grafo
+opset 11; profiling mostra computação DML efetiva e auxiliares/NMS na CPU.
+Ambiente separado com onnxruntime-directml 1.23.0; comparação CPU na mesma
+versão e referência 1.23.2 preservada, sem distribuições ORT concorrentes.
+
+Sessão sequencial, memory patterns desligados e override batch=1 na sessão,
+sem reescrever pesos, reduzir precisão ou mudar os critérios.
+60 análises cumpriram o gate congelado; 45 transmissões completas deram
+15/15 para GPU contra 11/15 em cada CPU, ganho médio de 26–33%.
+Preservar os picos, três lacunas GPU e pior captura de 81,44% no vazio.
+72 regressões conservaram 27/36 em cada executor e os mesmos eventos/decisões;
+quatro perdas e controles inconclusivos continuam.
+
+Manter CPU como padrão. Há fundamento para preparar somente um teste físico
+curto opt-in, com outbox/diagnósticos exclusivos e sem HTTP/snapshot.
+Configuração de 60 s preparada, câmera não aberta. Sem nova busca de modelos,
+treino, driver/global Windows alterado ou aprovação integral do MVP.
+[Relatório e reprodução](RELATORIOS/VIABILIDADE_RTMO_DIRECTML_2026_10_27.md).

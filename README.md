@@ -1,5 +1,13 @@
 # Radar de Acontecimentos
 
+**RTMO na GPU existente, 27/10:** DirectML demonstrou ganho médio de 26–33%
+na transmissão, preservando os mesmos eventos/decisões dos 36 arquivos.
+Opção experimental separada; CPU normal mantida, quatro perdas históricas e
+controles inconclusivos preservados. Configuração física de 60 s somente
+preparada; nenhuma webcam aberta nesta rodada.
+[Prova, limitações e reprodução](docs/RELATORIOS/VIABILIDADE_RTMO_DIRECTML_2026_10_27.md).
+
+
 **Base de construção do MVP v0.1 · Felipe Maia · 21/10/2026**
 
 **Núcleo funcional em desenvolvimento, ainda não aprovado.** O fechamento da 08

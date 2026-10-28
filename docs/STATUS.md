@@ -1,5 +1,24 @@
 # Status de construção
 
+**27/10/2026 — RTMO na GPU AMD comprovado; opção DirectML isolada.**
+AMD Radeon 1002:15E7/driver 31.0.21925.1001 e DirectX 12 verificados.
+Profiling confirmou computação DML, com NMS/auxiliares em CPU e transferências;
+não houve fallback integral. Pesos/classificador/recuperação V3 e worker normal
+preservados; ambiente experimental separado, DirectML 1.23.0/CPU comparável
+1.23.0 e referência CPU 1.23.2.
+60 análises dos mesmos pixels: ganho agregado 24,15%, sem mudança perceptual.
+45 transmissões sequenciais: GPU 15/15, cada CPU 11/15 no gate técnico;
+médias 26–33% menores, três lacunas GPU >500 ms e vazio com pior captura 81,44%.
+72 regressões FILE: mesmos 27/36, eventos e decisões semânticas iguais;
+quatro perdas e controles inconclusivos continuam, sem avaliação independente.
+479 testes passaram, uma GUI ignorada; lint/formatação passaram.
+Configuração física opt-in de 60 s somente preparada, sem webcam nesta rodada,
+mudança do padrão, banco/credenciais alterados, commit/push/deploy ou aceite do MVP.
+[Relatório e comandos](RELATORIOS/VIABILIDADE_RTMO_DIRECTML_2026_10_27.md) ·
+[Transmissões](RELATORIOS/VIABILIDADE_RTMO_DIRECTML_STREAMS_2026_10_27.csv) ·
+[Regressão](RELATORIOS/VIABILIDADE_RTMO_DIRECTML_REGRESSAO_2026_10_27.csv).
+
+
 **27/10/2026 — referência parcial encerrada; localizador alternativo não promovido.**
 Nove regiões de tornozelo, em seis frames, conferidas pelo fundador; demais
 articulações e lateralidade continuam incertas. Caixas visíveis retificadas
