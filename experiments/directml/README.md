@@ -1,5 +1,12 @@
 # Prova isolada de RTMO com DirectML
 
+**Integração funcional de 28/10:** a opção explícita `model.executor: DIRECTML`
+agora faz parte da fábrica normal do worker. Use `scripts/run-edge.py` dentro
+deste ambiente isolado para o fluxo com HTTP existente.
+[Roteiro de API, painel e worker](../../docs/USO_DIRECTML_EXPERIMENTAL.md).
+O runner curto `worker.py` e os benchmarks abaixo preservam seus guards e
+continuam separados da demonstração com envio.
+
 Este diretório seleciona outra sessão ONNX Runtime no processo experimental.
 Pré-processamento, pós-processamento, coordenadas, recuperações V3,
 classificador, contexto e motor temporal vêm do worker existente.
@@ -76,3 +83,29 @@ O runner separado `worker.py` é a opção explícita para um futuro teste físi
 não foi executado. Mantém HTTP/imagens desligados e exige outbox nova e duração
 limitada. O enquadramento deve continuar correspondendo à calibração existente.
 Consulte o relatório antes de executar; o comando FILE acima continua sem câmera.
+
+## Repetir o teste curto da webcam
+
+A partir de 28/10, o worker cria uma sessão independente em
+`physical-prepared/sessions/<UUID>/` a cada execução explícita. O mesmo comando
+funciona novamente, preservando a outbox e os resultados de todas as tentativas.
+A pasta da sessão é informada no terminal. Não apague a outbox anterior.
+
+```powershell
+. ./scripts/activate.ps1
+$prova = (Get-Content .local/detector-evolution/directml-current.json -Raw | ConvertFrom-Json).root
+uv run --project experiments/directml --frozen python experiments/directml/worker.py --config "$prova/physical-prepared/webcam-directml-60s.yaml"
+```
+
+Esse comando abre a câmera por até 60 s. Não grava vídeo/imagem nem entrega
+incidentes ao painel. Q/Esc encerra antes. Confira o piso se mudar o enquadramento.
+A correção foi testada sem abrir a câmera.
+[Diagnóstico e preservação da tentativa anterior](../../docs/RELATORIOS/REPETICAO_WEBCAM_DIRECTML_2026_10_28.md).
+
+## Análise da sessão física de 28/10
+
+O fundador executou o teste posteriormente. Houve uma Pessoa no chão local e
+rearme, mas o ensaio terminou manualmente em 56,31 s, teve cobertura insuficiente
+no horizonte completo e ficou sem o último perfil de processamento.
+HTTP continuou desligado. O resultado é parcial; não houve promoção do padrão.
+[Análise e reprodução somente dos registros salvos](../../docs/RELATORIOS/ENSAIO_FISICO_DIRECTML_2026_10_28.md).

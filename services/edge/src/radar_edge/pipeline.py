@@ -6,7 +6,7 @@ import os
 import sqlite3
 from contextlib import ExitStack
 from pathlib import Path
-from time import perf_counter, sleep
+from time import monotonic_ns, perf_counter, sleep
 from uuid import uuid4
 
 import cv2
@@ -15,7 +15,13 @@ from radar_edge.calibration import check_compatibility, load_calibration
 from radar_edge.config import EdgeConfig, private_path, quality_threshold
 from radar_edge.decision_trace import DecisionTrace
 from radar_edge.errors import EdgeError
-from radar_edge.estimator import create_estimator, perception_summary, reset_processing_preference
+from radar_edge.estimator import (
+    create_estimator,
+    executed_model_metadata,
+    executor_options,
+    perception_summary,
+    reset_processing_preference,
+)
 from radar_edge.features import QualityGate, extract_features
 from radar_edge.metrics import Metrics
 from radar_edge.model import file_hash, get_model_spec, model_metadata
@@ -144,10 +150,12 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                 if frame is None:
                     health.update(capture="ENDED", flags=set())
                 network = resources.enter_context(NetworkWorker(config, health))
+                resources.callback(source.close)
             estimator = resources.enter_context(
                 create_estimator(
                     config.model.path,
                     config.model.variant,
+                    **executor_options(config, directory),
                     **(
                         {"recovery": config.model.recovery}
                         if config.model.recovery != "NONE"
@@ -198,7 +206,10 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         )
                         if remaining > 0:
                             sleep(remaining)
+                    processing_started = perf_counter()
+                    profile_start_ns = monotonic_ns()
                     poses, inference_ms = estimator.estimate(frame)
+                    pose_finished = perf_counter()
                     inference_state, reasons = pose_quality(poses, quality_threshold(config))
                     luminance = float(cv2.cvtColor(frame.bgr, cv2.COLOR_BGR2GRAY).mean())
                     # Instantaneous luminance diagnostic; temporal LOW_LIGHT policy belongs to 05.
@@ -237,29 +248,60 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                         warmup_observations += 1
                         frame = read_frame()
                         continue
-                    if runtime is not None:
-                        runtime.process(observation, frame)
-                    elif diagnostic_gate is not None:
-                        features = diagnostic_gate.apply(
+                    observation_ready = perf_counter()
+                    preview_started = None
+                    keep_running = None
+                    try:
+                        if runtime is not None:
+                            runtime.process(observation, frame)
+                        elif diagnostic_gate is not None:
+                            features = diagnostic_gate.apply(
+                                observation,
+                                extract_features(
+                                    observation, calibration["floorPolygon"], diagnostic_gate.policy
+                                ),
+                            )
+                            trace.observation(
+                                observation, features, diagnostic_gate.policy, None, None
+                            )
+                        if health is not None:
+                            health.observation(observation, runtime.previous_features)
+                        metrics.add(observation)
+                        sequence.update(f"{frame.index}:{frame.timestamp_ms}\n".encode())
+                        exporter.write(observation)
+                        preview_started = perf_counter()
+                        keep_running = preview.show(
+                            frame,
                             observation,
-                            extract_features(
-                                observation, calibration["floorPolygon"], diagnostic_gate.policy
-                            ),
+                            calibration["floorPolygon"],
+                            quality_threshold(config),
                         )
-                        trace.observation(observation, features, diagnostic_gate.policy, None, None)
-                    if health is not None:
-                        health.observation(observation, runtime.previous_features)
-                    metrics.add(observation)
-                    sequence.update(f"{frame.index}:{frame.timestamp_ms}\n".encode())
-                    exporter.write(observation)
-                    preview_started = perf_counter()
-                    keep_running = preview.show(
-                        frame,
-                        observation,
-                        calibration["floorPolygon"],
-                        quality_threshold(config),
-                    )
-                    preview_call_seconds += perf_counter() - preview_started
+                    finally:
+                        ended = perf_counter()
+                        if preview_started is not None:
+                            preview_call_seconds += ended - preview_started
+                        if config.diagnostics.profileProcessing:
+                            trace.processing(
+                                frame.timestamp_ms,
+                                {
+                                    "monotonicStartNs": profile_start_ns,
+                                    "monotonicFinishedNs": monotonic_ns(),
+                                    "inferenceMs": inference_ms,
+                                    "observationPreparationMs": (observation_ready - pose_finished)
+                                    * 1000,
+                                    "runtimeAndMetricsMs": (preview_started - observation_ready)
+                                    * 1000,
+                                    "previewMs": (ended - preview_started) * 1000
+                                    if preview_started is not None
+                                    else None,
+                                    "totalProcessingMs": (ended - processing_started) * 1000,
+                                    "eventRuntimeStages": getattr(runtime, "last_processing", {})
+                                    if preview_started is not None
+                                    else None,
+                                    "attempts": getattr(estimator, "perception_attempts", []),
+                                    "scope": "FILE sequential; source PTS are not host frame age",
+                                },
+                            )
                     if not keep_running:
                         state = "STOPPED_REQUEST"
                         break
@@ -295,6 +337,11 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         }
     finally:
         exporter.close()
+        if health:
+            health.update(capture="ERROR" if error else "ENDED")
+            health.refresh_pending()
+            if health.final_outbox is not None:
+                temporal_summary["outbox"] = health.final_outbox
         if trace is not None:
             try:
                 trace.status(state, error["code"] if error else state)
@@ -335,7 +382,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         ),
         "source": {**source.metadata(), "sha256": video_hash},
         "model": {
-            **model_metadata(model_spec),
+            **executed_model_metadata(model_spec, estimator, config.model.executor),
             "loaded": model_loaded,
         },
         "calibration": {"id": calibration["calibrationId"], "version": calibration["version"]}
@@ -394,6 +441,7 @@ def doctor(config: EdgeConfig) -> dict:
         with create_estimator(
             config.model.path,
             config.model.variant,
+            **executor_options(config),
             **({"recovery": config.model.recovery} if config.model.recovery != "NONE" else {}),
             **(
                 {"runtime_profile": config.model.runtimeProfile}

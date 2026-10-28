@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,12 +14,12 @@ import yaml  # noqa: E402
 from stream import experimental_factory  # noqa: E402
 
 
-def evaluate(protocol_path, backend, case_id):
+def evaluate(protocol_path, backend, case_id, *, native_worker=False):
     from radar_edge.config import load_config
     from radar_edge.evaluation import Target, match_floor_acceptance
     from radar_edge.pipeline import run_pipeline
 
-    protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
+    protocol = json.loads(protocol_path.read_text(encoding="utf-8-sig"))
     item = next(c for c in protocol["cases"] if c["id"] == case_id)
     for path, expected in item["preservedFiles"].items():
         if hashlib.sha256(Path(path).read_bytes()).hexdigest() != expected:
@@ -44,12 +45,17 @@ def evaluate(protocol_path, backend, case_id):
     config.diagnostics.outputDirectory = str(directory / "results")
     config.diagnostics.exportDecisions = True
     config.diagnostics.profileProcessing = False
+    if native_worker:
+        config.model.executor = "DIRECTML" if backend == "directml" else "CPU"
     (directory / "config.yaml").write_text(
         yaml.safe_dump(config.model_dump(), sort_keys=False), encoding="utf-8"
     )
     sessions = []
-    with experimental_factory(backend, sessions):
+    context = nullcontext() if native_worker else experimental_factory(backend, sessions)
+    with context:
         report, code = run_pipeline(config)
+    if native_worker:
+        sessions.append(report["model"].get("executor"))
     temporal = report.get("temporal", {})
     if item["targets"] is not None:
         targets = [Target(**t) for t in item["targets"]]
@@ -109,5 +115,8 @@ if __name__ == "__main__":
     parser.add_argument("--protocol", type=Path, required=True)
     parser.add_argument("--backend", choices=("cpu-reference", "directml"), required=True)
     parser.add_argument("--case", required=True)
+    parser.add_argument("--native-worker", action="store_true")
     args = parser.parse_args()
-    raise SystemExit(evaluate(args.protocol, args.backend, args.case)["code"])
+    raise SystemExit(
+        evaluate(args.protocol, args.backend, args.case, native_worker=args.native_worker)["code"]
+    )

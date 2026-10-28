@@ -260,6 +260,8 @@ class WebcamSource:
         try:
             self._release()
         finally:
+            if self.state != "ERROR":
+                self.state = "ENDED"
             if self.device_lock is not None:
                 self.device_lock.__exit__(None, None, None)
                 self.device_lock = None

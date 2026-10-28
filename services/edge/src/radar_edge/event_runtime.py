@@ -115,8 +115,10 @@ class EventRuntime:
         async_delivery=False,
         decision_trace=None,
         clock=None,
+        capture_origin_utc=None,
     ):
         self.config, self.calibration = config, calibration
+        self.capture_origin_utc = capture_origin_utc
         self.clock = clock or ProcessingClock()
         self.previous_acquired_ns = None
         self.timing_interruptions = 0
@@ -178,6 +180,11 @@ class EventRuntime:
             encode(
                 {
                     "video": video_hash,
+                    **(
+                        {"executor": config.model.executor, "deviceId": config.model.deviceId}
+                        if config.model.executor != "CPU"
+                        else {}
+                    ),
                     "videoId": getattr(config.source, "videoId", None),
                     **(
                         {"device": config.source.model_dump()}
@@ -265,7 +272,13 @@ class EventRuntime:
             self.store = self.resources.enter_context(
                 Outbox(self.config.events.outboxPath, self.config.cameraId)
             )
-            self.run, self.resumed = self.store.execution(self.fingerprint)
+            if self.capture_origin_utc is not None:
+                anchor = self.capture_origin_utc.isoformat(timespec="milliseconds").replace(
+                    "+00:00", "Z"
+                )
+                self.run, self.resumed = self.store.execution(self.fingerprint, anchor=anchor)
+            else:
+                self.run, self.resumed = self.store.execution(self.fingerprint)
             # Session identity is never resumed after ENDED. The SQLite execution
             # retains checkpoints/episodes; already stored envelopes stay immutable.
             self.capture_run_id = str(uuid4())

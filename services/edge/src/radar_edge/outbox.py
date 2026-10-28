@@ -195,7 +195,7 @@ class Outbox:
             )
         ]
 
-    def execution(self, fingerprint):
+    def execution(self, fingerprint, *, anchor=None):
         row = self.db.execute(
             "SELECT * FROM executions WHERE camera_id=? AND retired=0", (self.camera_id,)
         ).fetchone()
@@ -207,12 +207,13 @@ class Outbox:
                     "com motivo; o histórico será preservado.",
                 )
             return dict(row), True
-        run_id, anchor = str(uuid4()), utc_now()
+        run_id, created = str(uuid4()), utc_now()
+        anchor = anchor or created
         with self.transaction():
             self.db.execute(
                 "INSERT INTO executions(run_id,camera_id,fingerprint,anchor,created_at) "
                 "VALUES(?,?,?,?,?)",
-                (run_id, self.camera_id, fingerprint, anchor, anchor),
+                (run_id, self.camera_id, fingerprint, anchor, created),
             )
         return dict(
             self.db.execute("SELECT * FROM executions WHERE run_id=?", (run_id,)).fetchone()

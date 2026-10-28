@@ -6,9 +6,12 @@ import subprocess
 from pathlib import Path
 
 
-def execute(path):
-    protocol = json.loads(path.read_text(encoding="utf-8"))
+def execute(path, *, native_worker=False):
+    protocol = json.loads(path.read_text(encoding="utf-8-sig"))
     root = Path(protocol["outputRoot"])
+    if (root / "functional").exists() or any(root.glob("functional-*.log")):
+        raise ValueError("Use nova pasta de regressão; resultados anteriores preservados.")
+    root.mkdir(parents=True, exist_ok=True)
     for index, item in enumerate(protocol["cases"]):
         order = ["cpu-reference", "directml"] if index % 2 == 0 else ["directml", "cpu-reference"]
         for backend in order:
@@ -23,6 +26,8 @@ def execute(path):
                 "--case",
                 item["id"],
             ]
+            if native_worker:
+                command.append("--native-worker")
             with log_path.open("w", encoding="utf-8") as log:
                 child = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
             if child.returncode:
@@ -50,4 +55,6 @@ def execute(path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", type=Path, required=True)
-    execute(parser.parse_args().protocol)
+    parser.add_argument("--native-worker", action="store_true")
+    args = parser.parse_args()
+    execute(args.protocol, native_worker=args.native_worker)

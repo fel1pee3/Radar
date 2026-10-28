@@ -17,7 +17,13 @@ from radar_edge.calibration import check_compatibility, load_calibration
 from radar_edge.config import private_path, quality_threshold
 from radar_edge.decision_trace import DecisionTrace
 from radar_edge.errors import EdgeError
-from radar_edge.estimator import create_estimator, perception_summary, reset_processing_preference
+from radar_edge.estimator import (
+    create_estimator,
+    executed_model_metadata,
+    executor_options,
+    perception_summary,
+    reset_processing_preference,
+)
 from radar_edge.event_runtime import EventRuntime
 from radar_edge.features import QualityGate, extract_features
 from radar_edge.health import LiveHealth, NetworkWorker
@@ -68,6 +74,7 @@ def doctor_live(config):
         with create_estimator(
             config.model.path,
             config.model.variant,
+            **executor_options(config),
             **({"recovery": config.model.recovery} if config.model.recovery != "NONE" else {}),
             **(
                 {"runtime_profile": config.model.runtimeProfile}
@@ -147,6 +154,7 @@ def run_live(config, *, technical_stream=False):
     health = None
     temporal = {"enabled": config.events.enabled}
     state, code, error = "ENDED", 0, None
+    stop_reason = "UNKNOWN"
     last_status = 0.0
     status_retries = 0
     previous_command = None if technical_stream else _control(config)
@@ -189,6 +197,7 @@ def run_live(config, *, technical_stream=False):
                         first.geometry,
                         async_delivery=True,
                         decision_trace=trace,
+                        capture_origin_utc=source.start_utc if not technical_stream else None,
                     )
                 )
                 resources.callback(lambda: temporal.update(runtime.summary()))
@@ -201,11 +210,13 @@ def run_live(config, *, technical_stream=False):
             health = LiveHealth(config, capture_run, calibration)
             health.source = source
             network = resources.enter_context(NetworkWorker(config, health))
+            resources.callback(source.close)  # Release capture before final heartbeat/summary.
             # Save error/final state before the network resource is closed.
             estimator = resources.enter_context(
                 create_estimator(
                     config.model.path,
                     config.model.variant,
+                    **executor_options(config, directory),
                     **(
                         {"recovery": config.model.recovery}
                         if config.model.recovery != "NONE"
@@ -230,10 +241,12 @@ def run_live(config, *, technical_stream=False):
             resources.enter_context(preview)
             if runtime and not technical_stream:
                 anchor = datetime.fromisoformat(runtime.run["anchor"].replace("Z", "+00:00"))
-                offset = max(
-                    runtime.run["timestamp_ms"] + 1 - first.timestamp_ms,
-                    round((source.start_utc - anchor).total_seconds() * 1000),
-                )
+                offset = round((source.start_utc - anchor).total_seconds() * 1000)
+                if offset + first.timestamp_ms <= runtime.run["timestamp_ms"]:
+                    raise EdgeError(
+                        "LIVE_CLOCK_INCOHERENT",
+                        "Relógio anterior ao checkpoint. Pendentes preservados; confira o relógio.",
+                    )
                 frame_offset = runtime.run["frame_index"] + 1
             else:
                 offset, frame_offset = 0, 0
@@ -274,6 +287,7 @@ def run_live(config, *, technical_stream=False):
                 if command and command != previous_command:
                     previous_command = command
                     if command["action"] == "stop":
+                        stop_reason = "CONTROL_STOP"
                         break
                     if command["action"] == "pause" and not paused:
                         preview.set_paused(True)
@@ -292,11 +306,13 @@ def run_live(config, *, technical_stream=False):
                             capture="RUNNING", flags={"FRAME_TIMEOUT"}, inference="WARMING_UP"
                         )
                 if not preview.poll():
+                    stop_reason = "PREVIEW_EXIT"
                     break
                 if (
                     config.processing.maxRunSeconds
                     and now - started >= config.processing.maxRunSeconds
                 ):
+                    stop_reason = "MAX_RUN_SECONDS"
                     break
                 if not technical_stream and now - last_status >= 1:
                     status = {
@@ -431,53 +447,72 @@ def run_live(config, *, technical_stream=False):
                     personProposalScore=getattr(estimator, "person_proposal_score", None),
                 )
                 observation_ready = perf_counter()
-                features = (
-                    runtime.process(o, frame, acquired_ns=source.last_acquired_ns)
-                    if runtime
-                    else None
-                )
-                if diagnostic_gate is not None:
-                    features = diagnostic_gate.apply(
-                        o, extract_features(o, calibration["floorPolygon"], diagnostic_gate.policy)
+                before_preview = None
+                keep_running = None
+                try:
+                    features = (
+                        runtime.process(o, frame, acquired_ns=source.last_acquired_ns)
+                        if runtime
+                        else None
                     )
-                    trace.observation(o, features, diagnostic_gate.policy, None, None)
-                metrics.add(o)
-                health.observation(o, features)
-                health.update(capture="RUNNING")
-                before_preview = perf_counter()
-                if not preview.show(
-                    frame, o, calibration["floorPolygon"], quality_threshold(config)
-                ):
+                    if diagnostic_gate is not None:
+                        features = diagnostic_gate.apply(
+                            o,
+                            extract_features(
+                                o, calibration["floorPolygon"], diagnostic_gate.policy
+                            ),
+                        )
+                        trace.observation(o, features, diagnostic_gate.policy, None, None)
+                    metrics.add(o)
+                    health.observation(o, features)
+                    health.update(capture="RUNNING")
+                    before_preview = perf_counter()
+                    keep_running = preview.show(
+                        frame, o, calibration["floorPolygon"], quality_threshold(config)
+                    )
+                finally:
+                    preview_finished = perf_counter()
+                    if profile_enabled:
+                        profile.update(
+                            {
+                                "inferenceMs": duration,
+                                "observationPreparationMs": (observation_ready - pose_finished)
+                                * 1000,
+                                "runtimeAndMetricsMs": (
+                                    (before_preview or preview_finished) - observation_ready
+                                )
+                                * 1000,
+                                "previewMs": (preview_finished - before_preview) * 1000
+                                if before_preview is not None
+                                else None,
+                                "totalProcessingMs": (preview_finished - processing_started) * 1000,
+                                "eventRuntimeStages": getattr(runtime, "last_processing", {})
+                                if before_preview is not None
+                                else None,
+                                "monotonicFinishedNs": monotonic_ns(),
+                                "frameAgeAfterPreviewMs": (monotonic_ns() - source.last_acquired_ns)
+                                / 1e6,
+                                "attempts": getattr(estimator, "perception_attempts", []),
+                            }
+                        )
+                        write_started = perf_counter()
+                        trace.processing(frame.timestamp_ms, profile)
+                        profile_write_ms += (perf_counter() - write_started) * 1000
+                        processing_profile_count += 1
+                if not keep_running:
+                    stop_reason = "PREVIEW_EXIT"
                     break
-                preview_finished = perf_counter()
-                if profile_enabled:
-                    profile.update(
-                        {
-                            "inferenceMs": duration,
-                            "observationPreparationMs": (observation_ready - pose_finished) * 1000,
-                            "runtimeAndMetricsMs": (before_preview - observation_ready) * 1000,
-                            "previewMs": (preview_finished - before_preview) * 1000,
-                            "totalProcessingMs": (preview_finished - processing_started) * 1000,
-                            "eventRuntimeStages": getattr(runtime, "last_processing", {}),
-                            "monotonicFinishedNs": monotonic_ns(),
-                            "frameAgeAfterPreviewMs": (monotonic_ns() - source.last_acquired_ns)
-                            / 1e6,
-                            "attempts": getattr(estimator, "perception_attempts", []),
-                        }
-                    )
-                    write_started = perf_counter()
-                    trace.processing(frame.timestamp_ms, profile)
-                    profile_write_ms += (perf_counter() - write_started) * 1000
-                    processing_profile_count += 1
                 previous_profile_end = perf_counter()
                 next_analysis = max(now + 1 / config.processing.targetAnalysisFps, monotonic())
                 if (
                     config.processing.maxObservations
                     and metrics.analyzed >= config.processing.maxObservations
                 ):
+                    stop_reason = "MAX_OBSERVATIONS"
                     break
     except KeyboardInterrupt:
         state, code = "INTERRUPTED", 130
+        stop_reason = "KEYBOARD_INTERRUPT"
     except (EdgeError, sqlite3.Error) as failure:
         state, code = "ERROR", 1
         error = {
@@ -510,8 +545,40 @@ def run_live(config, *, technical_stream=False):
                 else "CAPTURE_ERROR"
             )
             health.update(capture="ERROR", flags={flag} if flag else set())
+        if health:
+            health.update(capture="ERROR" if error else "ENDED")
+            try:
+                health.refresh_pending()
+                if temporal.get("enabled") and health.final_outbox is not None:
+                    temporal["outbox"] = health.final_outbox
+            except (sqlite3.Error, OSError):
+                state, code = "ERROR", 1
+                error = {"code": "STORAGE_ERROR", "message": "Falha ao consultar pendentes finais."}
+                health.update(capture="ERROR", flags={"STORAGE_FULL"})
         if network:
             network.close()
+        if health and not technical_stream:
+            try:
+                target = private_path(f".local/edge-control/{config.cameraId}-status.json")
+                status_retries += publish_status(
+                    target,
+                    {
+                        "heartbeat": health.snapshot(),
+                        "network": health.network,
+                        "capture": source.metadata(),
+                        "episodeExecutionId": runtime.run["run_id"] if runtime else None,
+                        "final": True,
+                    },
+                )
+            except Exception as failure:
+                if error is None:
+                    state, code = "ERROR", 1
+                    error = {
+                        "code": "LOCAL_STATUS_WRITE_ERROR",
+                        "message": "Falha ao publicar resumo final privado.",
+                        "diagnostic": safe_diagnostic(failure),
+                    }
+                    health.update(capture="ERROR")
         if trace is not None:
             try:
                 trace.status(state, error["code"] if error else state)
@@ -545,6 +612,7 @@ def run_live(config, *, technical_stream=False):
         },
         "diagnosticReportId": report_id,
         "captureState": state,
+        "stopReason": stop_reason if error is None else "ERROR",
         "error": error,
         "localStatusRetries": status_retries,
         "runId": health.run_id if health else None,
@@ -553,7 +621,7 @@ def run_live(config, *, technical_stream=False):
         "staleAnalysesDiscarded": stale_analysis_discarded,
         "liveInferenceAttemptTiming": attempt_timing,
         "model": {
-            **model_metadata(spec),
+            **executed_model_metadata(spec, estimator, config.model.executor),
         },
         "metrics": metrics.summary(),
         "decisionExport": trace.summary() if trace else {"enabled": False},

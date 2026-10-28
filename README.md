@@ -1,5 +1,18 @@
 # Radar de Acontecimentos
 
+**28/10 — demonstração física GPU verificada:** um evento, incidente e aviso
+local entregues, com rearme e encerramento consistentes. Revisão humana ainda
+não salva e cobertura elegível abaixo de 80%; fluxo parcial, sem aprovação
+geral do detector.
+[Resultados e única próxima ação](docs/RELATORIOS/VERIFICACAO_DEMO_DIRECTML_2026_10_28.md).
+
+**28/10 — opção DirectML no fluxo completo:** GPU opt-in no worker normal,
+com API, painel, deduplicação e revisão automatizada comprovados em arquivos.
+CPU permanece padrão. Demonstração física preparada, ainda não executada;
+percepção experimental e falhas históricas mantidas.
+[Iniciar a demonstração](docs/USO_DIRECTML_EXPERIMENTAL.md) ·
+[Resultados verificáveis](docs/RELATORIOS/INTEGRACAO_DIRECTML_2026_10_28.md).
+
 **RTMO na GPU existente, 27/10:** DirectML demonstrou ganho médio de 26–33%
 na transmissão, preservando os mesmos eventos/decisões dos 36 arquivos.
 Opção experimental separada; CPU normal mantida, quatro perdas históricas e

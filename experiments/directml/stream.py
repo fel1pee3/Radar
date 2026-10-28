@@ -26,6 +26,14 @@ def experimental_factory(backend, sessions):
             if self.runtime_profile != "REFERENCE_4_SPIN" or self.recovery != "RTMO_ADAPTIVE_V3":
                 raise ValueError("The isolated executor requires the unchanged reference")
             self.session, info = create_session(self.model_path, backend)
+            self.executor_metadata = {
+                **info,
+                "requested": backend,
+                "runtime": "onnxruntime-directml" if backend != "cpu-reference" else "onnxruntime",
+                "version": info.get("ortVersion"),
+                "providers": info.get("actualProviders", []),
+                "adapter": info.get("adapter"),
+            }
             sessions.append(info)
             return self
 

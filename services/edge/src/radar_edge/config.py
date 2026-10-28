@@ -54,6 +54,8 @@ class WebcamConfig(StrictModel):
 
 class ModelConfig(StrictModel):
     variant: Literal["lite", "full", "rtmo-s"] = "lite"
+    executor: Literal["CPU", "DIRECTML"] = "CPU"
+    deviceId: int = Field(default=0, ge=0, le=15)
     path: str = ".local/models/pose_landmarker_lite.task"
     recovery: Literal[
         "NONE",
@@ -69,6 +71,12 @@ class ModelConfig(StrictModel):
 
     @model_validator(mode="after")
     def full_path_is_explicit(self):
+        if self.executor == "DIRECTML" and (
+            self.variant != "rtmo-s"
+            or self.recovery != "RTMO_ADAPTIVE_V3"
+            or self.runtimeProfile != "REFERENCE_4_SPIN"
+        ):
+            raise ValueError("DirectML exige RTMO_ADAPTIVE_V3 + REFERENCE_4_SPIN explícitos.")
         if self.runtimeProfile != "REFERENCE_4_SPIN" and self.variant != "rtmo-s":
             raise ValueError("CPU runtime profiles require RTMO.")
         if self.recovery != "NONE" and self.variant != "rtmo-s":
@@ -93,6 +101,7 @@ class ProcessingConfig(StrictModel):
 
 class DiagnosticsConfig(StrictModel):
     profileProcessing: bool = False
+    profileOperators: bool = False
     outputDirectory: str = ".local/results/edge"
     exportObservations: bool = False
     maxExportObservations: int = Field(default=1000, ge=1, le=10000)

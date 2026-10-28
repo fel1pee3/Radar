@@ -1,5 +1,29 @@
 # Relatórios de implementação
 
+[Verificação da demonstração física DirectML, 28/10](VERIFICACAO_DEMO_DIRECTML_2026_10_28.md):
+evento/incidente/aviso reais entregues e rearme/encerramento confirmados;
+revisão humana ainda ausente. Cobertura 79,87%/78,81%, abaixo de 80%;
+fluxo parcial, detector sem aprovação geral. Somente leitura e análise.
+[Intervalos](VERIFICACAO_DEMO_DIRECTML_COBERTURA_2026_10_28.csv) ·
+[Transições](VERIFICACAO_DEMO_DIRECTML_TRANSICOES_2026_10_28.csv).
+
+[Integração opt-in DirectML, 28/10](INTEGRACAO_DIRECTML_2026_10_28.md):
+worker normal até API/painel e revisão automatizada comprovados em FILE;
+72 regressões com mesmos 27/36, falhas históricas preservadas.
+Demonstração física somente preparada, sem abertura da webcam.
+[Regressão](INTEGRACAO_DIRECTML_REGRESSAO_2026_10_28.csv) ·
+[Cobertura antiga detalhada](INTEGRACAO_DIRECTML_COBERTURA_2026_10_28.csv).
+
+[Ensaio físico DirectML, 28/10](ENSAIO_FISICO_DIRECTML_2026_10_28.md):
+um evento de Pessoa no chão e rearme na sessão do fundador, sem entrega ao painel.
+Encerramento manual em 56,31 s, cobertura 70,18% dos 60 s e último perfil ausente:
+aceite parcial, sem nova captura ou mudança do detector.
+
+[Repetição do teste curto DirectML, 28/10](REPETICAO_WEBCAM_DIRECTML_2026_10_28.md):
+cada execução explícita usa nova outbox e resultados, preservando a tentativa
+anterior. Configuração real conferida sem abrir câmera; 25 testes passaram.
+
+
 [Viabilidade RTMO/DirectML, 27/10](VIABILIDADE_RTMO_DIRECTML_2026_10_27.md):
 GPU física comprovada, 60 análises, 45 transmissões e 72 regressões;
 aceleração útil isolada, mesmo reconhecimento conhecido e falhas preservadas.

@@ -714,3 +714,168 @@ test('evidência JPEG sintética: leitura, falha transitória, permissões e exc
   await submit(page, 'RECOGNIZE');
   await expect(page.getByText('Reconhecido', { exact: true }).first()).toBeVisible();
 });
+
+test('DirectML real FILE → incidente → aviso → revisão automatizada persistida', async ({
+  page,
+  request,
+  fixture,
+}) => {
+  test.skip(!process.env.RADAR_DIRECTML_PROTOCOL, 'Protocolo privado e GPU opt-in obrigatórios.');
+  test.setTimeout(180000);
+  const directory = `.local/directml-integration-e2e/${randomUUID()}`;
+  await mkdir(directory, { recursive: true });
+  const credentialFile = `${directory}/worker.json`;
+  await writeFile(
+    credentialFile,
+    JSON.stringify({
+      cameraId: fixture.camera.id,
+      apiUrl,
+      deviceToken: fixture.credential.token,
+    }),
+  );
+  async function python(args) {
+    const child = spawn(
+      'uv',
+      ['run', '--project', 'experiments/directml', '--frozen', 'python', ...args],
+      {
+        env: process.env,
+        windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    let output = '',
+      errors = '';
+    child.stdout.on('data', (x) => {
+      output += x;
+    });
+    child.stderr.on('data', (x) => {
+      errors += x;
+    });
+    const code = await new Promise((resolve, reject) => {
+      child.once('error', reject);
+      child.once('exit', resolve);
+    });
+    await writeFile(`${directory}/worker-${randomUUID()}.log`, output + errors);
+    expect(code, 'Worker DirectML encerrou com erro; consulte os registros privados.').toBe(0);
+    return JSON.parse(output);
+  }
+  const results = [];
+  for (const caseId of ['intake16-03', 'chair08-02']) {
+    const prepared = await python([
+      'scripts/validation/prepare-directml-replay.py',
+      '--protocol',
+      process.env.RADAR_DIRECTML_PROTOCOL,
+      '--case',
+      caseId,
+      '--camera-id',
+      fixture.camera.id,
+      '--credential',
+      credentialFile,
+      '--output',
+      `${directory}/${caseId}`,
+    ]);
+    const result = await python(['scripts/run-edge.py', 'run', '--config', prepared.config]);
+    expect(result.status).toBe('ok');
+    expect(result.mode).toBe('REPLAY');
+    expect(result.model.delegate).toBe('DIRECTML');
+    expect(result.model.executor.operatorProfile.gpuComputeProven).toBe(true);
+    expect(result.health.captureState).toBe('ENDED');
+    expect(result.health.outboxPending).toBe(0);
+    expect(result.framesSaved).toBe(false);
+    const rows = (await readFile(result.decisionExport.path, 'utf8'))
+      .trim()
+      .split('\n')
+      .map(JSON.parse);
+    const ds = rows.filter((x) => x.recordType === 'DECISION').map((x) => x.timestampMs);
+    const ps = rows.filter((x) => x.recordType === 'PROCESSING_PROFILE').map((x) => x.timestampMs);
+    expect(ps).toEqual(ds);
+    expect(ds.length).toBeGreaterThan(5);
+    expect(result.temporal.generatedEvents).toBe(caseId === 'intake16-03' ? 1 : 0);
+    results.push({
+      caseId,
+      reportPath: result.reportPath,
+      model: result.model,
+      events: result.temporal.generatedEvents,
+      decisions: ds.length,
+      pending: result.health.outboxPending,
+      heartbeat: result.network.heartbeat,
+    });
+  }
+  const incidents = await fixture.database.incident.findMany({
+    where: { cameraId: fixture.camera.id },
+  });
+  expect(incidents).toHaveLength(1);
+  const incident = incidents[0];
+  expect(incident.mode).toBe('REPLAY');
+  expect(incident.deliveryClass).toBe('TEST');
+  expect(incident.kind).toBe('PERSON_ON_FLOOR');
+  const receipt = await fixture.database.eventReceipt.findFirstOrThrow({
+    where: { incidentId: incident.id },
+  });
+  const resend = await request.post(`${apiUrl}/edge/events`, {
+    headers: { Authorization: `Bearer ${fixture.credential.token}` },
+    data: receipt.payload,
+  });
+  expect(resend.status()).toBe(200);
+  const duplicate = await resend.json();
+  expect(duplicate.duplicate).toBe(true);
+  expect(duplicate.incidentId).toBe(incident.id);
+  expect(await fixture.database.incident.count({ where: { cameraId: fixture.camera.id } })).toBe(1);
+  expect(await fixture.database.eventReceipt.count({ where: { incidentId: incident.id } })).toBe(1);
+  await expect
+    .poll(() =>
+      fixture.database.notificationDelivery.count({
+        where: { intent: { incidentId: incident.id } },
+      }),
+    )
+    .toBe(1);
+  expect(
+    await fixture.database.notificationIntent.count({ where: { incidentId: incident.id } }),
+  ).toBe(1);
+  await login(page, fixture);
+  await page.goto(`/incidentes/${incident.id}`);
+  await expect(
+    page.getByRole('heading', { name: 'Possível pessoa no chão', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Reprodução', { exact: true })).toBeVisible();
+  await expect(page.getByText('Teste', { exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Ação', exact: true }).selectOption('SET_REVIEW');
+  await page
+    .getByRole('combobox', { name: 'Revisão humana', exact: true })
+    .selectOption('PERSON_ON_FLOOR_CONFIRMED');
+  const note =
+    'REVISÃO AUTOMATIZADA DE TESTE DirectML/REPLAY. Não representa revisão humana do fundador.';
+  await page.getByLabel('Nota', { exact: true }).fill(note);
+  await page.getByRole('button', { name: 'Registrar ação', exact: true }).click();
+  await expect(page.getByText('Ação registrada com sucesso.', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.timeline').getByText(note, { exact: true })).toBeVisible();
+  const stored = await fixture.database.incident.findUniqueOrThrow({ where: { id: incident.id } });
+  expect(stored.review).toBe('PERSON_ON_FLOOR_CONFIRMED');
+  expect(stored.version).toBe(2);
+  const camera = await fixture.database.camera.findUniqueOrThrow({
+    where: { id: fixture.camera.id },
+  });
+  expect(camera.lastHeartbeat.captureState).toBe('ENDED');
+  expect(camera.lastHeartbeat.outboxPending).toBe(0);
+  await writeFile(
+    `${directory}/verification.json`,
+    JSON.stringify(
+      {
+        scope: 'AUTOMATED_TEST_NOT_FOUNDER_HUMAN_REVIEW',
+        incidentId: incident.id,
+        mode: stored.mode,
+        deliveryClass: stored.deliveryClass,
+        review: stored.review,
+        version: stored.version,
+        duplicate: duplicate.duplicate,
+        notificationDeliveries: 1,
+        heartbeatFinal: camera.lastHeartbeat.captureState,
+        results,
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(`DirectML: integração isolada comprovada; registros privados em ${directory}`);
+});

@@ -1,5 +1,80 @@
 # Status de construção
 
+**28/10/2026 — demonstração física DirectML verificada; fluxo parcial, cobertura reprovada.**
+Sessão de captura 5d456564-3ae5-4ba9-9bd3-a83765b8ca4d, câmera 5be84234…,
+relatório 7307ddc3…: 13:54:09–13:55:10, 60,8085 s, MAX_RUN_SECONDS.
+Tentativa anterior de 9,61 s separada, sem somar observações ou intervalo.
+Um PERSON_ON_FLOOR, um ACK/recibo, um incidente e um aviso local entregues;
+episódio CLOSED após rearme, fonte/heartbeat/status/API ENDED e zero pendentes.
+Revisão ausente na leitura READ ONLY de 14:10:24: UNREVIEWED, versão 1, actions=[].
+261 decisões / 261 perfis; 20 NO_POSE, 11 baixa confiança e seis UNKNOWN.
+Processamento médio/P95/máximo 120,9/324,7/506,3 ms, 4,29 análises/s totais.
+Idade máxima 500 ms, intervalo de observação máximo 500 ms, zero lacunas >500 ms.
+Cobertura elegível 79,8683% dos 60 s e 78,8064% do tempo executado: abaixo de 80%;
+captura tempestiva 95,4683%/94,1989%. Inicialização e encerramento mantidos.
+Sequência LYING do modelo de 24,531 s e persistência de 2.078 ms não comprovam
+atividade real ou latência humana; não há marcação independente/vídeo.
+SQL só em leitura, cópias com WAL, originais e software preservados.
+Sem câmera, nova inferência, reenvio, revisão em nome do fundador, testes
+repetidos, alteração de parâmetros, commit/push/deploy ou aprovação do MVP.
+Quatro perdas históricas e controles inconclusivos continuam preservados.
+Próxima ação única: salvar a revisão humana fiel no incidente 3f8db408….
+[Relatório completo](RELATORIOS/VERIFICACAO_DEMO_DIRECTML_2026_10_28.md) ·
+[Intervalos](RELATORIOS/VERIFICACAO_DEMO_DIRECTML_COBERTURA_2026_10_28.csv).
+
+**28/10/2026 — DirectML opt-in integrado ao fluxo; demonstração física preparada.**
+CPU continua padrão; ambiente DirectML 1.23.0 isolado, mesmos pesos/classificador/
+recuperação e temporizadores. Fábrica normal do worker seleciona GPU explicitamente,
+sem fallback silencioso. Perfis finalizados ao sair da prévia, captura fechada
+antes do heartbeat final e pendentes lidos da outbox. Âncora LIVE corrigida
+nas novas execuções; eventos históricos intactos, proteção de idade mantida.
+Prova real FILE com GPU → outbox → API → incidente → aviso → revisão automatizada
+no painel passou em banco exclusivo: positivo 1, controle 0, reenvio sem duplicação,
+revisão recuperada após reload. Profiling comprovou computação DML e auxiliares CPU.
+72 regressões FILE: mesmos 27/36 e decisões/eventos semânticos, quatro perdas e
+controles inconclusivos preservados; desenvolvimento, sem avaliação independente.
+493 testes Python e 161 API passaram; E2E final passou, lint/formatação e
+typecheck passaram. Uma GUI opt-in ignorada, sem captura física nesta entrega.
+Cobertura antiga preservada: 70,18% dos 60 s e 74,78% dos 56,31 s; atribuição
+limitada separa início/fim, processamento e inelegibilidade, sem inventar causa.
+Configuração física com HTTP preparada e credencial ativa conferida em READ ONLY,
+sem envio de demonstração, rotação, mudança de banco ou abertura da webcam.
+Integração comprovada; LIVE→painel→revisão do fundador pendente;
+confiabilidade de percepção e aprovação integral do MVP continuam pendentes.
+[Relatório](RELATORIOS/INTEGRACAO_DIRECTML_2026_10_28.md) ·
+[Comandos e roteiro](USO_DIRECTML_EXPERIMENTAL.md) ·
+[Regressão](RELATORIOS/INTEGRACAO_DIRECTML_REGRESSAO_2026_10_28.csv).
+
+**28/10/2026 — ensaio físico DirectML analisado; detecção local, aceite parcial.**
+Fundador confirmou 20–30 s no chão, aproximadamente pés para a câmera,
+piso/corpo no enquadramento e controle em pé; encerrou manualmente em 56,31 s.
+243 análises, 306 chamadas, uma Pessoa no chão local (2.110 ms de evidência),
+21,5 s de sequência LYING e retorno a OBSERVING; HTTP desligado, PENDING=1.
+Processamento médio/P95/máximo 119,9/245,1/523,9 ms (242 perfis), 4,62 análises/s;
+idade máxima 546 ms e uma lacuna entre decisões >500 ms.
+Cobertura de decisão 70,18% nos 60 s previstos, ou 74,78% na duração executada;
+sem marcadores humanos para latência, sem aprovação de controles individuais.
+Último perfil ausente, snapshots de estado desatualizados, rótulo CPU genérico
+e diferença de 282 ms entre detectedAt e criação SQLite preservados no relatório.
+Sessão DirectML/AMD identificada; profiling por operador somente na prova anterior,
+não reconstituído para esta captura. Sete originais atuais e sete anteriores
+conferidos por hash. Quatro perdas históricas e controles inconclusivos mantidos.
+Nesta análise não houve captura, repetição física, ajustes, entrega ao painel,
+commit/push/deploy ou aprovação integral do MVP.
+[Relatório, evidências e análise reproduzível sem câmera](RELATORIOS/ENSAIO_FISICO_DIRECTML_2026_10_28.md).
+
+**28/10/2026 — repetição do teste curto DirectML corrigida.**
+Uma tentativa física feita pelo fundador terminou com status ok/ENDED;
+a qualidade dessa cena não foi aprovada por esta correção.
+Reexecutar falhava pela outbox já existente. O runner experimental agora
+clona os caminhos de saída em uma pasta nova por execução explícita,
+preservando parâmetros, calibração, checkpoint e relatórios anteriores.
+25 testes do experimento, lint e formatação passaram; sete arquivos da
+tentativa anterior preservados por hash. Configuração real somente preparada/
+validada pelo assistente, sem abrir câmera ou repetir teste físico.
+[Diagnóstico e comando para repetir](RELATORIOS/REPETICAO_WEBCAM_DIRECTML_2026_10_28.md).
+
+
 **27/10/2026 — RTMO na GPU AMD comprovado; opção DirectML isolada.**
 AMD Radeon 1002:15E7/driver 31.0.21925.1001 e DirectX 12 verificados.
 Profiling confirmou computação DML, com NMS/auxiliares em CPU e transferências;

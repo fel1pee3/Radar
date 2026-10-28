@@ -17,7 +17,9 @@ def decisions(result):
 
 
 def compare(root):
-    protocol = json.loads((root / "functional-protocol.frozen.json").read_text(encoding="utf-8"))
+    protocol = json.loads(
+        (root / "functional-protocol.frozen.json").read_text(encoding="utf-8-sig")
+    )
     rows = []
     for item in protocol["cases"]:
         results = {

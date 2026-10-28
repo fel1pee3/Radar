@@ -287,6 +287,13 @@ class RtmoEstimator:
             self.session = ort.InferenceSession(
                 str(path), sess_options=options, providers=["CPUExecutionProvider"]
             )
+            self.executor_metadata = {
+                "requested": "CPU",
+                "runtime": "onnxruntime",
+                "version": ort.__version__,
+                "providers": self.session.get_providers(),
+                "adapter": None,
+            }
         except Exception:
             raise EdgeError(
                 "MODEL_LOAD_ERROR", "ONNX Runtime não carregou o RTMO verificado em CPU."

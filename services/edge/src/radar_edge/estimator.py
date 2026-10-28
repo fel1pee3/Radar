@@ -30,9 +30,63 @@ def perception_summary(estimator):
     )
 
 
+def executor_options(config, directory=None):
+    if config.model.executor == "CPU":
+        return {}
+    return {
+        "executor": config.model.executor,
+        "device_id": config.model.deviceId,
+        "operator_profile_prefix": directory / "ort-operators"
+        if config.diagnostics.profileOperators and directory
+        else None,
+    }
+
+
+def executed_model_metadata(spec, estimator, requested="CPU"):
+    from radar_edge.model import model_metadata
+
+    value = model_metadata(spec)
+    info = getattr(estimator, "executor_metadata", None)
+    if info is None and requested == "DIRECTML":
+        value["delegate"] = None
+        value["executor"] = {
+            "requested": requested,
+            "initialized": False,
+            "runtime": None,
+            "version": None,
+            "providers": [],
+            "adapter": None,
+        }
+    if info:
+        value["executor"] = {**info, "initialized": True}
+        value["delegate"] = "DIRECTML" if "DmlExecutionProvider" in info["providers"] else "CPU"
+    return value
+
+
 def create_estimator(
-    model_path, variant="lite", recovery="NONE", runtime_profile="REFERENCE_4_SPIN"
+    model_path,
+    variant="lite",
+    recovery="NONE",
+    runtime_profile="REFERENCE_4_SPIN",
+    *,
+    executor="CPU",
+    device_id=0,
+    operator_profile_prefix=None,
 ):
+    if executor == "DIRECTML":
+        if (
+            variant != "rtmo-s"
+            or recovery != "RTMO_ADAPTIVE_V3"
+            or runtime_profile != "REFERENCE_4_SPIN"
+        ):
+            raise EdgeError("DIRECTML_CONFIG_INVALID", "Preserve a referência RTMO com DirectML.")
+        from radar_edge.directml import DirectMlEstimator
+
+        return DirectMlEstimator(
+            model_path, recovery, runtime_profile, device_id, operator_profile_prefix
+        )
+    if executor != "CPU":
+        raise EdgeError("EXECUTOR_INVALID", "Selecione CPU ou DIRECTML explicitamente.")
     if variant == "rtmo-s":
         if recovery == "RTMO_PREFERRED_V2":
             from radar_edge.reacquiring_rtmo import ReacquiringRtmoEstimator

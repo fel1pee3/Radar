@@ -5,6 +5,7 @@ import json
 import sqlite3
 import threading
 from collections import deque
+from pathlib import Path
 from time import monotonic, monotonic_ns
 
 import httpx
@@ -28,6 +29,7 @@ class LiveHealth:
         self.flags = {"FRAME_TIMEOUT"}
         self.inference = "WARMING_UP"
         self.pending = 0
+        self.final_outbox = None
         self.run_id = run_id
         self.sequence = 0
         self.versions = {
@@ -91,6 +93,16 @@ class LiveHealth:
                 else:
                     flags.add("POSTURE_UNCERTAIN")
             self.update(flags=flags, inference=o.inferenceState)
+
+    def refresh_pending(self):
+        path = Path(self.config.events.outboxPath).resolve()
+        if not self.config.events.enabled or not path.exists():
+            return
+        with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True) as db:
+            counts = dict(db.execute("SELECT status,COUNT(*) FROM outbox GROUP BY status"))
+        with self.lock:
+            self.final_outbox = counts
+            self.pending = sum(v for k, v in counts.items() if k != "DELIVERED")
 
     def snapshot(self):
         with self.lock:
@@ -261,13 +273,19 @@ class NetworkWorker:
     def close(self, final=True):
         if self.stop.is_set():
             return
-        if final and self.threads:
-            if self.health.capture != "ERROR":
-                self.health.update(capture="ENDED")
-            self.final_ack.wait(timeout=self.config.events.delivery.timeoutSeconds + 0.5)
-        self.stop.set()
-        for thread in self.threads:
-            thread.join(timeout=self.config.events.delivery.timeoutSeconds + 0.5)
+        try:
+            if final:
+                self.health.refresh_pending()
+                if self.health.capture != "ERROR":
+                    self.health.update(capture="ENDED")
+            if final and self.threads:
+                if self.health.capture != "ERROR":
+                    self.health.update(capture="ENDED")
+                self.final_ack.wait(timeout=self.config.events.delivery.timeoutSeconds + 0.5)
+        finally:
+            self.stop.set()
+            for thread in self.threads:
+                thread.join(timeout=self.config.events.delivery.timeoutSeconds + 0.5)
 
     def __exit__(self, error_type, error, traceback):
         if error_type is not None and error_type is not KeyboardInterrupt:
