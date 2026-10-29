@@ -14,25 +14,37 @@ from radar_edge.delivery import credentials
 from radar_edge.posture import check_posture
 
 
-def prepare(base, credential, output):
+def prepare(base, credential, output, duration=60):
     original = base.read_bytes()
     c = load_config(base)
     if c.source.kind != "WEBCAM" or not c.source.authorized:
         raise ValueError("Use a webcam previamente autorizada e calibrada")
     c.model.executor = "DIRECTML"
-    if c.model.recovery != "RTMO_ADAPTIVE_V3" or c.model.runtimeProfile != "REFERENCE_4_SPIN":
+    if (
+        c.model.recovery != "RTMO_ADAPTIVE_V3"
+        or c.model.runtimeProfile != "REFERENCE_4_SPIN"
+    ):
         raise ValueError("Preserve a referencia existente")
     c.events.delivery.enabled = True
     c.events.delivery.credentialFile = str(private_path(credential))
-    credentials(c.events.delivery, c.cameraId)  # Validate locally; never send or print token.
+    credentials(
+        c.events.delivery, c.cameraId
+    )  # Validate locally; never send or print token.
     c.events.evidenceMode = "skeleton"
     c.events.snapshotAuthorized = False
     c.processing.preview = True
     c.processing.previewStartPaused = False
-    if c.processing.maxRunSeconds != 60.0:
-        raise ValueError("Preserve os 60 segundos da demonstracao")
+    if duration not in (60, 600):
+        raise ValueError("Use 60 segundos curtos ou 600 segundos nominais (D51)")
+    c.processing.maxRunSeconds = duration
     c.diagnostics.exportDecisions = c.diagnostics.profileProcessing = True
     c.diagnostics.profileOperators = False
+    if duration == 600:
+        # Bounded diagnostics for decisions + final profiles at 5 Hz; not video.
+        # Does not change cadence, evidence or acceptance criteria.
+        c.diagnostics.maxDecisionRecords = 10000
+        c.diagnostics.maxDecisionBytes = 50 * 1024 * 1024
+        c.diagnostics.maxDecisionDirectoryBytes = 100 * 1024 * 1024
     target = private_path(output)
     if target.exists():
         raise ValueError("Destino existente preservado. Use uma pasta nova.")
@@ -51,7 +63,7 @@ def prepare(base, credential, output):
                 "baseConfig": str(base),
                 "baseConfigSha256": hashlib.sha256(original).hexdigest(),
                 "cameraId": c.cameraId,
-                "durationSeconds": 60,
+                "durationSeconds": duration,
                 "deliveryEnabled": True,
                 "snapshotAuthorized": False,
                 "cameraOpened": False,
@@ -70,12 +82,13 @@ if __name__ == "__main__":
     ap.add_argument("--base", required=True, type=Path)
     ap.add_argument("--credential", required=True)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--duration", type=int, choices=(60, 600), default=60)
     a = ap.parse_args()
     print(
         json.dumps(
             {
                 "status": "prepared",
-                "config": prepare(a.base, a.credential, a.output),
+                "config": prepare(a.base, a.credential, a.output, a.duration),
                 "cameraOpened": False,
                 "httpSent": False,
             }

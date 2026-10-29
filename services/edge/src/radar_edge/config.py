@@ -157,9 +157,13 @@ class SupportRegion(StrictModel):
 
 
 class PostureConfig(StrictModel):
-    method: Literal["BASELINE", "LINEAR_CONTEXT_V1", "LINEAR_BODY_V2", "MULTICLASS_BODY_V3"] = (
-        "BASELINE"
-    )
+    method: Literal[
+        "BASELINE",
+        "LINEAR_CONTEXT_V1",
+        "LINEAR_BODY_V2",
+        "MULTICLASS_BODY_V3",
+        "MULTICLASS_CONTEXT_V4",
+    ] = "BASELINE"
     artifactPath: str | None = None
     artifactSha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     installationId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]{1,80}$")

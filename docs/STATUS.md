@@ -1,5 +1,20 @@
 # Status de construção
 
+**29/10/2026 — candidata V4 parcial; encerramento do MVP ainda não aprovado.**
+Contexto corporal distribuído e trajetória temporal corrigidos: 16/16 alvos com evento
+(antes 12/16), 29/36 aprovações (antes 27/36), quatro controles inconclusivos e dois
+alertas fora do prazo registrado. Possível queda: 2/4 transições FILE históricas,
+sem generalização comprovada. GPU → outbox → API → incidente → aviso → revisão
+automatizada passou em banco isolado. Configuração de 600 s preparada, câmera não aberta.
+Comparação inicial de stream misturou CPU na referência e DirectML na V4: não prova
+ganho da V4. Comparador corrigido, repetição bloqueada em 29/10 por Code Integrity
+do Windows recusando python312.dll (3033/3077, 0xC0E90002), nos dois ambientes.
+Checker agora consome provas vinculadas e retorna exit 1: falhas funcionais, ambiente
+bloqueado e provas pendentes/desatualizadas. Nenhuma aprovação do MVP, commit ou push.
+[Relatório central](RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md) ·
+[Operação V4](USO_CANDIDATA_V4.md) · [Evidências do checker](VALIDACAO_EVIDENCIAS.md).
+
+
 **28/10/2026 — demonstração física DirectML verificada; fluxo parcial, cobertura reprovada.**
 Sessão de captura 5d456564-3ae5-4ba9-9bd3-a83765b8ca4d, câmera 5be84234…,
 relatório 7307ddc3…: 13:54:09–13:55:10, 60,8085 s, MAX_RUN_SECONDS.

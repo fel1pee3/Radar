@@ -11,7 +11,16 @@ from radar_edge.errors import EdgeError
 from radar_edge.posture_context import confirm_context
 
 
-def test_context_confirmation_requires_action_and_preserves_old_queue(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "method,version",
+    [
+        ("MULTICLASS_BODY_V3", "floor-rtmo-score-posture-multiclass-v3-synthetic"),
+        ("MULTICLASS_CONTEXT_V4", "floor-rtmo-score-posture-context-v4-synthetic"),
+    ],
+)
+def test_context_confirmation_requires_action_and_preserves_old_queue(
+    tmp_path, monkeypatch, method, version
+):
     from radar_edge import posture_context
 
     model, cal, _ = classifier(tmp_path, monkeypatch, 3)
@@ -22,8 +31,9 @@ def test_context_confirmation_requires_action_and_preserves_old_queue(tmp_path, 
     c.model.variant = "rtmo-s"
     c.model.path = ".local/not-opened.onnx"
     c.posture = model.settings
+    c.posture.method = method
     c.events.policy = {
-        "version": "floor-rtmo-score-posture-multiclass-v3-synthetic",
+        "version": version,
         "qualitySource": "RTMO_KEYPOINT_SCORE",
         "temporalMode": "EVIDENCE_V2",
     }

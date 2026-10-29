@@ -22,8 +22,10 @@ def confirm_context(filename, confirmed=False):
     path = private_path(filename)
     original = path.read_bytes()
     config = load_config(path)
-    if config.posture.method != "MULTICLASS_BODY_V3":
-        raise EdgeError("POSTURE_CONTEXT_UNSUPPORTED", "Este preparador atende ao candidato V3.")
+    if config.posture.method not in {"MULTICLASS_BODY_V3", "MULTICLASS_CONTEXT_V4"}:
+        raise EdgeError(
+            "POSTURE_CONTEXT_UNSUPPORTED", "Este preparador atende aos candidatos V3 e V4."
+        )
     cal = load_calibration(config.calibrationPath)
     if cal["cameraId"] != config.cameraId:
         raise EdgeError("CALIBRATION_CAMERA_MISMATCH", "Calibracao pertence a outra camera.")

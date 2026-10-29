@@ -42,7 +42,11 @@ class Policy:
             raise ValueError("Invalid policy version")
         if self.temporalMode not in {"LEGACY", "EVIDENCE_V2"}:
             raise ValueError("Invalid temporal mode")
-        if self.transitionEvidence not in {"UPRIGHT_HIP_LEGACY", "POSTURE_DYNAMICS_V1"}:
+        if self.transitionEvidence not in {
+            "UPRIGHT_HIP_LEGACY",
+            "POSTURE_DYNAMICS_V1",
+            "POSTURE_DYNAMICS_V2",
+        }:
             raise ValueError("Invalid transition evidence")
         for field in fields(self):
             if field.name in {"version", "qualitySource", "temporalMode", "transitionEvidence"}:
@@ -92,9 +96,13 @@ DEFAULT_POLICY = Policy()
 def configured_policy(overrides):
     policy = Policy(**overrides)
     if policy.transitionEvidence != "UPRIGHT_HIP_LEGACY" and not policy.version.startswith(
-        "floor-rtmo-score-posture-multiclass-v3"
+        ("floor-rtmo-score-posture-multiclass-v3", "floor-rtmo-score-posture-context-v4")
     ):
         raise ValueError("Posture dynamics requires a separate explicit policy version")
+    if policy.transitionEvidence == "POSTURE_DYNAMICS_V2" and not policy.version.startswith(
+        "floor-rtmo-score-posture-context-v4"
+    ):
+        raise ValueError("Motion V2 requires the explicit context V4 policy")
     score_version = policy.version.startswith("floor-rtmo-score-")
     if score_version != (policy.qualitySource == "RTMO_KEYPOINT_SCORE"):
         raise ValueError("RTMO score quality requires its explicit policy family")

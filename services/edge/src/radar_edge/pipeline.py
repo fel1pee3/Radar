@@ -370,7 +370,9 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
         "captureState": state,
         "error": error,
         "workerVersion": (
-            "edge-posture-v3"
+            "edge-posture-context-v4"
+            if config.posture.method == "MULTICLASS_CONTEXT_V4"
+            else "edge-posture-v3"
             if config.posture.method == "MULTICLASS_BODY_V3"
             else "edge-posture-v2"
             if config.posture.method == "LINEAR_BODY_V2"

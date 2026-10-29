@@ -382,3 +382,26 @@ curto opt-in, com outbox/diagnósticos exclusivos e sem HTTP/snapshot.
 Configuração de 60 s preparada, câmera não aberta. Sem nova busca de modelos,
 treino, driver/global Windows alterado ou aprovação integral do MVP.
 [Relatório e reprodução](RELATORIOS/VIABILIDADE_RTMO_DIRECTML_2026_10_27.md).
+
+
+## D62 — Candidata contextual V4 e fechamento verificável, 28–29/10/2026
+
+O fundador autorizou trabalhar conjuntamente reconhecimento/contexto, trajetória,
+validação e operação. MULTICLASS_CONTEXT_V4 e POSTURE_DYNAMICS_V2 são opt-in;
+RTMO, pesos, classificador, DirectML isolado e padrão CPU permanecem preservados.
+Evidência positiva parcial exige seis essenciais reais, ambos os quadris, três de
+torso e um lado completo; contexto distribuído nunca representa contato físico.
+Apoios configurados continuam vetando confirmação de chão. Sem reduzir confiança,
+alterar polígonos, tolerância de lacuna, idade, persistência ou prazo de aceitação.
+
+V4 recupera emissões nos quatro casos históricos, mas dois ainda excedem o prazo
+registrado. 29/36 aprovações e 2/4 transições FILE: candidata não promovida.
+Comparação GPU pareada ainda pendente; lote inicial com CPU na referência
+foi preservado e não comprova ganho. Bloqueio Code Integrity do Windows em 29/10
+impediu a repetição corrigida; nenhuma proteção foi desativada.
+
+Checker passa a consumir comprovantes vinculados; D50/D51 mantidas: apresentação
+dispensada e 600 s nominais. Configuração nova preparada sem webcam; aprovação
+de engenharia não equivale a aprovação funcional. Quatro perdas anteriores,
+controles inconclusivos e falha longa permanecem no histórico.
+[Relatório central](RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md).

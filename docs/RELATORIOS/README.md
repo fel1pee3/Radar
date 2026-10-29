@@ -1,5 +1,10 @@
 # Relatórios de implementação
 
+[Fechamento V4, 28–29/10](FECHAMENTO_CANDIDATA_V4_2026_10_28.md):
+16/16 alvos com evento, 29/36 aprovações, 2/4 transições e integração GPU/painel
+comprovada em teste. MVP não aprovado; comparação pareada pendente por bloqueio
+de Python pelo Windows. Quatro perdas históricas preservadas.
+
 [Verificação da demonstração física DirectML, 28/10](VERIFICACAO_DEMO_DIRECTML_2026_10_28.md):
 evento/incidente/aviso reais entregues e rearme/encerramento confirmados;
 revisão humana ainda ausente. Cobertura 79,87%/78,81%, abaixo de 80%;
@@ -125,8 +130,8 @@ CAUCAFall executada: 3/4 alvos, uma perda e zero alertas nos oito ADL, com
 cobertura limitada. [Resultados e limites](CAUCAFALL_ETAPA_08.md).
 LIVE positivo/revisão e replay/serviços offline comprovados na 08.
 Não confundir fechamento da demonstração técnica com eficácia geral ou liberação
-assistencial/comercial. O checker não consome o aceite manual e mantém sua lista
-original fixa; sem aprovação automática alegada.
+assistencial/comercial. O checker daquela entrega não consumia o aceite manual. A versão atual lê
+comprovantes vinculados; não transfere esse aceite automaticamente à V4.
 
 O [complemento dos materiais 08](MATERIAIS_ETAPA_08.md) registra fontes, hashes,
 licenças, ensaios dos 23 novos vídeos e recuperação dos dois históricos. A avaliação

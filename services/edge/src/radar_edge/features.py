@@ -41,6 +41,9 @@ class Features:
     postureClassScores: tuple[float, ...] = ()
     postureQualityReasons: tuple[str, ...] = ()
     postureEvidenceOrigin: str | None = None
+    bodyEvidenceSufficient: bool | None = None
+    floorContextCompatible: bool | None = None
+    contextEvidenceIndices: tuple[int, ...] = ()
     hipX: float | None = None
     bodyScale: float | None = None
     shoulderX: float | None = None

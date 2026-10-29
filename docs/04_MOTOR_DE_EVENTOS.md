@@ -210,3 +210,14 @@ a idade máxima de observação de 2 s. Nenhum cancelamento transacional ou
 deadline do sistema operacional é prometido. FILE não cadenciado conserva
 o relógio de mídia; testes de suspensão usam relógios injetados, sem hardware.
 [Implementação e testes](RELATORIOS/CONTINUIDADE_E_REFERENCIA_VISUAL_2026_10_27.md).
+
+
+## Candidata opt-in V4 (28–29/10/2026)
+
+As regras anteriores continuam nas políticas existentes. A candidata
+MULTICLASS_CONTEXT_V4 separa qualidade, suficiência corporal, postura e contexto
+2D distribuído; POSTURE_DYNAMICS_V2 observa o movimento também no início da
+suspeita. Usa somente pontos atuais do estimador, sem interpolação como evidência.
+Não muda 2 s de persistência, 500 ms de lacuna, idade de 2 s ou rearme de 3 s.
+O rótulo POSSIBLE_FALL exige trajetória adicional, não o nome do arquivo.
+[Limites, resultados e reprovações](RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md).

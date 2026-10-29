@@ -1,5 +1,11 @@
 # Radar de Acontecimentos
 
+**29/10 — V4 parcial:** eventos nos 16 alvos conhecidos e integração GPU/painel
+comprovada em teste isolado; 29/36 aprovações, sem MVP aprovado. Comparação GPU
+pareada pendente e Python bloqueado pela política do Windows nesta máquina.
+[Resultados e bloqueios](docs/RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md) ·
+[Operação e configuração de 600 s](docs/USO_CANDIDATA_V4.md).
+
 **28/10 — demonstração física GPU verificada:** um evento, incidente e aviso
 local entregues, com rearme e encerramento consistentes. Revisão humana ainda
 não salva e cobertura elegível abaixo de 80%; fluxo parcial, sem aprovação
@@ -104,7 +110,7 @@ Um software de percepção assistiva que analisa vídeo no computador local, ide
 
 O resultado pretendido é uma demonstração real, reproduzível e apresentável. Primeiro construiremos com dados simulados e vídeos autorizados; depois validaremos com a webcam do notebook. A câmera IP KAP-S069 entra se o equipamento permitir acesso compatível ao vídeo.
 
-> **Estado atual:** etapas 00–08 concluídas **no escopo revisado da demonstração experimental de bancada** (D50/D51). Engenharia, instalação/restore isolados, FILE/LIVE→incidente→revisão e replay/API/painel offline verificados. Sessão LIVE nominal de 10 min: 600,660 s totais, 576,986 s elegíveis, 2799 análises, encerramento automático confirmado e zero eventos. Houve trecho no chão <10 s sem alerta: possível perda/inconclusivo, sem tempo exato/ROI confirmados. CAUCAFall: três de quatro alvos detectados, uma perda e zero alertas nos oito ADL, com cobertura limitada. Não aprova eficácia geral, piloto assistencial ou estabilidade prolongada; o teste original de 30 min não foi comprovado e a falha aos 27min45s permanece. Apresentação formal dispensada D50. Veja a [sessão física](docs/RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md), a [matriz final](docs/RELATORIOS/VALIDACAO_MVP.md) e o [relatório 08](docs/RELATORIOS/ETAPA_08.md). Aceite documental/manual: o checker ainda imprime gates originais fixos e não certifica esse aceite. Etapa 09 opcional, não iniciada. Snapshot real/purga pessoal desabilitados; dados e volumes preservados. Versionamento por commit/push solicitado pelo fundador; sem deploy.
+> **Estado atual:** etapas 00–08 concluídas **no escopo revisado da demonstração experimental de bancada** (D50/D51). Engenharia, instalação/restore isolados, FILE/LIVE→incidente→revisão e replay/API/painel offline verificados. Sessão LIVE nominal de 10 min: 600,660 s totais, 576,986 s elegíveis, 2799 análises, encerramento automático confirmado e zero eventos. Houve trecho no chão <10 s sem alerta: possível perda/inconclusivo, sem tempo exato/ROI confirmados. CAUCAFall: três de quatro alvos detectados, uma perda e zero alertas nos oito ADL, com cobertura limitada. Não aprova eficácia geral, piloto assistencial ou estabilidade prolongada; o teste original de 30 min não foi comprovado e a falha aos 27min45s permanece. Apresentação formal dispensada D50. Veja a [sessão física](docs/RELATORIOS/SESSAO_WEBCAM_10MIN_ETAPA_08.md), a [matriz final](docs/RELATORIOS/VALIDACAO_MVP.md) e o [relatório 08](docs/RELATORIOS/ETAPA_08.md). Aceite documental/manual histórico preservado; o checker atual lê provas vinculadas à candidata e não transfere automaticamente esse aceite antigo. Etapa 09 opcional, não iniciada. Snapshot real/purga pessoal desabilitados; dados e volumes preservados. Versionamento por commit/push solicitado pelo fundador; sem deploy.
 
 Investigação de fluidez em 20 clipes: candidatos de acompanhamento visual deram
 mais quadros intermediários em replay, mas ainda perderam segmentos e não foram

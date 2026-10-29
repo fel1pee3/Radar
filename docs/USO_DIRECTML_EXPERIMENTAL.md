@@ -1,5 +1,11 @@
 # Demonstração experimental com DirectML
 
+**Atualização 29/10:** este roteiro preserva a configuração V3 curta. A sessão
+física posterior foi verificada, com fluxo parcial e cobertura reprovada.
+Para a candidata V4/600 s, consulte [o roteiro atual](USO_CANDIDATA_V4.md),
+incluindo o bloqueio atual do Python pelo Windows. Os resultados históricos
+não aprovam automaticamente a candidata nova.
+
 A opção GPU usa o worker, motor temporal, outbox, autenticação, API e painel
 existentes. CPU permanece como padrão. A integração em arquivo foi comprovada;
 a demonstração física completa desta opção ainda precisa ser executada.

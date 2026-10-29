@@ -5,14 +5,18 @@ $taskRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $taskRoot
 if ($Config -notmatch '^\.local/[A-Za-z0-9_./-]+\.yaml$' -or $Config.Contains('..')) { throw 'Use caminho relativo simples dentro de .local.' }
 if (-not (Test-Path -LiteralPath $Config)) { throw 'Prepare a configuracao privada antes de iniciar.' }
-$taskCameraId = (& uv run --project services/edge --frozen python -c 'import sys; from radar_edge.config import load_config; print(load_config(sys.argv[1]).cameraId)' $Config).Trim()
-if ($LASTEXITCODE -ne 0 -or $taskCameraId -notmatch '^[0-9a-f-]{36}$') { throw 'Configuracao invalida.' }
+$taskSelection = & uv run --project services/edge --frozen python scripts/validation/select-worker.py --config $Config
+if ($LASTEXITCODE -ne 0) { throw 'Configuracao invalida; nenhum worker aberto.' }
+$taskSelection = $taskSelection | ConvertFrom-Json
+$taskCameraId = $taskSelection.cameraId
+$taskWorkerArguments = @($taskSelection.arguments)
+if ($taskCameraId -notmatch '^[0-9a-f-]{36}$') { throw 'Camera invalida.' }
 $taskStatusPath = Join-Path $taskRoot ".local/edge-control/$taskCameraId-status.json"
 $taskStartUtc = [DateTime]::UtcNow
 $taskId = [guid]::NewGuid().ToString()
 $taskDirectory = Join-Path $taskRoot ".local/etapa08/continuous-$taskId"
 New-Item -ItemType Directory -Path $taskDirectory | Out-Null
-$taskProcess = Start-Process -FilePath (Get-Command uv).Source -ArgumentList @('run', '--project', 'services/edge', '--frozen', 'radar-edge', 'run', '--config', $Config, '--preview') -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $taskDirectory 'worker.json') -RedirectStandardError (Join-Path $taskDirectory 'worker-errors.log')
+$taskProcess = Start-Process -FilePath (Get-Command uv).Source -ArgumentList $taskWorkerArguments -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $taskDirectory 'worker.json') -RedirectStandardError (Join-Path $taskDirectory 'worker-errors.log')
 $taskWatch = [Diagnostics.Stopwatch]::StartNew()
 $taskWriter = [System.IO.StreamWriter]::new((Join-Path $taskDirectory 'resources.jsonl'), $false, [System.Text.UTF8Encoding]::new($false))
 Write-Host 'Observacao iniciada. Nenhum video e gravado. Q/Esc na previa encerra.'

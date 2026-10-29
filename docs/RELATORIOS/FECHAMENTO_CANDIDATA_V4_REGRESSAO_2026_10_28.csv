@@ -1,0 +1,37 @@
+id,targets,referenceEvents,candidateEvents,referenceApproved,candidateApproved,kinds,latenciesMs,decisionCoverage,controlResult,negativeCaptureCoverage,duplicates,unmatched,annotationLimit
+cauca-01,1,1,1,True,True,PERSON_ON_FLOOR,1000,0.8908296943231441,,,0,0,existing annotation
+cauca-02,1,1,1,True,True,POSSIBLE_FALL,1800,0.9841269841269841,,,0,0,existing annotation
+cauca-03,1,1,1,False,False,PERSON_ON_FLOOR,2200,0.7922705314009661,,,0,0,existing annotation
+cauca-04,1,1,1,True,True,POSSIBLE_FALL,1800,0.9811320754716981,,,0,0,existing annotation
+cauca-05,0,0,0,True,True,,,0.9911504424778761,PASS,0.9911504424778761,0,0,existing annotation
+cauca-06,0,0,0,True,True,,,0.8571428571428571,PASS,0.8571428571428571,0,0,existing annotation
+cauca-07,0,0,0,True,True,,,0.8615384615384616,PASS,0.8615384615384616,0,0,existing annotation
+cauca-08,0,0,0,True,True,,,0.8034188034188035,PASS,0.8034188034188035,0,0,existing annotation
+cauca-09,0,0,0,True,True,,,0.9298892988929889,PASS,0.9298892988929889,0,0,existing annotation
+cauca-10,0,0,0,False,False,,,0.6438356164383562,INCONCLUSIVE,0.6438356164383562,0,0,existing annotation
+cauca-11,0,0,0,True,True,,,0.9423076923076923,PASS,0.9423076923076923,0,0,existing annotation
+cauca-12,0,0,0,False,False,,,0.7969348659003831,INCONCLUSIVE,0.7969348659003831,0,0,existing annotation
+chair08-01,0,0,0,False,False,,,0.6442238176703435,INCONCLUSIVE,0.6442238176703435,0,0,existing annotation
+chair08-02,0,0,0,True,True,,,0.9845216950012686,PASS,0.9845216950012686,0,0,existing annotation
+controlled-lying,1,0,1,False,False,PERSON_ON_FLOOR,5200,0.8827586206896552,,,0,0,existing annotation
+floor03,1,0,1,False,False,PERSON_ON_FLOOR,5216,0.8484145703043643,,,0,0,provisional onset unchanged
+floor05,1,0,1,False,True,POSSIBLE_FALL,4816,0.8904620182212384,,,0,0,provisional onset unchanged
+floor07,1,0,1,False,True,POSSIBLE_FALL,4224,0.8599980595711653,,,0,0,provisional onset unchanged
+intake16-01,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9977827050997783,,,0,0,existing annotation
+intake16-02,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9879518072289156,,,0,0,existing annotation
+intake16-03,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9918478260869565,,,0,0,existing annotation
+intake16-04,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9905660377358491,,,0,0,existing annotation
+intake16-05,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9876543209876543,,,0,0,existing annotation
+intake16-06,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9950248756218906,,,0,0,existing annotation
+intake16-07,0,0,0,True,True,,,0.9880621303571646,PASS,0.9880621303571646,0,0,existing annotation
+intake16-08,0,0,0,False,False,,,0.77103892140222,INCONCLUSIVE,0.77103892140222,0,0,existing annotation
+intake16-09,0,0,0,True,True,,,0.9202453987730062,PASS,0.9202453987730062,0,0,existing annotation
+intake16-10,0,0,0,True,True,,,0.88,PASS,0.88,0,0,existing annotation
+intake16-11,0,0,0,True,True,,,0.9913793103448276,PASS,0.9913793103448276,0,0,existing annotation
+intake16-12,0,0,0,True,True,,,0.9148936170212766,PASS,0.9148936170212766,0,0,existing annotation
+intake16-13,0,0,0,True,True,,,0.9826589595375722,PASS,0.9826589595375722,0,0,existing annotation
+intake16-14,0,0,0,True,True,,,0.0,PASS,0.9982486865148862,0,0,existing annotation
+intake16-15,0,0,0,True,True,,,0.0,PASS,0.979381443298969,0,0,existing annotation
+intake16-16,0,0,0,True,True,,,0.8984375,PASS,0.8984375,0,0,existing annotation
+yoga2-01,1,1,1,True,True,PERSON_ON_FLOOR,2002,0.992007,,,0,0,existing annotation
+yoga2-02,1,1,1,True,True,PERSON_ON_FLOOR,2000,0.9875,,,0,0,existing annotation

@@ -241,7 +241,7 @@ class PostureClassifier:
 
 
 def create_posture_classifier(settings, calibration, model_spec, policy):
-    if settings.method == "MULTICLASS_BODY_V3":
+    if settings.method in {"MULTICLASS_BODY_V3", "MULTICLASS_CONTEXT_V4"}:
         from radar_edge.posture_multiclass import MulticlassClassifier
 
         return MulticlassClassifier(settings, calibration, model_spec, policy)

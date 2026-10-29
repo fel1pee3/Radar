@@ -32,6 +32,8 @@ SCHEMAS = Path(__file__).resolve().parents[4] / "packages/contracts/src/schemas"
 
 
 def worker_version(policy):
+    if policy.version.startswith("floor-rtmo-score-posture-context-v4"):
+        return "edge-posture-context-v4"
     if policy.version.startswith("floor-rtmo-score-posture-multiclass-v3"):
         return "edge-posture-v3"
     if policy.version.startswith("floor-rtmo-score-posture-body-v2"):
@@ -564,7 +566,9 @@ class EventRuntime:
                         "version": self.classifier.artifact.version,
                         "sha256": self.config.posture.artifactSha256,
                         "installationId": self.config.posture.installationId,
-                        "scope": "EXPERIMENTAL_UNSEEN_INSTALLATION_EVALUATION"
+                        "scope": "EXPERIMENTAL_CONTEXT_CANDIDATE_NOT_INDEPENDENTLY_VALIDATED"
+                        if self.config.posture.method == "MULTICLASS_CONTEXT_V4"
+                        else "EXPERIMENTAL_UNSEEN_INSTALLATION_EVALUATION"
                         if self.config.posture.method in {"LINEAR_BODY_V2", "MULTICLASS_BODY_V3"}
                         else "EXPERIMENTAL_INSTALLATION_SPECIFIC",
                         "descriptor": self.classifier.artifact.descriptor,

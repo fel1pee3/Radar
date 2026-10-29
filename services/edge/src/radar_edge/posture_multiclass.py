@@ -175,11 +175,15 @@ class MulticlassClassifier:
                 "POSTURE_ARTIFACT_INVALID", "Confira o artefato multiclasse e seu SHA-256."
             ) from None
         if (
-            settings.method != "MULTICLASS_BODY_V3"
+            settings.method not in {"MULTICLASS_BODY_V3", "MULTICLASS_CONTEXT_V4"}
             or not settings.operatorConfirmed
             or settings.calibrationSha256 != calibration_digest(calibration)
             or self.artifact.poseModelSha256 != model_spec.sha256
-            or not policy.version.startswith("floor-rtmo-score-posture-multiclass-v3")
+            or not policy.version.startswith(
+                "floor-rtmo-score-posture-context-v4"
+                if settings.method == "MULTICLASS_CONTEXT_V4"
+                else "floor-rtmo-score-posture-multiclass-v3"
+            )
             or policy.qualitySource != "RTMO_KEYPOINT_SCORE"
             or policy.temporalMode != "EVIDENCE_V2"
             or policy.minKeypointScore != self.artifact.qualityThreshold
@@ -282,7 +286,7 @@ class MulticlassClassifier:
                 reasons.append("CONTEXT_EXCLUDED_REGION")
             elif floor is not True:
                 reasons.append("LYING_OUTSIDE_OBSERVED_REGION")
-        return replace(
+        classified = replace(
             f,
             eligible=not reasons,
             candidate=posture == "LYING" and not reasons,
@@ -306,6 +310,12 @@ class MulticlassClassifier:
             bboxAspectRatio=aspect,
             **common,
         )
+
+        if self.settings.method == "MULTICLASS_CONTEXT_V4":
+            from radar_edge.body_context import apply_body_context
+
+            return apply_body_context(self, o, classified, valid)
+        return classified
 
     @property
     def calibration_floor(self):

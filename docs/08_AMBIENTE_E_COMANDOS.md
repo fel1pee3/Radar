@@ -2,6 +2,10 @@
 
 [Voltar ao README central](../README.md)
 
+**29/10:** [operação V4](USO_CANDIDATA_V4.md) e [provas do checker](VALIDACAO_EVIDENCIAS.md).
+Configuração final nominal: 600 s. Apresentação dispensada por D50. A candidata
+ainda reprova critérios; Python atualmente bloqueado pelo Windows nesta máquina.
+
 **Atualização 08 — 22/10/2026: PARCIAL.** Comandos de validação, instalação limpa,
 backup/restore e candidata local agora existem. [Operação e backup](OPERACAO_E_BACKUP.md),
 [roteiro 08](VALIDACAO_MANUAL_ETAPA_08.md) e [matriz](RELATORIOS/VALIDACAO_MVP.md)
@@ -11,8 +15,8 @@ permanecem fora do escopo. Os parágrafos históricos abaixo registram a evoluç
 | Comando existente na 08 | Resultado/efeito |
 | --- | --- |
 | `pnpm.cmd demo:verify` | Executa engenharia e registra código/comandos/saídas em .local/etapa08 |
-| `pnpm.cmd demo:check --engineering` | Exit 0 somente com pré-requisitos/evidência atual aprovados; 1 para falha/ausência |
-| `pnpm.cmd demo:check` | Exit 2 enquanto gates físicos/manuais pendentes; releaseReady=false |
+| `pnpm.cmd demo:check --engineering` | Exit 0 para engenharia aprovada; 1 para falha; 2 para prova pendente/desatualizada |
+| `pnpm.cmd demo:check` | Lê comprovantes: 0 aprovado, 1 reprovado, 2 pendente/desatualizado; engenharia e funcional separados |
 | `pnpm.cmd demo:install-check` | Instalação limpa em cópia/banco exclusivos; não altera demonstração |
 | `pnpm.cmd test:backup` | Dump/restore real sintético, autorização/redação/deduplicação |
 | `pnpm.cmd backup:create --stopped` | Backup real do banco, exige processos parados; não é diagnóstico |

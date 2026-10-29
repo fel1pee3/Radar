@@ -1,6 +1,7 @@
 """Versioned posture evidence with bounded uncertainty and explicit transition support."""
 
 import math
+from collections import deque
 
 from radar_edge.engine import Emission, TemporalEngine
 from radar_edge.posture import OTHER_POSTURES
@@ -11,6 +12,7 @@ class EvidenceEngine(TemporalEngine):
         super().__init__(policy, active)
         self.negative_ms = 0
         self.motion_at = None
+        self.motion_history = deque()
 
     def clear_suspicion(self):
         super().clear_suspicion()
@@ -55,6 +57,73 @@ class EvidenceEngine(TemporalEngine):
             rotation >= p.transitionAngleChangeDeg and displacement >= p.transitionBodyDisplacement
         )
 
+    def update_motion_v2(self, current):
+        """Support dwell precedes the motion window; no pose is synthesized in gaps.
+
+        Continue examining motion during the first second of floor suspicion.
+        A missing/unknown observation contributes no displacement or support time.
+        A gap >500 ms between real usable body observations destroys the history.
+        """
+        p, t = self.policy, current.timestampMs
+        if self.motion_at is not None and t - self.motion_at > p.rapidDescentWindowMs:
+            self.motion_at = None
+        if self.motion_history and t - self.motion_history[-1].timestampMs > p.maxObservationGapMs:
+            self.motion_history.clear()
+            self.motion_at = None
+        while self.motion_history and t - self.motion_history[0].timestampMs > (
+            p.rapidDescentWindowMs + p.transitionUprightHoldMs
+        ):
+            self.motion_history.popleft()
+        usable = all(
+            getattr(current, name) is not None
+            for name in ("hipX", "hipY", "shoulderX", "shoulderY", "torsoAngleDeg", "bodyScale")
+        )
+        blocked = set(current.reasons) - {
+            "POSTURE_UNCERTAIN",
+            "FLOOR_CONTEXT_UNKNOWN",
+            "CONTEXT_EXCLUDED_REGION",
+            "LYING_OUTSIDE_OBSERVED_REGION",
+        }
+        if not usable or blocked or current.bodyScale <= 0:
+            return
+        supported = [
+            x
+            for x in self.motion_history
+            if x.posture in {"STANDING_OR_WALKING", "SEATED"}
+            and x.torsoAngleDeg <= 90 - p.transitionAngleChangeDeg
+        ]
+        search = self.start is None or t - self.start <= p.rapidDescentWindowMs
+        if search:
+            for old in reversed(supported):
+                if not 0 < t - old.timestampMs <= p.rapidDescentWindowMs:
+                    continue
+                dwell = [
+                    x
+                    for x in supported
+                    if 0 <= old.timestampMs - x.timestampMs <= p.transitionUprightHoldMs
+                ]
+                if (
+                    len(dwell) < 2
+                    or old.timestampMs - dwell[0].timestampMs < p.transitionUprightHoldMs
+                ):
+                    continue
+                aspect = current.context[-3] / current.context[-2]
+                displacement = max(
+                    math.hypot((current.hipX - old.hipX) * aspect, current.hipY - old.hipY),
+                    math.hypot(
+                        (current.shoulderX - old.shoulderX) * aspect,
+                        current.shoulderY - old.shoulderY,
+                    ),
+                ) / max(old.bodyScale, current.bodyScale)
+                rotation = abs(current.torsoAngleDeg - old.torsoAngleDeg)
+                if (
+                    rotation >= p.transitionAngleChangeDeg
+                    and displacement >= p.transitionBodyDisplacement
+                ):
+                    self.motion_at = t
+                    break
+        self.motion_history.append(current)
+
     def step(self, f):
         self.closed = False
         p, t = self.policy, f.timestampMs
@@ -76,6 +145,11 @@ class EvidenceEngine(TemporalEngine):
         )
         if not continuous or not f.eligible:
             self.history.clear()
+        if p.transitionEvidence == "POSTURE_DYNAMICS_V2":
+            if not continuous:
+                self.motion_history.clear()
+                self.motion_at = None
+            self.update_motion_v2(f)
         if p.transitionEvidence == "POSTURE_DYNAMICS_V1":
             if not continuous:
                 self.motion_at = None
@@ -94,6 +168,7 @@ class EvidenceEngine(TemporalEngine):
                 if self.rearm_ms >= p.rearmHoldMs:
                     self.clear_suspicion()
                     self.history.clear()
+                    self.motion_history.clear()
                     self.rearm_ms = 0
                     self.closed = True
             else:
@@ -108,7 +183,8 @@ class EvidenceEngine(TemporalEngine):
         if negative:
             self.negative_ms = self.negative_ms + dt if continuous and prior_negative else 0
             if self.negative_ms >= p.negativeResetMs:
-                self.clear_suspicion()
+                if p.transitionEvidence != "POSTURE_DYNAMICS_V2" or self.start is not None:
+                    self.clear_suspicion()
         elif positive:
             self.negative_ms = 0
             if self.start is None:
@@ -128,8 +204,10 @@ class EvidenceEngine(TemporalEngine):
                     and all(old.hipY is not None for old in upright)
                     and f.hipY - min(old.hipY for old in upright) >= p.minHipDescentNormalized
                 )
-                if p.transitionEvidence == "POSTURE_DYNAMICS_V1":
+                if p.transitionEvidence in {"POSTURE_DYNAMICS_V1", "POSTURE_DYNAMICS_V2"}:
                     self.rapid = self.motion_at is not None
+            if p.transitionEvidence == "POSTURE_DYNAMICS_V2" and self.motion_at is not None:
+                self.rapid = True
             self.state = "SUSPECTED"
             self.last_candidate = t
         else:
