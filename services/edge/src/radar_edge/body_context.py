@@ -96,7 +96,38 @@ def apply_body_context(classifier, observation, classified, valid, *, geometry_f
         if f.hipX is not None and f.hipY is not None
         else None
     )
-    compatible = sufficient and not excluded and (hip_floor is True or distributed)
+    # A complete observed arm can lie on the calibrated image floor even when
+    # all torso projections sit above its boundary. This is an opt-in alternative
+    # 2D grounding cue, not a margin, virtual landmark or physical-contact claim.
+    # Full torso/knees and the existing body sufficiency guard remain mandatory.
+    arm_grounded = False
+    if (
+        classifier.settings.floorContextStrategy == "ARTICULATED_ARM_V1"
+        and sufficient
+        and geometry is not None
+        and TORSO | {25, 26} <= valid.keys()
+    ):
+        diagonal = geometry["bodyScale"] * o.height
+        for shoulder, elbow, wrist in ((11, 13, 15), (12, 14, 16)):
+            if {shoulder, elbow, wrist} <= points.keys() and {elbow, wrist} <= floor_points:
+                forearm = math.hypot(
+                    (points[elbow].x - points[wrist].x) * o.width,
+                    (points[elbow].y - points[wrist].y) * o.height,
+                )
+                if forearm >= 0.1 * diagonal:
+                    arm_grounded = True
+    compatible = sufficient and not excluded and (hip_floor is True or distributed or arm_grounded)
+    support_mechanism = (
+        "EXCLUDED"
+        if excluded
+        else "HIP_PROJECTION"
+        if compatible and hip_floor is True
+        else "DISTRIBUTED_POINTS"
+        if compatible and distributed
+        else "OBSERVED_ARM_CHAIN_2D"
+        if compatible and arm_grounded
+        else "UNKNOWN"
+    )
     posture, origin = f.posture, f.postureEvidenceOrigin
     # Independent geometric branch for supine torso with both knees above pelvis:
     # relevant to exercises with flexed/raised legs. Does not change learned scores.
@@ -110,6 +141,27 @@ def apply_body_context(classifier, observation, classified, valid, *, geometry_f
     )
     if geometry_fallback and compatible and raised_knees and posture in {"UNKNOWN", "SEATED"}:
         posture, origin = "LYING", "OBSERVED_RECLINED_TORSO_RAISED_KNEES_V4"
+    observed_upright = (
+        geometry["shoulderY"] < geometry["hipY"] and geometry["torsoAngleDeg"] <= 55.0
+        if geometry is not None and TORSO <= valid.keys()
+        else None
+    )
+    # Separate uncertainty about a subtype from a strongly supported class group.
+    # This is NOT a normal-activity claim: exact scores and subtype uncertainty
+    # remain visible, and a missing body or meaningful lying score stays UNKNOWN.
+    subtype_uncertain = False
+    class_scores = f.postureClassScores
+    if (
+        classifier.settings.postureAmbiguityStrategy == "NON_FLOOR_GROUP_V1"
+        and posture == "UNKNOWN"
+        and sufficient
+        and observed_upright is True
+        and len(class_scores) == 4
+        and sum(class_scores[:3]) >= 0.95
+        and class_scores[3] <= 0.05
+    ):
+        posture, origin = "OTHER_POSTURE", "RTMO_NON_FLOOR_GROUP_V1"
+        subtype_uncertain = True
     reasons = []
     if posture == "UNKNOWN":
         reasons.append("POSTURE_UNCERTAIN")
@@ -120,6 +172,10 @@ def apply_body_context(classifier, observation, classified, valid, *, geometry_f
             reasons.append("CONTEXT_EXCLUDED_REGION")
         elif not compatible:
             reasons.append("FLOOR_CONTEXT_UNKNOWN")
+    # Observed image orientation is separate from posture classification.
+    # It does not relabel posture; unresolved UNKNOWN remains ineligible.
+    # Four current usable torso joints are required;
+    # missing joints never acquire a temporal orientation value.
     return replace(
         f,
         **(geometry or {}),
@@ -133,4 +189,7 @@ def apply_body_context(classifier, observation, classified, valid, *, geometry_f
         bodyEvidenceSufficient=sufficient,
         floorContextCompatible=bool(compatible),
         contextEvidenceIndices=tuple(sorted(floor_points)),
+        contextSupportMechanism=support_mechanism,
+        observedUprightTorso=observed_upright,
+        postureSubtypeUncertain=subtype_uncertain,
     )

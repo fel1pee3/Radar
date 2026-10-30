@@ -28,6 +28,7 @@ from radar_edge.model import file_hash, get_model_spec, model_metadata
 from radar_edge.observations import Observation, pose_quality
 from radar_edge.policy import configured_policy
 from radar_edge.preview import LocalPreview
+from radar_edge.runtime_environment import runtime_identity
 from radar_edge.source import FileSource, MediaSampler
 
 
@@ -358,6 +359,7 @@ def run_pipeline(config: EdgeConfig, evaluation_excluded=None) -> tuple[dict, in
                     "message": "Falha ao concluir diagnóstico privado; confira acesso e espaço.",
                 }
     report = {
+        "runtimeEnvironment": runtime_identity(),
         "schemaVersion": 1,
         "command": "run",
         "status": "ok" if code == 0 else "error",

@@ -19,12 +19,16 @@ def prepare(base, credential, output, duration=60):
     c = load_config(base)
     if c.source.kind != "WEBCAM" or not c.source.authorized:
         raise ValueError("Use a webcam previamente autorizada e calibrada")
-    c.model.executor = "DIRECTML"
     if (
-        c.model.recovery != "RTMO_ADAPTIVE_V3"
+        c.model.variant != "rtmo-s"
+        or c.model.recovery not in {"RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V2"}
         or c.model.runtimeProfile != "REFERENCE_4_SPIN"
     ):
-        raise ValueError("Preserve a referencia existente")
+        raise ValueError(
+            "Preserve RTMO_ADAPTIVE_V3/RTMO_PREFERRED_V2 com REFERENCE_4_SPIN"
+        )
+    source_executor = c.model.executor
+    c.model.executor = "DIRECTML"
     c.events.delivery.enabled = True
     c.events.delivery.credentialFile = str(private_path(credential))
     credentials(
@@ -63,6 +67,14 @@ def prepare(base, credential, output, duration=60):
                 "baseConfig": str(base),
                 "baseConfigSha256": hashlib.sha256(original).hexdigest(),
                 "cameraId": c.cameraId,
+                "sourceExecutor": source_executor,
+                "requestedExecution": {
+                    "executor": c.model.executor,
+                    "recovery": c.model.recovery,
+                    "runtimeProfile": c.model.runtimeProfile,
+                    "initialized": False,
+                    "pythonEnvironmentSelected": False,
+                },
                 "durationSeconds": duration,
                 "deliveryEnabled": True,
                 "snapshotAuthorized": False,

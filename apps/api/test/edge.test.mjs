@@ -59,7 +59,7 @@ test('Python real: features → episódio/outbox → timeout após commit → re
         [
           'run',
           '--project',
-          'services/edge',
+          process.env.RADAR_EDGE_RUNTIME_PROJECT || 'services/edge',
           '--frozen',
           'python',
           'services/edge/tests/edge_api_probe.py',

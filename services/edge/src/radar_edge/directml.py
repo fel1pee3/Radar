@@ -86,7 +86,7 @@ class DirectMlEstimator(RtmoEstimator):
             self.session = None
             raise EdgeError(
                 "DIRECTML_INITIALIZATION_FAILED",
-                "DirectML obrigatório não inicializou. Use o ambiente experiments/directml "
+                "DirectML obrigatório não inicializou. Use um ambiente isolado DirectML 1.23.0 "
                 "e confira o adaptador AMD. Nenhuma substituição por CPU foi feita.",
             ) from exc
 

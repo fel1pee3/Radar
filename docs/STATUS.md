@@ -1,5 +1,26 @@
 # Status de construção
 
+**30/10/2026 — runtime recuperado; fechamento funcional ainda parcial.**
+Smart App Control identificado; Python PSF assinado 3.13.17 funciona em ambientes
+CPU/DirectML separados, sem alterar proteções ou substituir os ambientes antigos.
+GPU comprovada por perfil de operadores. Comparação corrigida na mesma GPU:
+V3 2/20 e V4 5/20 transmissões dentro de tempo/cobertura.
+Correções opt-in de contexto, ambiguidade e trajetória elevaram a regressão FILE
+conhecida de 29/36 para **33/36**, com 16/16 alvos, zero alertas nos 20 controles,
+floor03 ainda fora do prazo provisório e cauca-10/12 inconclusivos.
+POSSIBLE_FALL nas quatro transições encenadas: 3/4; os tipos de floor05/07 e da
+descida voluntária não são acertos humanos de queda comprovados.
+Preferência V2 na GPU reduziu custo no piloto, mas regrediu cauca-04 e foi rejeitada
+como substituta. ADAPTIVE_V3 preservada. Comparação final: 14/20 em tempo/cobertura
+contra 10/20 anterior; com prazo anotado, 11/20 contra 6/20. Ainda reprovada.
+Integração real passou nos 22 E2E, com revisão automatizada em banco isolado.
+Instalação limpa assinada e backup/restauração passaram. Checker: engenharia APROVADA (14 verificações, exit 0); integral REPROVADO (exit 1),
+com provas independentes/físicas/offline/recuperação da candidata atual pendentes.
+Nenhuma webcam aberta nesta rodada;
+configuração de 600 s apenas preparada. Perdas históricas e controles mantidos.
+[Relatório atual](RELATORIOS/RETOMADA_FECHAMENTO_V4_2026_10_30.md) ·
+[Operação](USO_CANDIDATA_V4.md) · [Runtime Windows](DIAGNOSTICO_RUNTIME_WINDOWS.md).
+
 **29/10/2026 — candidata V4 parcial; encerramento do MVP ainda não aprovado.**
 Contexto corporal distribuído e trajetória temporal corrigidos: 16/16 alvos com evento
 (antes 12/16), 29/36 aprovações (antes 27/36), quatro controles inconclusivos e dois

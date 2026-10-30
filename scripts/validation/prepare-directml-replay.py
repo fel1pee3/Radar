@@ -15,7 +15,9 @@ from radar_edge.posture import calibration_digest
 
 def prepare(protocol, case_id, camera_id, credential, output):
     item = next(
-        c for c in json.loads(protocol.read_text(encoding="utf-8"))["cases"] if c["id"] == case_id
+        c
+        for c in json.loads(protocol.read_text(encoding="utf-8"))["cases"]
+        if c["id"] == case_id
     )
     for path, expected in item["preservedFiles"].items():
         if hashlib.sha256(Path(path).read_bytes()).hexdigest() != expected:
@@ -23,14 +25,21 @@ def prepare(protocol, case_id, camera_id, credential, output):
     c = load_config(item["config"])
     if c.source.kind != "FILE" or not c.source.authorized:
         raise ValueError("Only existing authorized FILE; never webcam")
+    if (
+        c.model.variant != "rtmo-s"
+        or c.model.recovery not in {"RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V2"}
+        or c.model.runtimeProfile != "REFERENCE_4_SPIN"
+    ):
+        raise ValueError(
+            "Preserve RTMO_ADAPTIVE_V3/RTMO_PREFERRED_V2 com REFERENCE_4_SPIN"
+        )
+    source_executor = c.model.executor
+    c.model.executor = "DIRECTML"
     credential = private_path(credential)
     auth = json.loads(credential.read_text(encoding="utf-8"))
     if auth["cameraId"] != camera_id:
         raise ValueError("Camera credential mismatch")
     c.cameraId = camera_id
-    c.model.executor = "DIRECTML"
-    c.model.recovery = "RTMO_ADAPTIVE_V3"
-    c.model.runtimeProfile = "REFERENCE_4_SPIN"
     c.processing.preview = c.processing.previewStartPaused = False
     c.processing.replaySpeed = 1.0
     c.events.enabled = True
@@ -57,7 +66,19 @@ def prepare(protocol, case_id, camera_id, credential, output):
             {
                 "scope": "AUTOMATED_REPLAY_TEST_NOT_HUMAN_REVIEW",
                 "sourceConfig": item["config"],
-                "sourceVideoSha256": hashlib.sha256(Path(c.source.path).read_bytes()).hexdigest(),
+                "sourceExecutor": source_executor,
+                "requestedExecution": {
+                    "executor": c.model.executor,
+                    "recovery": c.model.recovery,
+                    "runtimeProfile": c.model.runtimeProfile,
+                    "initialized": False,
+                    "pythonEnvironmentSelected": False,
+                },
+                "cameraOpened": False,
+                "httpSent": False,
+                "sourceVideoSha256": hashlib.sha256(
+                    Path(c.source.path).read_bytes()
+                ).hexdigest(),
                 "geometryAndPolygonsUnchanged": True,
                 "cameraIdentityClonedForIsolatedDatabase": True,
             },
@@ -76,4 +97,8 @@ if __name__ == "__main__":
     ap.add_argument("--credential", required=True)
     ap.add_argument("--output", required=True)
     a = ap.parse_args()
-    print(json.dumps({"config": prepare(a.protocol, a.case, a.camera_id, a.credential, a.output)}))
+    print(
+        json.dumps(
+            {"config": prepare(a.protocol, a.case, a.camera_id, a.credential, a.output)}
+        )
+    )

@@ -76,10 +76,16 @@ def create_estimator(
     if executor == "DIRECTML":
         if (
             variant != "rtmo-s"
-            or recovery != "RTMO_ADAPTIVE_V3"
+            or recovery not in {"RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V2"}
             or runtime_profile != "REFERENCE_4_SPIN"
         ):
             raise EdgeError("DIRECTML_CONFIG_INVALID", "Preserve a referência RTMO com DirectML.")
+        if recovery == "RTMO_PREFERRED_V2":
+            from radar_edge.directml_reacquiring import DirectMlReacquiringEstimator
+
+            return DirectMlReacquiringEstimator(
+                model_path, runtime_profile, device_id, operator_profile_prefix
+            )
         from radar_edge.directml import DirectMlEstimator
 
         return DirectMlEstimator(

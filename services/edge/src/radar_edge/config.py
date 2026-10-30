@@ -73,10 +73,12 @@ class ModelConfig(StrictModel):
     def full_path_is_explicit(self):
         if self.executor == "DIRECTML" and (
             self.variant != "rtmo-s"
-            or self.recovery != "RTMO_ADAPTIVE_V3"
+            or self.recovery not in {"RTMO_ADAPTIVE_V3", "RTMO_PREFERRED_V2"}
             or self.runtimeProfile != "REFERENCE_4_SPIN"
         ):
-            raise ValueError("DirectML exige RTMO_ADAPTIVE_V3 + REFERENCE_4_SPIN explícitos.")
+            raise ValueError(
+                "DirectML exige RTMO_ADAPTIVE_V3/RTMO_PREFERRED_V2 com REFERENCE_4_SPIN."
+            )
         if self.runtimeProfile != "REFERENCE_4_SPIN" and self.variant != "rtmo-s":
             raise ValueError("CPU runtime profiles require RTMO.")
         if self.recovery != "NONE" and self.variant != "rtmo-s":
@@ -164,6 +166,8 @@ class PostureConfig(StrictModel):
         "MULTICLASS_BODY_V3",
         "MULTICLASS_CONTEXT_V4",
     ] = "BASELINE"
+    floorContextStrategy: Literal["DISTRIBUTED_V4", "ARTICULATED_ARM_V1"] = "DISTRIBUTED_V4"
+    postureAmbiguityStrategy: Literal["KEEP_UNKNOWN", "NON_FLOOR_GROUP_V1"] = "KEEP_UNKNOWN"
     artifactPath: str | None = None
     artifactSha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     installationId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]{1,80}$")
@@ -181,6 +185,13 @@ class PostureConfig(StrictModel):
 
     @model_validator(mode="after")
     def explicit_context(self):
+        if (
+            self.postureAmbiguityStrategy != "KEEP_UNKNOWN"
+            and self.method != "MULTICLASS_CONTEXT_V4"
+        ):
+            raise ValueError("Non-floor class grouping requires explicit V4 method.")
+        if self.floorContextStrategy != "DISTRIBUTED_V4" and self.method != "MULTICLASS_CONTEXT_V4":
+            raise ValueError("Articulated floor context requires explicit V4 method.")
         if self.method != "BASELINE" and not (
             self.artifactPath
             and self.artifactSha256

@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 
 
-def execute(candidate_root, reference_root, output):
+def execute(candidate_root, reference_root, output, selected_cases=None, repeats=2, source_root=Path(".")):
     output.mkdir(parents=True, exist_ok=False)
     cases = (
         "floor03",
@@ -24,8 +24,12 @@ def execute(candidate_root, reference_root, output):
         "intake16-03",
         "intake16-15",
     )
+    if selected_cases:
+        if not set(selected_cases) <= set(cases):
+            raise ValueError("Use somente os cenarios do protocolo comparativo")
+        cases = tuple(selected_cases)
     plan = []
-    for repeat in (1, 2):
+    for repeat in range(1, repeats + 1):
         for index, case in enumerate(cases):
             order = (
                 ("reference", "candidate")
@@ -61,7 +65,17 @@ def execute(candidate_root, reference_root, output):
                     }
                 )
     (output / "plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
-    env = dict(os.environ, PYTHONPATH=str(Path("services/edge/src").resolve()))
+    code_path = (source_root / "services/edge/src").resolve()
+    env = dict(os.environ, PYTHONPATH=str(code_path))
+    probe = subprocess.run(
+        [sys.executable, "-c",
+         "import sys,json,radar_edge.live; print(json.dumps(dict(python=sys.version, executable=sys.executable, live=radar_edge.live.__file__)))"],
+        env=env, capture_output=True, text=True, check=True,
+    )
+    identity = json.loads(probe.stdout)
+    if not Path(identity["live"]).resolve().is_relative_to(code_path):
+        raise ValueError("Worker importado diverge da fonte solicitada")
+    (output / "source-runtime.json").write_text(json.dumps(identity, indent=2), encoding="utf-8")
     for item in plan:
         with (output / (Path(item["output"]).name + ".log")).open(
             "x", encoding="utf-8"
@@ -103,5 +117,8 @@ if __name__ == "__main__":
     ap.add_argument("--candidate-root", type=Path, required=True)
     ap.add_argument("--reference-root", type=Path, required=True)
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--cases", nargs="+")
+    ap.add_argument("--repeats", type=int, choices=(1, 2), default=2)
+    ap.add_argument("--source-root", type=Path, default=Path("."))
     args = ap.parse_args()
-    execute(args.candidate_root, args.reference_root, args.output)
+    execute(args.candidate_root, args.reference_root, args.output, args.cases, args.repeats, args.source_root)

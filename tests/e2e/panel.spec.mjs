@@ -736,7 +736,14 @@ test('DirectML real FILE → incidente → aviso → revisão automatizada persi
   async function python(args) {
     const child = spawn(
       'uv',
-      ['run', '--project', 'experiments/directml', '--frozen', 'python', ...args],
+      [
+        'run',
+        '--project',
+        process.env.RADAR_DIRECTML_RUNTIME_PROJECT || 'experiments/directml',
+        '--frozen',
+        'python',
+        ...args,
+      ],
       {
         env: process.env,
         windowsHide: true,

@@ -1,0 +1,15 @@
+[project]
+name = "radar-directml-python313"
+version = "0.0.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "numpy==2.5.4",
+  "opencv-contrib-python==5.0.0.93",
+  "onnxruntime-directml==1.23.0",
+  "onnx==1.19.1",
+  "pydantic==2.14.1",
+  "pyyaml==6.0.3",
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+  "tqdm==4.67.1",
+]

@@ -13,6 +13,7 @@ class EvidenceEngine(TemporalEngine):
         self.negative_ms = 0
         self.motion_at = None
         self.motion_history = deque()
+        self.motion_v3_history = deque()
 
     def clear_suspicion(self):
         super().clear_suspicion()
@@ -124,6 +125,101 @@ class EvidenceEngine(TemporalEngine):
                     break
         self.motion_history.append(current)
 
+    def update_motion_v3(self, current):
+        """Use observed torso orientation independently of the posture subtype.
+
+        Missing perception supplies neither position nor upright dwell. A marker
+        breaks new support runs. Previously completed real support may remain
+        only within the existing motion window and <=500 ms between real body
+        observations. Current endpoints are always real; capture failures reset.
+        """
+        p, t = self.policy, current.timestampMs
+        if self.motion_at is not None and t - self.motion_at > p.rapidDescentWindowMs:
+            self.motion_at = None
+        allowed = {
+            "POSTURE_UNCERTAIN",
+            "FLOOR_CONTEXT_UNKNOWN",
+            "CONTEXT_EXCLUDED_REGION",
+            "LYING_OUTSIDE_OBSERVED_REGION",
+        }
+        perception_gaps = {
+            "NO_POSE",
+            "MISSING_ESSENTIAL_LANDMARK",
+            "LOW_LANDMARK_QUALITY",
+            "POSTURE_DESCRIPTOR_INSUFFICIENT",
+            "FLOOR_BODY_EVIDENCE_INCOMPLETE",
+            "BODY_CROPPED",
+            "BODY_OUT_OF_FRAME",
+        }
+        blocked = set(current.reasons) - allowed
+        history = self.motion_v3_history
+        if blocked - perception_gaps:
+            history.clear()
+            self.motion_at = None
+            return
+        while history and t - history[0][0] > (p.rapidDescentWindowMs + p.transitionUprightHoldMs):
+            history.popleft()
+        last_real = next((f for _, f in reversed(history) if f is not None), None)
+        if last_real is not None and t - last_real.timestampMs > p.maxObservationGapMs:
+            history.clear()
+            self.motion_at = None
+            last_real = None
+        geometry = tuple(
+            getattr(current, name)
+            for name in ("hipX", "hipY", "shoulderX", "shoulderY", "torsoAngleDeg", "bodyScale")
+        )
+        usable = (
+            current.observedUprightTorso is not None
+            and all(value is not None and math.isfinite(value) for value in geometry)
+            and current.bodyScale > 0
+            and not blocked
+        )
+        if not usable:
+            # None is a missing-measurement marker, never a substitute pose.
+            if last_real is not None:
+                history.append((t, None))
+            return
+        search = self.start is None or t - self.start <= p.rapidDescentWindowMs
+        run_start = None
+        if search:
+            for _, old in history:
+                upright = (
+                    old is not None
+                    and old.observedUprightTorso is True
+                    and (
+                        old.posture in {"STANDING_OR_WALKING", "SEATED", "UNKNOWN"}
+                        or (old.posture == "OTHER_POSTURE" and old.postureSubtypeUncertain)
+                    )
+                    and old.torsoAngleDeg <= 90 - p.transitionAngleChangeDeg
+                    and old.shoulderY < old.hipY
+                )
+                if not upright:
+                    run_start = None
+                    continue
+                if run_start is None:
+                    run_start = old.timestampMs
+                if (
+                    old.timestampMs - run_start < p.transitionUprightHoldMs
+                    or not 0 < t - old.timestampMs <= p.rapidDescentWindowMs
+                ):
+                    continue
+                aspect = current.context[-3] / current.context[-2]
+                displacement = max(
+                    math.hypot((current.hipX - old.hipX) * aspect, current.hipY - old.hipY),
+                    math.hypot(
+                        (current.shoulderX - old.shoulderX) * aspect,
+                        current.shoulderY - old.shoulderY,
+                    ),
+                ) / max(old.bodyScale, current.bodyScale)
+                rotation = abs(current.torsoAngleDeg - old.torsoAngleDeg)
+                if (
+                    rotation >= p.transitionAngleChangeDeg
+                    and displacement >= p.transitionBodyDisplacement
+                ):
+                    self.motion_at = t
+                    break
+        history.append((t, current))
+
     def step(self, f):
         self.closed = False
         p, t = self.policy, f.timestampMs
@@ -150,6 +246,11 @@ class EvidenceEngine(TemporalEngine):
                 self.motion_history.clear()
                 self.motion_at = None
             self.update_motion_v2(f)
+        if p.transitionEvidence == "POSTURE_DYNAMICS_V3":
+            if not continuous:
+                self.motion_v3_history.clear()
+                self.motion_at = None
+            self.update_motion_v3(f)
         if p.transitionEvidence == "POSTURE_DYNAMICS_V1":
             if not continuous:
                 self.motion_at = None
@@ -169,6 +270,7 @@ class EvidenceEngine(TemporalEngine):
                     self.clear_suspicion()
                     self.history.clear()
                     self.motion_history.clear()
+                    self.motion_v3_history.clear()
                     self.rearm_ms = 0
                     self.closed = True
             else:
@@ -183,7 +285,10 @@ class EvidenceEngine(TemporalEngine):
         if negative:
             self.negative_ms = self.negative_ms + dt if continuous and prior_negative else 0
             if self.negative_ms >= p.negativeResetMs:
-                if p.transitionEvidence != "POSTURE_DYNAMICS_V2" or self.start is not None:
+                if (
+                    p.transitionEvidence not in {"POSTURE_DYNAMICS_V2", "POSTURE_DYNAMICS_V3"}
+                    or self.start is not None
+                ):
                     self.clear_suspicion()
         elif positive:
             self.negative_ms = 0
@@ -204,9 +309,16 @@ class EvidenceEngine(TemporalEngine):
                     and all(old.hipY is not None for old in upright)
                     and f.hipY - min(old.hipY for old in upright) >= p.minHipDescentNormalized
                 )
-                if p.transitionEvidence in {"POSTURE_DYNAMICS_V1", "POSTURE_DYNAMICS_V2"}:
+                if p.transitionEvidence in {
+                    "POSTURE_DYNAMICS_V1",
+                    "POSTURE_DYNAMICS_V2",
+                    "POSTURE_DYNAMICS_V3",
+                }:
                     self.rapid = self.motion_at is not None
-            if p.transitionEvidence == "POSTURE_DYNAMICS_V2" and self.motion_at is not None:
+            if (
+                p.transitionEvidence in {"POSTURE_DYNAMICS_V2", "POSTURE_DYNAMICS_V3"}
+                and self.motion_at is not None
+            ):
                 self.rapid = True
             self.state = "SUSPECTED"
             self.last_candidate = t

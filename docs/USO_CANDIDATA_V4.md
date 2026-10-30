@@ -1,17 +1,20 @@
 # Candidata de contexto V4 — uso e fechamento
 
-28–29/10/2026. **Experimental, não aprovada como MVP.** CPU e V3 continuam disponíveis
+30/10/2026. **Experimental, não aprovada como MVP.** CPU e V3 continuam disponíveis
 sem mudança do padrão. A V4 usa os mesmos pesos RTMO, classificador e recuperação
-ADAPTIVE_V3; muda contexto corporal e avaliação da trajetória. Os resultados
+ADAPTIVE_V3. A configuração atual acrescenta ARTICULATED_ARM_V1, NON_FLOOR_GROUP_V1 e POSTURE_DYNAMICS_V3, preservando os critérios. Os resultados
 da matriz conhecida são desenvolvimento, não avaliação independente.
 
-[Resultados e bloqueios](RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md).
+[Resultados e bloqueios](RELATORIOS/RETOMADA_FECHAMENTO_V4_2026_10_30.md).
 
-**Bloqueio atual de ambiente (29/10):** o Windows está recusando carregar
-python312.dll nos dois ambientes. Não execute o ensaio físico agora.
-O responsável pela política de segurança precisa verificar os eventos Code
-Integrity 3033/3077 e autorizar legitimamente o Python do projeto; não desative
-proteção global. Os comandos abaixo ficam preparados para depois da resolução.
+**Runtime recuperado em ambiente separado:** Python PSF assinado 3.13.17
+executa com Smart App Control ativo. CPU e DirectML experimentais têm lockfiles
+e ambientes próprios; os ambientes 3.12 anteriores continuam preservados.
+[Diagnóstico, preparação e limitação de patch](DIAGNOSTICO_RUNTIME_WINDOWS.md).
+A candidata continua **33/36** na regressão conhecida; floor03 e dois controles
+reprovam. A opção PREFERRED_V2 economizou chamadas, mas regrediu uma transição
+e não substitui ADAPTIVE_V3. O novo ensaio físico está apenas preparado,
+**não é a próxima validação aprovada enquanto esses bloqueios persistirem**.
 
 ## Iniciar serviços
 
@@ -47,18 +50,19 @@ Somente quando optar por abrir a webcam, em outro terminal:
 
 ```powershell
 . ./scripts/activate.ps1
-$rodada = (Get-Content .local/mvp-closure-current.json -Raw | ConvertFrom-Json).root -replace '\\', '/'
+$raiz = (Get-Content .local/runtime-recovery-current.json -Raw | ConvertFrom-Json).root
+$rodada = (Resolve-Path -LiteralPath $raiz -Relative) -replace '\\', '/' -replace '^\./', ''
 $configV4 = "$rodada/physical-600/config.yaml"
-powershell -NoProfile -File scripts/validation/observe.ps1 -Config $configV4
+powershell -NoProfile -File scripts/validation/observe.ps1 -Config $configV4 -Runtime PYTHON313_SIGNED
 ```
 
-O observador lê a configuração e seleciona `experiments/directml` explicitamente.
-A leitura inicial pelo ambiente CPU apenas valida YAML; não abre a fonte nem executa
+O observador lê a configuração e seleciona `experiments/python313-directml` explicitamente.
+A leitura inicial por `experiments/python313-cpu` apenas valida YAML; não abre a fonte nem executa
 o modelo. DirectML indisponível resulta em erro explícito, sem fallback silencioso.
 O launcher normal também pode ser usado, sem a medição adicional de recursos:
 
 ```powershell
-uv run --project experiments/directml --frozen python scripts/run-edge.py run --config $configV4
+uv run --project experiments/python313-directml --frozen --no-python-downloads python scripts/run-edge.py run --config $configV4
 ```
 
 Use apenas um dos dois comandos de execução por vez. Não abra duas capturas.
@@ -126,7 +130,7 @@ Sem essa referência, não inferir a atividade real a partir das classes do dete
 
 ```powershell
 . ./scripts/activate.ps1
-$rodada = (Get-Content .local/mvp-closure-current.json -Raw | ConvertFrom-Json).root
+$rodada = (Get-Content .local/runtime-recovery-current.json -Raw | ConvertFrom-Json).root
 pnpm.cmd demo:check --evidence "$rodada/release-evidence.json" --engineering-evidence "$rodada/engineering.json"
 ```
 

@@ -405,3 +405,26 @@ dispensada e 600 s nominais. Configuração nova preparada sem webcam; aprovaç�
 de engenharia não equivale a aprovação funcional. Quatro perdas anteriores,
 controles inconclusivos e falha longa permanecem no histórico.
 [Relatório central](RELATORIOS/FECHAMENTO_CANDIDATA_V4_2026_10_28.md).
+
+## D63 — Retomada isolada e correções funcionais V4, 30/10/2026
+
+O bloqueio Python foi atribuído ao Smart App Control por política/eventos
+correlacionados. A alternativa PSF assinada 3.13.17 opera em dois ambientes
+experimentais novos; não altera proteções, PATH global, versões ou ambientes
+anteriores. A lacuna para o patch 3.13.18 fica explícita, sem promover silenciosamente
+uma migração. O worker e observador selecionam esse runtime somente por opção.
+
+ARTICULATED_ARM_V1 e NON_FLOOR_GROUP_V1 são opções da V4; POSTURE_DYNAMICS_V3
+separa orientação observada e classe. São regras desenvolvidas em arquivos
+conhecidos, preservando pesos, geometria, qualidade e temporizadores. Nenhuma
+pose ausente é preenchida. O contexto 2D não comprova contato físico ou acidente.
+A regressão conhecida passa de 29/36 para 33/36, sem aprovar o MVP.
+
+RTMO_PREFERRED_V2 recebeu adaptador DirectML explícito para uma prova delimitada.
+Reduziu custo no piloto, mas regrediu o tipo em cauca-04 e cobertura dos controles;
+foi rejeitado como substituto. RTMO_ADAPTIVE_V3 permanece na candidata mantida.
+O espelhamento de 12 frames também não foi integrado. Não se inicia busca aberta
+por outros modelos. Floor03 mantém início provisório e prazo reprovado; descidas
+voluntárias e floor05/07 não viram acertos humanos de queda pela previsão do motor.
+
+[Resultados e limites](RELATORIOS/RETOMADA_FECHAMENTO_V4_2026_10_30.md).

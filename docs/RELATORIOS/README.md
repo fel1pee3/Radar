@@ -1,5 +1,10 @@
 # Relatórios de implementação
 
+[Retomada V4, 29–30/10](RETOMADA_FECHAMENTO_V4_2026_10_30.md):
+runtime assinado recuperado, GPU comprovada e regressão conhecida 33/36.
+Preferência mais barata rejeitada por regressão. MVP permanece parcial.
+[36 cenários](RETOMADA_V4_FUNCIONAL_2026_10_30.csv).
+
 [Fechamento V4, 28–29/10](FECHAMENTO_CANDIDATA_V4_2026_10_28.md):
 16/16 alvos com evento, 29/36 aprovações, 2/4 transições e integração GPU/painel
 comprovada em teste. MVP não aprovado; comparação pareada pendente por bloqueio

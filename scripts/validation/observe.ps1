@@ -1,11 +1,15 @@
-param([string]$Config = '.local/etapa08/webcam.yaml')
+param(
+    [string]$Config = '.local/etapa08/webcam.yaml',
+    [ValidateSet('PYTHON312', 'PYTHON313_SIGNED')][string]$Runtime = 'PYTHON312'
+)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '../activate.ps1')
 $taskRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $taskRoot
 if ($Config -notmatch '^\.local/[A-Za-z0-9_./-]+\.yaml$' -or $Config.Contains('..')) { throw 'Use caminho relativo simples dentro de .local.' }
 if (-not (Test-Path -LiteralPath $Config)) { throw 'Prepare a configuracao privada antes de iniciar.' }
-$taskSelection = & uv run --project services/edge --frozen python scripts/validation/select-worker.py --config $Config
+$taskSelectorProject = if ($Runtime -eq 'PYTHON313_SIGNED') { 'experiments/python313-cpu' } else { 'services/edge' }
+$taskSelection = & uv run --project $taskSelectorProject --frozen --no-python-downloads python scripts/validation/select-worker.py --config $Config --runtime $Runtime
 if ($LASTEXITCODE -ne 0) { throw 'Configuracao invalida; nenhum worker aberto.' }
 $taskSelection = $taskSelection | ConvertFrom-Json
 $taskCameraId = $taskSelection.cameraId

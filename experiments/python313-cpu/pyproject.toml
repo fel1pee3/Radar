@@ -1,0 +1,17 @@
+[project]
+name = "radar-edge-python313"
+version = "0.0.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "mediapipe==1.1.1",
+  "opencv-contrib-python==5.0.0.93",
+  "pydantic==2.14.1",
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+  "pyyaml==6.0.3",
+  "numpy==2.5.4",
+  "onnxruntime==1.23.2",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.17.1"]

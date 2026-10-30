@@ -38,6 +38,7 @@ def test_prepare_preserves_original_and_short_option(tmp_path, monkeypatch, dura
 
     m = script("prepare-directml-demo.py")
     c = live_config()
+    c.model.variant = "rtmo-s"
     c.model.recovery = "RTMO_ADAPTIVE_V3"
     c.model.runtimeProfile = "REFERENCE_4_SPIN"
     base = tmp_path / "base.yaml"
@@ -57,3 +58,25 @@ def test_prepare_preserves_original_and_short_option(tmp_path, monkeypatch, dura
     assert calls == ["local credential validation", "local posture validation"]
     with pytest.raises(ValueError, match="Destino existente"):
         m.prepare(base, ".local/private.json", str(output), duration)
+
+
+@pytest.mark.parametrize(
+    "executor,project",
+    [("CPU", "experiments/python313-cpu"), ("DIRECTML", "experiments/python313-directml")],
+)
+def test_signed_runtime_is_explicit_and_does_not_download_an_interpreter(
+    monkeypatch, executor, project
+):
+    m = script("select-worker.py")
+    monkeypatch.setattr(
+        m,
+        "load_config",
+        lambda _: SimpleNamespace(cameraId="camera", model=SimpleNamespace(executor=executor)),
+    )
+    selection = m.arguments(Path(".local/private.yaml"), "PYTHON313_SIGNED")
+    assert selection["project"] == project
+    assert selection["pythonRuntime"] == "PYTHON313_SIGNED"
+    assert "--no-python-downloads" in selection["arguments"]
+    assert not selection["sourceOpened"]
+    with pytest.raises(ValueError):
+        m.arguments(Path(".local/private.yaml"), "UNKNOWN")

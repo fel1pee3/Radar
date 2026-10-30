@@ -44,10 +44,13 @@ class Features:
     bodyEvidenceSufficient: bool | None = None
     floorContextCompatible: bool | None = None
     contextEvidenceIndices: tuple[int, ...] = ()
+    contextSupportMechanism: str | None = None
+    postureSubtypeUncertain: bool = False
     hipX: float | None = None
     bodyScale: float | None = None
     shoulderX: float | None = None
     shoulderY: float | None = None
+    observedUprightTorso: bool | None = None
 
 
 def extract_features(o: Observation, polygon, policy: Policy = DEFAULT_POLICY) -> Features:

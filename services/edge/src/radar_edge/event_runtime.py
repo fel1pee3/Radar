@@ -41,6 +41,20 @@ def worker_version(policy):
     return "edge-posture-v1" if policy.temporalMode == "EVIDENCE_V2" else WORKER_VERSION
 
 
+def posture_execution_context(settings):
+    """Preserve old queue fingerprints when new opt-in strategies are unused.
+
+    Keep every historical posture field exactly as serialized before these two
+    options existed. Non-default opt-ins remain part of execution identity.
+    """
+    value = settings.model_dump()
+    if value.get("floorContextStrategy") == "DISTRIBUTED_V4":
+        value.pop("floorContextStrategy")
+    if value.get("postureAmbiguityStrategy") == "KEEP_UNKNOWN":
+        value.pop("postureAmbiguityStrategy")
+    return value
+
+
 def event_payload(observation, features, emission, run, policy, evidence_mode):
     anchor = datetime.fromisoformat(run["anchor"].replace("Z", "+00:00"))
 
@@ -222,7 +236,11 @@ class EventRuntime:
                         )
                     },
                     "evidenceMode": self.evidence_mode,
-                    **({"posture": config.posture.model_dump()} if new_posture else {}),
+                    **(
+                        {"posture": posture_execution_context(config.posture)}
+                        if new_posture
+                        else {}
+                    ),
                 }
             ).encode()
         ).hexdigest()

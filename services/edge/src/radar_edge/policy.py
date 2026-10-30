@@ -46,6 +46,7 @@ class Policy:
             "UPRIGHT_HIP_LEGACY",
             "POSTURE_DYNAMICS_V1",
             "POSTURE_DYNAMICS_V2",
+            "POSTURE_DYNAMICS_V3",
         }:
             raise ValueError("Invalid transition evidence")
         for field in fields(self):
@@ -99,10 +100,11 @@ def configured_policy(overrides):
         ("floor-rtmo-score-posture-multiclass-v3", "floor-rtmo-score-posture-context-v4")
     ):
         raise ValueError("Posture dynamics requires a separate explicit policy version")
-    if policy.transitionEvidence == "POSTURE_DYNAMICS_V2" and not policy.version.startswith(
-        "floor-rtmo-score-posture-context-v4"
-    ):
-        raise ValueError("Motion V2 requires the explicit context V4 policy")
+    if policy.transitionEvidence in {
+        "POSTURE_DYNAMICS_V2",
+        "POSTURE_DYNAMICS_V3",
+    } and not policy.version.startswith("floor-rtmo-score-posture-context-v4"):
+        raise ValueError("Motion V2/V3 requires the explicit context V4 policy")
     score_version = policy.version.startswith("floor-rtmo-score-")
     if score_version != (policy.qualitySource == "RTMO_KEYPOINT_SCORE"):
         raise ValueError("RTMO score quality requires its explicit policy family")

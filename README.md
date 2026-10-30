@@ -1,5 +1,11 @@
 # Radar de Acontecimentos
 
+**30/10 — execução recuperada e candidata parcial:** Python assinado em ambientes
+isolados, GPU comprovada e regressão conhecida melhorada para 33/36. Persistem
+atraso, controles inconclusivos e bloqueios operacionais; MVP não aprovado.
+[Resultados atuais](docs/RELATORIOS/RETOMADA_FECHAMENTO_V4_2026_10_30.md) ·
+[Comandos e configuração preparada](docs/USO_CANDIDATA_V4.md).
+
 **29/10 — V4 parcial:** eventos nos 16 alvos conhecidos e integração GPU/painel
 comprovada em teste isolado; 29/36 aprovações, sem MVP aprovado. Comparação GPU
 pareada pendente e Python bloqueado pela política do Windows nesta máquina.
